@@ -1,0 +1,132 @@
+
+import cv2
+from numpy import empty, nan
+import os
+import sys
+import time
+
+import CMT.CMT
+import CMT.util as cmtutil
+import numpy as np
+
+
+CMT = CMT.CMT.CMT()
+
+class CMT_algorithm():
+
+
+
+    def __init__(self,inputPath, outputDir = None, bBox = None , skip = None):
+        self.inputPath = inputPath     # 'The input path.'
+        self.outputDir = outputDir      # 'Specify a directory for output data.'
+        self.bBox = bBox                # 'Specify initial bounding box.'
+        self.skip = skip                # 'Skip the first n frames.'
+        
+
+       
+    def speakerTracker(self):
+        
+
+        # Clean up
+        cv2.destroyAllWindows()
+
+        if self.inputPath is not None:
+
+            # If a path to a file was given, assume it is a single video file
+            if os.path.isfile(self.inputPath):
+                cap = cv2.VideoCapture(self.inputPath)
+
+                #Skip first frames if required
+                if self.skip is not None:
+                    cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, self.skip)
+
+            # Otherwise assume it is a format string for reading images
+            else:
+                cap = cmtutil.FileVideoCapture(self.inputPath)
+
+                #Skip first frames if required
+                if self.skip is not None:
+                    cap.frame = 1 + self.skip
+
+        else:
+            # If no input path was specified, open camera device
+            sys.exit("Error: no input path was specified")
+
+        # Read first frame
+        status, im0 = cap.read()
+        im_gray0 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
+        im_draw = np.copy(im0)
+
+        if self.bBox is not None:
+            # Try to disassemble user specified bounding box
+            values = self.bBox.split(',')
+            try:
+                values = [int(v) for v in values]
+            except:
+                raise Exception('Unable to parse bounding box')
+            if len(values) != 4:
+                raise Exception('Bounding box must have exactly 4 elements')
+            bbox = np.array(values)
+
+            # Convert to point representation, adding singleton dimension
+            bbox = cmtutil.bb2pts(bbox[None, :])
+
+            # Squeeze
+            bbox = bbox[0, :]
+
+            tl = bbox[:2]
+            br = bbox[2:4]
+        else:
+            # Get rectangle input from user
+            (tl, br) = cmtutil.get_rect(im_draw)
+
+        print 'using', tl, br, 'as init bb'
+
+        CMT.initialise(im_gray0, tl, br)
+
+        frame = 1
+
+        finalCoordinates = []
+        centerCoordinates = []
+        
+        out = cv2.VideoWriter('zzz.mp4',-1, 30.0, (640,480))
+
+        while (True):
+            # Read image
+            status, im = cap.read()
+            if not status:
+                break
+            im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+            im_draw = np.copy(im)
+            
+            out.write(im_draw)
+
+            tic = time.time()
+            CMT.process_frame(im_gray)
+            toc = time.time()
+
+            finalCoordinates.append((CMT.tl, CMT.tr, CMT.br, CMT.bl))
+            centerCoordinates.append((CMT.center[0], CMT.center[1]))
+            
+            # Remember image
+            im_prev = im_gray
+
+            # Advance frame number
+            print 'center: {0:.2f},{1:.2f}'.format(CMT.center[0], CMT.center[1])
+	    print 'hih'
+            frame += 1
+            
+            
+        # Release everything if job is finished
+        cap.release()
+        out.release()
+        cv2.destroyAllWindows()     
+            # Converting python list to numpy array and return the array
+        return np.asarray(finalCoordinates, dtype=np.int16) , np.asarray(centerCoordinates, dtype=np.float32)    
+
+
+
+
+
+
+    
