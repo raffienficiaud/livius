@@ -14,6 +14,57 @@ from pylab import *
 import cv2
 
 
+'''
+def perspective_transformation(img, coordinates, desiredScreenLayout=(1280,960)):
+
+    slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
+                        [0,desiredScreenLayout[1]-1]],np.float32)
+    retval = cv2.getPerspectiveTransform(coordinates,slideShow)
+    warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
+    return warp
+
+
+
+class transformation():
+  
+    def __init__(self, coordinate, layout):
+        
+        self.coordinate = coordinate
+        self.layout = layout
+  
+    def perspective(self,img):
+               
+        if self.coordinate is None:
+            self.coordinate = np.zeros((4,2))
+        
+        return perspective_transformation(img,self.coordinate,self.layout)
+
+
+'''
+
+class transformation():
+  
+    def __init__(self, coordinate, layout):
+        
+        self.coordinate = coordinate
+        self.layout = layout
+  
+    def perspective(self,img):
+               
+        if self.coordinate is None:
+            self.coordinate = np.zeros((4,2))
+        
+        return self.perspective_transformation(img,self.coordinate,self.layout)
+    
+    
+    def perspective_transformation(self, img, coordinates, desiredScreenLayout=(1280,960)):
+
+        slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
+                            [0,desiredScreenLayout[1]-1]],np.float32)
+        retval = cv2.getPerspectiveTransform(coordinates,slideShow)
+        warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
+        return warp
+
 
 def prompt_yes_no_terminal(question, default="yes"):
     
@@ -119,7 +170,7 @@ def video_duration_shrink (fullVideoPath, tStart, tEnd, writeFlie = False):
         newVideo.write_videofile("shrinkedVideo.mp4",fps= mainVideo.fps, codec='libx264')
 
 
-
+'''
 def perspective_transformation(coordinates, desiredScreenLayout=(1280,960)):
 
     """
@@ -139,7 +190,7 @@ def perspective_transformation(coordinates, desiredScreenLayout=(1280,960)):
     retval = cv2.getPerspectiveTransform(coordinates,slideShow)
     #warp = cv2.warpPerspective(img,retval,(1280,960)) 
     return retval
-
+'''
 
 
 def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
