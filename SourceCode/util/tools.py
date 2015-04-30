@@ -14,30 +14,6 @@ from pylab import *
 import cv2
 
 
-'''
-def perspective_transformation(img, coordinates, desiredScreenLayout=(1280,960)):
-
-    slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
-                        [0,desiredScreenLayout[1]-1]],np.float32)
-    retval = cv2.getPerspectiveTransform(coordinates,slideShow)
-    warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
-    return warp
-
-
-
-class transformation():
-  
-    def __init__(self, coordinate, layout):
-        
-        self.coordinate = coordinate
-        self.layout = layout
-  
-    def perspective(self,img):
-               
-        if self.coordinate is None:
-            self.coordinate = np.zeros((4,2))
-        
-        return perspective_transformation(img,self.coordinate,self.layout)
 
 
 '''
@@ -64,6 +40,23 @@ class transformation():
         retval = cv2.getPerspectiveTransform(coordinates,slideShow)
         warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
         return warp
+'''    
+    
+
+def perspective_transformation2D(img, coordinates, desiredScreenLayout=(1280,960)):
+
+    slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
+                        [0,desiredScreenLayout[1]-1]],np.float32)
+    retval = cv2.getPerspectiveTransform(coordinates,slideShow)
+    warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
+    return warp
+
+
+def transformation3D(img, coordinates, desiredScreenLayout=(1280,960)):
+    def new_tranformation(frame):
+        return perspective_transformation2D(frame, coordinates, desiredScreenLayout)
+    return clip.fl_image(new_tranformation)
+
 
 
 def prompt_yes_no_terminal(question, default="yes"):
