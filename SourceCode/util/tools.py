@@ -1,6 +1,9 @@
+#%debug
 
 """
-This module implements all required functions for any tools used in the package.
+This module is a collection of small Python functions and classes which make common patterns shorter and easier. 
+It is by no means a complete collection but you can keep extending it.
+If you need any other convenient utilities, you would add them inside this module.
 """
 
 import numpy as np
@@ -12,63 +15,23 @@ from moviepy.video.VideoClip import *
 import matplotlib.pyplot as plt
 from pylab import *
 import cv2
+from functools import wraps
 
-
-
-
-'''
-
-class transformation():
-  
-    def __init__(self, coordinate, layout):
-        
-        self.coordinate = coordinate
-        self.layout = layout
-  
-    def perspective(self,img):
-               
-        if self.coordinate is None:
-            self.coordinate = np.zeros((4,2))
-        
-        return self.perspective_transformation(img,self.coordinate,self.layout)
-    
-    
-    def perspective_transformation(self, img, coordinates, desiredScreenLayout=(1280,960)):
-
-        slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
-                            [0,desiredScreenLayout[1]-1]],np.float32)
-        retval = cv2.getPerspectiveTransform(coordinates,slideShow)
-        warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
-        return warp
-'''    
-    
-
-def perspective_transformation2D(img, coordinates, desiredScreenLayout=(1280,960)):
-
-    slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
-                        [0,desiredScreenLayout[1]-1]],np.float32)
-    retval = cv2.getPerspectiveTransform(coordinates,slideShow)
-    warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
-    return warp
-
-
-def transformation3D(img, coordinates, desiredScreenLayout=(1280,960)):
-    def new_tranformation(frame):
-        return perspective_transformation2D(frame, coordinates, desiredScreenLayout)
-    return clip.fl_image(new_tranformation)
 
 
 
 def prompt_yes_no_terminal(question, default="yes"):
     
     """
-    Ask a yes/no question via raw_input() and return user answer.
-    Input: 
+    It asks a yes/no question via raw_input() and return user answer.
+    Inputs: 
+    
         question: is a string that is presented to the user.
         default: is the presumed answer if the user just hits <Enter>.
         It must be "yes" (the default), "no" or None (meaning
         an answer is required of the user).
-    output:
+        
+    outputs:
         The "answer" return value is True for "yes" or False for "no".
     """
     
@@ -101,9 +64,12 @@ def rectify_coordinates(oldCoordinates):
     This function serves to rectify the coordinate of the detected slide area
     to the order like: [TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT ]
     
-    Input: 
+    Inputs: 
+    
         oldCoordinates: numpy array with 8 elements, normally (4,2)
-    output:
+        
+    outputs:
+    
         newCoordinates: numpy array with below order
         [TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT ]
     """
@@ -132,6 +98,7 @@ def video_duration_shrink (fullVideoPath, tStart, tEnd, writeFlie = False):
     This function serves to shrink the video duration and
     cuts the clip between two times.
     Inputs:
+    
         fullVideoPath: The corresponding path of the desired video
         tStart: The starting time to cut the video from that (default = 0)
         tEnd: The ending time to finish the video untill that (default = end of video)
@@ -163,27 +130,6 @@ def video_duration_shrink (fullVideoPath, tStart, tEnd, writeFlie = False):
         newVideo.write_videofile("shrinkedVideo.mp4",fps= mainVideo.fps, codec='libx264')
 
 
-'''
-def perspective_transformation(coordinates, desiredScreenLayout=(1280,960)):
-
-    """
-    It serves to transform the points perspectively. At first, it creates the 
-    perspective transformation matrix and then multiply that with the pair of points to obtain the new 
-    coordinates.
-    Inputs:
-        coordinates: The coordinates which are the aim of trasformation.
-        desiredScreenLayout: the desire layout for fixing the points into the corners. default=(1280,960)
-    Outputs:
-        retval = The perspective transformation matrix
-
-    """
-
-    slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
-                          [0,desiredScreenLayout[1]-1]],np.float32)
-    retval = cv2.getPerspectiveTransform(coordinates,slideShow)
-    #warp = cv2.warpPerspective(img,retval,(1280,960)) 
-    return retval
-'''
 
 
 def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
@@ -458,5 +404,5 @@ if __name__ == '__main__':
      
     
     targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video2.mp4"
-    t = "/media/pbahar/Data Raid/Videos/olddata/Blackmagic Production Camera 4K_1_2015-01-16_1411_C0000.mov"
-    video_duration_shrink (t, tStart=(0,10.0), tEnd=(0,30.0), writeFlie = True) 
+    t = "/media/pbahar/Data Raid/Videos/18.05.2015/ProfSeidel.mov"
+    video_duration_shrink (t, tStart=(30,0.0), tEnd=(32,0.0), writeFlie = True) 

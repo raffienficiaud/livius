@@ -19,15 +19,15 @@ import math
 from moviepy.editor import *
 from moviepy.Clip import *
 from moviepy.video.VideoClip import *
+from moviepy.config import get_setting # ffmpeg, ffmpeg.exe, etc...
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
 from pylab import *
 from scipy.ndimage.measurements import label
 
 import cv2
 from util.tools import *
 from util.templateMatching import templateMatching as tm
+from video.processing.postProcessing import transformation3D
 
 
 
@@ -36,19 +36,23 @@ class templateMatch():
     
     # documentation string, which can be accessed via ClassName.__doc__ 
     """ This class can be served to find the corners by means of four filter images. 
-    To this end, one has to specify the filter size and the correspomding approach to compute the 
-    template matching algorithm."""
+    To this end, one has to specify the filter size and the corresponding method (either SSD or NCC)
+    to compute the template matching algorithm."""
     
     '''
     Inputs:
     
+        inputImage: The gray-level image
+        filterSize: The size of filters for matching (eX: 50x50 -> (50,50)) - It is a list with two values
+        method: a string to specify the method. default: NCC (Normalized Cross Correlation)
+    
     Outputs:
-        
+        A 4x2 numpy array including four pair of points
     
     '''
     
-    def __init__(self,inputFile, filterSize, method):
-        self.inputFile = inputFile
+    def __init__(self,inputImage, filterSize, method = 'NCC'):
+        self.inputImage = inputImage
         self.filterSize = filterSize
         # Method can be either 'SSD' or 'NCC'
         self.method = method 
@@ -65,7 +69,7 @@ class templateMatch():
         4. RB -> Right Bottom
         '''
         size = self.filterSize
-        image = self.inputFile
+        image = self.inputImage
         edgeFilterSizeX = size[0]
         edgeFilterSizeY = size[1]
 
@@ -85,30 +89,32 @@ class templateMatch():
             
             heigthLT, widthLT = edgeFilterLT.shape
             [resultSSDLT,resultNCCLT,IdataLT,TdataLT] = tm.templateMatching(image,edgeFilterLT, type = "SSD")
-            # To find the place of maximum and minimum
+            # To find the place of maximum
             [peakY_SSDLT, peakX_SSDLT]  = np.unravel_index(np.argmax(resultSSDLT), resultSDDLT.shape)
 
             heigthRT, widthRT = edgeFilterRT.shape
             [resultSSDRT,resultNCCRT,IdataRT,TdataRT] = tm.templateMatching(image,edgeFilterRT, type = "SSD")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_SSDRT, peakX_SSDRT]  = np.unravel_index(np.argmax(resultSSDRT), resultSDDRT.shape)
 
             heigthLB, widthLB = edgeFilterLB.shape
             [resultSSDLB,resultNCCLB,IdataLB,TdataLB] = tm.templateMatching(image,edgeFilterLB, type = "SSD")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_SSDLB, peakX_SSDLB]  = np.unravel_index(np.argmax(resultSSDLB), resultSDDLB.shape)
 
             heigthRB, widthRB = edgeFilterRB.shape
             [resultSSDRB,resultNCCRB,IdataRB,TdataRB] = tm.templateMatching(image,edgeFilterRB, type = "SSD")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_SSDRB, peakX_SSDRB]  = np.unravel_index(np.argmax(resultSSDRB), resultSDDRB.shape)
         
-        
+                        
+            # Create a 4x2 numpy array
             pointsSSD = np.array([[ peakY_SSDLT, peakX_SSDLT], 
                                   [ peakY_SSDRT, peakX_SSDRT], 
                                   [ peakY_SSDLB, peakX_SSDLB], 
                                   [ peakY_SSDRB, peakX_SSDRB]])
-        
+            
+            # Return the value in order
             return rectify_coordinates(pointsSSD)
     
     
@@ -116,65 +122,71 @@ class templateMatch():
     
             heigthLT, widthLT = edgeFilterLT.shape
             [resultSSDLT,resultNCCLT,IdataLT,TdataLT] = tm.templateMatching(image,edgeFilterLT, type = "NCC")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_NCCLT, peakX_NCCLT]  = np.unravel_index(np.argmax(resultNCCLT), resultNCCLT.shape)
 
             heigthRT, widthRT = edgeFilterRT.shape
             [resultSSDRT,resultNCCRT,IdataRT,TdataRT] = tm.templateMatching(image,edgeFilterRT, type = "NCC")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_NCCRT, peakX_NCCRT]  = np.unravel_index(np.argmax(resultNCCRT), resultNCCRT.shape)
 
             heigthLB, widthLB = edgeFilterLB.shape
             [resultSSDLB,resultNCCLB,IdataLB,TdataLB] = tm.templateMatching(image,edgeFilterLB, type = "NCC")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_NCCLB, peakX_NCCLB]  = np.unravel_index(np.argmax(resultNCCLB), resultNCCLB.shape)
 
             heigthRB, widthRB = edgeFilterRB.shape
             [resultSSDRB,resultNCCRB,IdataRB,TdataRB] = tm.templateMatching(image,edgeFilterRB, type = "NCC")
-            # To find the place of maximum and minimum
+            # To find the place of maximum 
             [peakY_NCCRB, peakX_NCCRB]  = np.unravel_index(np.argmax(resultNCCRB), resultNCCRB.shape)
-        
+            
+            # Create a 4x2 numpy array
             pointsNCC = np.array([[ peakY_NCCLT, peakX_NCCLT], 
                                   [ peakY_NCCRT, peakX_NCCRT], 
                                   [ peakY_NCCLB, peakX_NCCLB], 
                                   [ peakY_NCCRB, peakX_NCCRB]])
             
+            # Return the value in order
             return rectify_coordinates(pointsNCC)
         
         
 class connectedComponent():
     
-    # documentation string, which can be accessed via ClassName.__doc__ 
-    """ ."""
+    
+    """ This class can be served to find the corners by means of connecting all components in 
+    black and white image."""
     
     '''
     Inputs:
     
+        inputImage: The gray-level image
+    
     Outputs:
-        
+        A 4x2 numpy array including four pair of points
     
     '''
     
-    def __init__(self, inputFile):       
-        self.inputFile = inputFile
+    def __init__(self, inputImage):       
+        self.inputImage = inputImage
                 
     
     def slideDetector(self):
         
-        image = self.inputFile
+        image = self.inputImage
         img = np.asarray(image)
         imgNorm = img/float(np.amax(img)) 
 
         # Let numpy do the heavy lifting for converting pixels to pure black or white
         bw = np.asarray(imgNorm).copy()
 
-        # Pixel range is 0...255, 256/2 = 128
+        # Pixel range is 0...255, converting to bw by 0.4 threshold ratio
         bw[bw < 0.4] = 0    # Black
         bw[bw >= 0.4] = 1 # White
 
         # bw labeling
         labeledArray, numFeatures = label(bw)
-
+        
+        # proning out the connected area with area smaller than 10000 pixels
         areaPixel = 10000
         for n in range (1, numFeatures):
             idx1, idx2 = np.where(labeledArray==n)
@@ -184,6 +196,7 @@ class connectedComponent():
         
         # bw labeling
         labeledArrayProned, numFeaturesProned = label(bw)
+        
         # CornerCoordinates = [x1 y1 x2 y2]
         CornerCoordinates = np.zeros((numFeaturesProned,5), dtype=float)        
         screenCoordinate = np.zeros((4,2), dtype=float)
@@ -208,25 +221,27 @@ class connectedComponent():
 
 class polygonDetection():
     
-    # documentation string, which can be accessed via ClassName.__doc__ 
-    """ ."""
+    
+    """ This class can be served to find the corners by means of canny edge detection and finding contours.
+    """
     
     '''
     Inputs:
     
+        inputImage: The gray-level image
+    
     Outputs:
-        
+        A 4x2 numpy array including four pair of points
     
     '''
     
-    def __init__(self, inputFile):
-        self.inputFile = inputFile
+    def __init__(self, inputImage):
+        self.inputImage = inputImage
         
     def slideDetector(self):
         
-        image = self.inputFile
-        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        gray = cv2.bilateralFilter(gray, 11, 17, 17)
+        image = self.inputImage
+        gray = cv2.bilateralFilter(image, 11, 17, 17)
         edged = cv2.Canny(gray, 30, 200)
         # find contours in the edged image, keep only the largest
         # ones, and initialize our screen contour
@@ -278,23 +293,23 @@ class harrisCornerDetection():
         This function serves for Haris Corner Detector
         Inputs:
  
-            src: Input single-channel 8-bit or floating-point image.
+            inputImage: The gray-level image.
             blockSize:  Neighborhood size (see the details on cornerEigenValsAndVecs() ).
             kernelSize: Aperture parameter for the Sobel() operator.
             k: Harris detector free parameter. See the formula below.
             borderType: Pixel extrapolation method. See borderInterpolate() .
         Outputs:
-            dst: Image to store the Harris detector responses. It has the type CV_32FC1 and the same size as src .
+            dst: Image to store the Harris detector responses. It has the type CV_32FC1 and the same size as inputImage .
 
         Example:
         
-        harris_corner_detection(inpuImage, blockSize=31, kernelSize=3, k=0.04,thersh=0.01, borderType)
+        harris_corner_detection(inputImage, blockSize=31, kernelSize=3, k=0.04,thersh=0.01, borderType)
         
     """
       
     
-    def __init__(self, inputFile, blockSize, kernelSize, k, borderType, thersh, flagShow):       
-        self.inputFile = inputFile
+    def __init__(self, inputImage, blockSize, kernelSize, k, borderType, thersh, flagShow):       
+        self.inputImage = inputImage
         self.blockSize = blockSize
         self.kernelSize = kernelSize 
         self.k = k
@@ -305,9 +320,8 @@ class harrisCornerDetection():
     def slideDetector(self):
         
      
-        image = self.inputFile
-        grayImage = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        grayImage = np.float32(grayImage)
+        image = self.inputImage
+        grayImage = np.float32(image)
         dst = cv2.cornerHarris(grayImage,self.blockSize,self.kernelSize,self.k, self.borderType)
 
         #result is dilated for marking the corners, not important
@@ -335,22 +349,36 @@ class getUserCropping():
     call the corresponding method, a window will be open to get the user for points and then return 
     the points back."""
     
+    '''
+    Inputs:
     
-    def __init__(self, inputFile):       
-      self.inputFile = inputFile
+        inputImage: The gray-level image
+    
+    Outputs:
+        A 4x2 numpy array including four pair of points
+        
+    '''
+    
+    
+    def __init__(self, inputImage):    
+        
+        self.inputImage = inputImage
     
     def slideDetector(self):
         
-        inputFrame = self.inputFile
+        # Pop up the frame
+        inputFrame = self.inputImage
         fig = plt.figure()
         plt.imshow(inputFrame)
-	plt.axis("off")
-        plt.title('Please click the four corners and then close the window.')
-
+        plt.title('Please click the top left, bottom left, bottom right and top right corners and then close the window.')
+        
+        # Call the function call connect from class CallbacksPoints and mouse-event
         objectCallbacksPoints = CallbacksPoints(inputFrame.shape[:2])
         objectCallbacksPoints.connect(fig)    
         plt.show()
         selectedPoints = objectCallbacksPoints.get_points()
+        
+        # Return four pair of points
         return rectify_coordinates(np.array(selectedPoints, dtype=np.float32))
 
 
@@ -362,11 +390,14 @@ if __name__ == '__main__':
 
     desiredFrame = main_clip.get_frame(t=20) # output is a numpy array
     file_slide = cv2.cvtColor(desiredFrame,cv2.COLOR_BGR2GRAY)
-    obj = connectedComponent(file_slide)
+    obj = getUserCropping(file_slide)
     
     points = obj.slideDetector()
-    #gh = rectify_coordinates(points)
     print points
+    
+    slideClip = main_clip.fx(transformation3D, points ,(1280, 960))
+    slideClip.write_videofile("video_test.mp4")
+
     
     
 

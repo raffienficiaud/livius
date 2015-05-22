@@ -37,17 +37,19 @@ def createFinalVideo(slideClip,speakerClip,
         speakerClip: The screen clip -- video object of moviepy
         pathToBackgroundImage: The path of background image -- string
         audio: The audio file to be attached to the video file -- audio object of moviepy
+        fps: frame per second
         sizeOfLayout: The desired size of whole layout, default=(1920, 1080) -- tuple
         sizeOfScreen: The desired size of screen part, default=(1280, 960) -- tuple
         sizeOfSpeaker: The desired size of speaker part, default=(620, 360) -- tuple
         talkInfo: Information about talk like the title, the subject, etc. -- string 
         speakerInfo: Information about talk like the title, the subject, etc. -- string 
+        instituteInfo: Information about instiute/University. -- string 
+        dateInfo: Information about the date of talk. -- string 
         firstPause: The amount of time in seconds to start the lecture. Actually, 
         this amount of time can be used for showing some information at the beginning of the clip.
-        default = 10.0 sec         
-        fps: Number of frames per second in the resulting video file (default = screen/speaker fps)
-        nameToSaveFile: A name to save the file, default = 'Output' -- string 
-        codecFormat = The codec format to write the new video into the file, default = 'libx264', -- string
+        default: 10.0 sec         
+        nameToSaveFile: A name to save the file, default: 'Output' -- string 
+        codecFormat = The codec format to write the new video into the file, default: 'libx264', -- string
         Codec to use for image encoding. Can be any codec supported by ffmpeg, but the container
         must be set accordingly.
         container: The video container, '.mp4' -- string
@@ -129,10 +131,10 @@ def createFinalVideo(slideClip,speakerClip,
 
     """
     
-
+    '''
     if slideClip.fps != speakerClip.fps:
         print "[layout] Error: The fps of two videos should be the same"
-
+    '''
     backgroundImage = ImageClip(pathToBackgroundImage)
     backgroundImageResized = backgroundImage.resize((sizeOfLayout[0],sizeOfLayout[1]))
     slideClipResized = slideClip.resize((sizeOfScreen[0],sizeOfScreen[1]))
@@ -142,16 +144,23 @@ def createFinalVideo(slideClip,speakerClip,
         print "[layout] Warning: The selected sizes are not appropriate."
 
 
-    desiredInfo = talkInfo +'\n'+speakerInfo  
+    desiredInfo1 = talkInfo  
     # Generate a text clip. You can customize the font, color, etc.
-    txtClipInfo = TextClip(desiredInfo,fontsize=20,color='white',font="Amiri")
-    # Say that you want it to appear 10s at the center of the screen
-    txtClipInfo = txtClipInfo.set_pos((640, 1030)).set_duration(slideClip.duration)
+    txtClipInfo1 = TextClip(desiredInfo1,fontsize=25,color='white',font="Amiri")
+    # Say that you want it to appear 10s 
+    txtClipInfo1 = txtClipInfo1.set_pos((640, 1030)).set_duration(slideClip.duration)
     
-
+    desiredInfo2 = speakerInfo  
+    # Generate a text clip. You can customize the font, color, etc.
+    txtClipInfo2 = TextClip(desiredInfo2,fontsize=25,color='white',font="Amiri")
+    # Say that you want it to appear 10s 
+    txtClipInfo2 = txtClipInfo2.set_pos((640, 1060)).set_duration(slideClip.duration)
+    
+    '''
     desiredStringBeginningLeft = 'Main Organizer'
     desiredStringBeginningRight = 'Video Team'
     desiredStringBeginningMiddle = 'Audio Team'
+    
     
     txtClipBeginLeft = TextClip(desiredStringBeginningLeft,fontsize=40,color='white',font="Amiri")
     txtClipBeginLeft = txtClipBeginLeft.set_pos((100 , sizeOfLayout[1]/3)).set_duration(firstPause/2)
@@ -161,8 +170,9 @@ def createFinalVideo(slideClip,speakerClip,
     
     txtClipBeginMiddle = TextClip(desiredStringBeginningMiddle,fontsize=40,color='white',font="Amiri")
     txtClipBeginMiddle = txtClipBeginMiddle.set_pos(((2*sizeOfLayout[0]/3) +100, sizeOfLayout[1]/3)).set_duration(firstPause/2)
+    '''
     
-    
+    # The template for the second show
     
     titleText = talkInfo
     speakerText = speakerInfo
@@ -170,38 +180,53 @@ def createFinalVideo(slideClip,speakerClip,
     defaultText = 'Machine Learning Summer School 2015'
     dateText = dateInfo
     
+    pixelLeftMargin = int(sizeOfLayout[0]/3)-100
+    pixelRightMargin = 100
+    maxNumHorizontalPixel = sizeOfLayout[0] - pixelLeftMargin - pixelRightMargin  
     
-    txtClipTitleText = TextClip(titleText,fontsize=80,color='white',font="Amiri")
-    txtClipTitleText = txtClipTitleText.set_pos(((sizeOfLayout[0]/3)-100 , sizeOfLayout[1]/3 )).set_duration(firstPause/2)
-    
-    txtClipSpeakerText = TextClip(speakerText,fontsize=50,color='white',font="Amiri")
-    txtClipSpeakerText = txtClipSpeakerText.set_pos(((sizeOfLayout[0]/3)-100 , sizeOfLayout[1]/3 +100)).set_duration(firstPause/2)
+    lenStringTitleText = len(titleText)
+    print lenStringTitleText
+    pixelPerCharTitleText = int((maxNumHorizontalPixel / lenStringTitleText))
     
     
-    txtClipInstituteText = TextClip(instituteText,fontsize=40,color='white',font="Amiri")
-    txtClipInstituteText = txtClipInstituteText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 + 170)).set_duration(firstPause/2)
+    lenStringSpeakerText = len(speakerText)
+    pixelPerCharSpeakerText = int((maxNumHorizontalPixel / lenStringSpeakerText))
+
+    
+    
+    txtClipTitleText = TextClip(titleText,fontsize=pixelPerCharTitleText,color='white',font="Amiri")
+    txtClipTitleText = txtClipTitleText.set_pos(((sizeOfLayout[0]/3)-100 , sizeOfLayout[1]/3 )).set_duration(firstPause)
+    
+    txtClipSpeakerText = TextClip(speakerText,fontsize=pixelPerCharSpeakerText,color='white',font="Amiri")
+    txtClipSpeakerText = txtClipSpeakerText.set_pos(((sizeOfLayout[0]/3)-100 , sizeOfLayout[1]/3 +100)).set_duration(firstPause)
+    
+    
+    txtClipInstituteText = TextClip(instituteText,fontsize=36,color='white',font="Amiri")
+    txtClipInstituteText = txtClipInstituteText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 + 170)).set_duration(firstPause)
     
     txtClipDefaultText = TextClip(defaultText,fontsize=40,color='white',font="Amiri")
-    txtClipDefaultText = txtClipDefaultText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 + 300 )).set_duration(firstPause/2)
+    txtClipDefaultText = txtClipDefaultText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 + 300 )).set_duration(firstPause)
 
     txtClipDateText = TextClip(dateText,fontsize=40,color='white',font="Amiri")
-    txtClipDateText = txtClipDateText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 +350)).set_duration(firstPause/2)
+    txtClipDateText = txtClipDateText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 +350)).set_duration(firstPause)
 
     
     outputVideo = CompositeVideoClip([backgroundImageResized.set_duration((slideClip.duration+firstPause+5)),
                                     speakerClipResized.set_pos((10,360)).set_start(firstPause),
                                     slideClipResized.set_pos((640,60)).set_start(firstPause), 
-                                    txtClipInfo.set_start(firstPause),
-                                    txtClipBeginLeft.set_start(0),
-                                    txtClipBeginRight.set_start(0),
-                                    txtClipBeginMiddle.set_start(0),
-                                    txtClipTitleText.set_start(firstPause/2),
-                                    txtClipSpeakerText.set_start(firstPause/2),
-                                    txtClipInstituteText.set_start(firstPause/2),
-                                    txtClipDefaultText.set_start(firstPause/2),
-                                    txtClipDateText.set_start(firstPause/2) ])
+                                    txtClipInfo1.set_start(firstPause),
+                                    txtClipInfo2.set_start(firstPause),
+                                    #txtClipBeginLeft.set_start(0),
+                                    #txtClipBeginRight.set_start(0),
+                                    #txtClipBeginMiddle.set_start(0),
+                                    txtClipTitleText.set_start(0),
+                                    txtClipSpeakerText.set_start(0),
+                                    txtClipInstituteText.set_start(0),
+                                    txtClipDefaultText.set_start(0),
+                                    txtClipDateText.set_start(0) ])
     
     
+
     
     
     if flagWrite:    
@@ -219,9 +244,9 @@ if __name__ == '__main__':
      
     
     #video_duration_shrink (targetVideo, tStart=(40,50.0), tEnd=(45,0.0), writeFlie = True)
-    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/Video_3.mp4"
+    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
     slideClip = VideoFileClip(targetVideo,audio=False)
-    targetVideo2 = "/media/pbahar/Data Raid/Videos/18.03.2015/Video_3.mp4"
+    targetVideo2 = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
     speakerClip = VideoFileClip(targetVideo2,audio=False)
     pathToBackgroundImage = "/is/ei/pbahar/Downloads/EdgarFiles/background_images_mlss2013/background_example.png"
     audio = AudioFileClip(targetVideo)
@@ -238,7 +263,7 @@ if __name__ == '__main__':
                         instituteInfo = 'Empirical Inference',
                         dateInfo = 'July 25th 2015',
                         firstPause = 10,
-                        nameToSaveFile = 'video', 
+                        nameToSaveFile = 'video_test', 
                         codecFormat = 'libx264',
                         container = '.mp4',
                         flagWrite = True)

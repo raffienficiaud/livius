@@ -86,64 +86,57 @@ class CMT_algorithm():
         print 'using', tl, br, 'as init bb'
 
         CMT.initialise(im_gray0, tl, br)
-
-        framenum = 1
-
-        finalCoordinates = []
-        centerCoordinates = []           
-        new_frames = []
+        new_clip = clip.fl_image( self.crop )
+                   
+        return new_clip 
+    
+    
+    def crop (self,frame):
+    
         windowSize = (640,360)
-        defaultFrame = np.zeros((windowSize[0],windowSize[1],3))
-        
+        new_frames = np.zeros((windowSize[0],windowSize[1],3))
+        im_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        for frame in clip.iter_frames(fps=clip.fps, with_times=False, progress_bar=False, dtype='uint8'):
 
+        tic = time.time()
+        CMT.process_frame(im_gray)
+        toc = time.time()
+
+        if not (math.isnan(CMT.center[0]) or math.isnan(CMT.center[1])
+                or (CMT.center[0] <= 0) or (CMT.center[1] <= 0)): 
             
-            im_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            im_draw = np.copy(frame)
-
-            tic = time.time()
-            CMT.process_frame(im_gray)
-            toc = time.time()
+            x1 = np.floor(CMT.center[1] - windowSize[1]/2)
+            y1 = np.floor(CMT.center[0] - windowSize[0]/2)
+            x2 = np.floor(x1 + windowSize[1])
+            y2 = np.floor(y1 + windowSize[0])
             
-            if math.isnan(CMT.center[0]) or math.isnan(CMT.center[1]):
-                new_frames.append(defaultFrame)
-                finalCoordinates.append(( (0,0), (0,0), (0,0), (0,0) ))
-                centerCoordinates.append((0, 0))
-            else:        
-                x1 = np.floor(np.abs(CMT.center[1] - windowSize[1]/2))
-                y1 = np.floor(np.abs(CMT.center[0] - windowSize[0]/2))
+            # Corner correction (Height)
+            if (x1 <= 0):                 
+                x1 = 0
                 x2 = np.floor(x1 + windowSize[1])
+            if (x2 >= im_gray.shape[0]):
+                x2 = np.floor(im_gray.shape[0])
+                x1 = np.floor(x2 - windowSize[1])
+            # Corner correction (Width)
+            if (y1 <= 0):                 
+                y1 = 0
                 y2 = np.floor(y1 + windowSize[0])
-                new_frames.append(frame[x1:x2,y1:y2,:])
-                finalCoordinates.append((CMT.tl, CMT.tr, CMT.br, CMT.bl))
-                centerCoordinates.append((CMT.center[0], CMT.center[1]))
-                #print (x1, x2, y1, y2)
-
-            # Remember image
-            im_prev = im_gray
-
-            # Advance frame number
-            print 'Frame: {2:4d} , Center: {0:.2f},{1:.2f}'.format(CMT.center[0], CMT.center[1] , framenum)
-
-            framenum += 1
-            # Converting python list to numpy array and return the array
+            if (y2 >= im_gray.shape[1]):
+                y2 = np.floor(im_gray.shape[1])
+                y1 = np.floor(y2 - windowSize[0])
+            new_frames = frame[x1:x2,y1:y2,:]
             
-        return np.asarray(finalCoordinates, dtype=np.float32) , np.asarray(centerCoordinates, dtype=np.float32) , new_frames    
-        #return new_frames
+        #print 'Center: {0:.2f},{1:.2f}'.format(CMT.center[0], CMT.center[1])
+        return new_frames
 
-    
-    
+
     
     
 if __name__ == '__main__':
     
-    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video2.mp4"
-    obj = CMT_algorithm(targetVideo)
-    
-    finalCoordinates , points, aa = obj.speakerTracker()
-    #print np.asarray(points, dtype=np.float32)    # Converting python list to numpy array
-    new_clip = ImageSequenceClip(aa, fps=30)
+    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_13.mp4"
+    obj = CMT_algorithm(targetVideo)   
+    new_clip = obj.speakerTracker()
     new_clip.write_videofile("speakerpart.mp4") 
     
  
