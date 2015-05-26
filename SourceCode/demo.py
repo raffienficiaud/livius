@@ -144,7 +144,7 @@ objGetUserCropping = getUserCropping(desiredFrame)
 # with the order of [TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT ]
 slideCoordinates = objGetUserCropping.slideDetector()
 
-print "[Demo] Info: The selected coordinates are: \n" , slideCoordinates
+print "[Demo] Info: The selected coordinates of the slide are: \n" , slideCoordinates
 
 # Save the coordinates in a .txt file
 

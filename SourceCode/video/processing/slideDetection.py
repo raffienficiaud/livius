@@ -370,7 +370,7 @@ class getUserCropping():
         inputFrame = self.inputImage
         fig = plt.figure()
         plt.imshow(inputFrame)
-        plt.title('Please click the top left, bottom left, bottom right and top right corners and then close the window.')
+        plt.title('Please click the four corners of the slide and then close the window.')
         
         # Call the function call connect from class CallbacksPoints and mouse-event
         objectCallbacksPoints = CallbacksPoints(inputFrame.shape[:2])

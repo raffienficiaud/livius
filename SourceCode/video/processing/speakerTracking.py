@@ -46,7 +46,8 @@ from moviepy.editor import *
 from pykalman import KalmanFilter
 from functools import wraps
 from moviepy.video.fx.crop import crop as moviepycrop
-
+import matplotlib.pyplot as plt
+from pylab import *
 
 
 def counterFunction(func):
@@ -133,7 +134,7 @@ class CMT_algorithm():
             # Get rectangle input from user
             (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTrackering] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
 
         self.CMT.initialise(imGray0, tl, br)
         
@@ -235,7 +236,7 @@ class CMT_algorithm_kalman_filter():
 
         (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTracker] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
 
         self.CMT.initialise(imGray0, tl, br)
 
@@ -410,7 +411,7 @@ class FOV_specification():
             # Get rectangle input from user
             (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTrackering] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
         
         # Get the points to crop the video with 4:3 aspect ratio
         # If the selected points are near to the border of the image, It will automaticaly croped till borders.
@@ -470,13 +471,15 @@ class CMT_algorithm_kalman_filter_stripe():
 
         (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTracker] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
                
-        croppedClip = moviepycrop(clip, x1=1, y1=tl[1]-500, x2=W, y2=br[1]+500)  # crpped Clip is a video object, does not have shape attribute
+        croppedClip = moviepycrop(clip, x1=1, y1=tl[1]-100, x2=W, y2=br[1]+100)  # crpped Clip is a video object, does not have shape attribute
         im1 = croppedClip.get_frame(t=1)
+           
+        plt.imshow(im1, cmap = cm.Greys_r)
+        plt.show() 
         imGray0 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         self.CMT.initialise(imGray0, tl, br)
-        print "Hallo" , self.CMT.active_keypoints, self.CMT.num_initial_keypoints
 
         measuredTrack=np.zeros((self.numFrames+10,2))-1
         
@@ -621,7 +624,7 @@ class CMT_algorithm_kalman_filter_downsample():
 
         (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTracker] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
                
         self.CMT.initialise(imResized, tl, br)
 
@@ -769,12 +772,11 @@ class CMT_algorithm_kalman_filter_no_vertical():
 
         (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTracker] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
 
         self.CMT.initialise(imGray0, tl, br)
-        self.inity = tl[1] - self.CMT.center_to_tl[1]
-        print self.CMT.center_to_tl[1]
-        measuredTrack=np.zeros((self.numFrames+10,1))-1
+        #self.inity = tl[1] - self.CMT.center_to_tl[1]
+        measuredTrack=np.zeros((self.numFrames+10,2))-1
         
         
         count =0
@@ -784,10 +786,10 @@ class CMT_algorithm_kalman_filter_no_vertical():
             self.CMT.process_frame(im_gray)
 
             print 'frame: {2:4d}, Center: {0:.2f},{1:.2f}'.format(self.CMT.center[0], self.CMT.center[1] , count)
-            print self.inity
+            #print self.inity
             if not (math.isnan(self.CMT.center[0]) or (self.CMT.center[0] <= 0)):
                 measuredTrack[count,0] = self.CMT.center[0]
-                #measuredTrack[count,1] = self.CMT.center[1]               
+                measuredTrack[count,1] = self.CMT.center[1]               
             count += 1 
 
     
@@ -796,15 +798,17 @@ class CMT_algorithm_kalman_filter_no_vertical():
         
         # Kalman Filter Parameters
         deltaT = 1.0/clip.fps
-        transitionMatrix=[[1,deltaT],[0,1]]   #A
-        observationMatrix=[[1,0]]   #C
+        transitionMatrix=[[1,0,deltaT,0],[0,1,0,deltaT],[0,0,1,0],[0,0,0,1]]   #A
+        observationMatrix=[[1,0,0,0],[0,1,0,0]]   #C
 
         xinit = markedMeasure[0,0]
+        yinit = markedMeasure[0,1]
         vxinit = markedMeasure[1,0]-markedMeasure[0,0]
-        initState = [xinit,vxinit]    #mu0
-        initCovariance = 1.0e-3*np.eye(2)          #sigma0
-        transistionCov = 1.0e-4*np.eye(2)          #Q
-        observationCov = 1.0e-1*np.eye(1)          #R
+        vyinit = markedMeasure[1,1]-markedMeasure[0,1]
+        initState = [xinit,yinit,vxinit,vyinit]    #mu0
+        initCovariance = 1.0e-3*np.eye(4)          #sigma0
+        transistionCov = 1.0e-4*np.eye(4)          #Q
+        observationCov = 1.0e-1*np.eye(2)          #R
         kf = KalmanFilter(transition_matrices = transitionMatrix,
             observation_matrices = observationMatrix,
             initial_state_mean = initState,
@@ -815,7 +819,7 @@ class CMT_algorithm_kalman_filter_no_vertical():
         self.measuredTrack = measuredTrack
         (self.filteredStateMeans, self.filteredStateCovariances) = kf.filter(markedMeasure)
         (self.filterStateMeanSmooth, self.filterStateCovariancesSmooth) = kf.smooth(markedMeasure)
-        
+        self.inity = np.mean(self.filterStateMeanSmooth[:][1], axis=0)
         newClip = clip.fl_image( self.crop ) 
         return newClip 
     
@@ -908,12 +912,11 @@ class CMT_algorithm_kalman_filter_downsample_no_vertical():
 
         (tl, br) = cmtutil.get_rect(imDraw)
 
-        print '[speakerTracker] Using', tl, br, 'as initial bounding box'
+        print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
                
         self.CMT.initialise(imResized, tl, br)
         self.inity = tl[1] - self.CMT.center_to_tl[1]
-        print self.CMT.center_to_tl[1]
-
+        
         measuredTrack=np.zeros((self.numFrames+10,1))-1
 
             
@@ -1014,7 +1017,7 @@ if __name__ == '__main__':
     '''
     
     targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
-    obj = CMT_algorithm_kalman_filter_no_vertical(targetVideo)   
-    new_clip = obj.speakerTracker()
-    new_clip.write_videofile("video_6_nv.mp4")
+    obj = CMT_algorithm_kalman_filter_stripe(targetVideo)   
+    new_clip = obj.speakerTracker()    
+    new_clip.write_videofile("video_6_stripe.mp4")
  
