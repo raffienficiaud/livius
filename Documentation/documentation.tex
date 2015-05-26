@@ -55,7 +55,7 @@
 \maketitle
 
 \begin{abstract}
-This Documentation serves as a short description for all required knowledge and previous works regarding the LiVius project in Max-Planck institute of intelligent system, Empirical Inference department. The main aim of the work is to automatically create an appropriate layout for online courses and lectures.  In this case, a proper framework should be composed of both the lecture slides and the speaker/teacher. To this aim, computer vision and machine learning  based algorithms are applied to detect the slides and track the person of interest.
+This Documentation serves as a short description for all required knowledge and previous works regarding the Livius project in Max-Planck Institute of intelligent system, Empirical Inference department. The main aim of the work is to automatically create an appropriate layout for online courses and lectures.  In this case, a proper framework should be composed of both the lecture slides/board and the speaker/teacher. To this aim, computer vision and machine learning  based algorithms are applied to detect the slides and track the person of interest.
 \end{abstract}
 
 \section{Introduction}
@@ -64,7 +64,7 @@ There are many advantages to online and computer-based learning when compared to
 Online courses are great for self-motivated individuals who want to learn new skills and advance their careers and their knowledge without attending in the college or university. Getting education online will also save tons of money. Although some would argue that online education is only an awesome alternative to traditional education because of the savings and convenience, there are actually many other advantages. Only online education fully integrates itself into today’s educational technology. It is also more efficient for fast and especially motivated learners and offers skills that lack resources in traditional education despite high demand from employers. 
 
 Class work can be scheduled around work and family.
-it reduces travel time and travel costs for off-campus students.
+It reduces travel time and travel costs for off-campus students.
 Students may have the option to select learning materials that meets their level of knowledge and interest.
 Students can study anywhere they have access to a computer and Internet connection.
 Self-paced learning modules allow students to work at their own pace.
@@ -79,15 +79,15 @@ In this case, the demand of taking online classes is increasing and there are ma
 
 \subsection{The Framework }
 
-As it was mentioned, we try to have both speaker and slide parts. In summer school 2013, there were some attempts to do it manually or to make it by helping of two cameras. one camera has been concentrated on the slides to record the video and another one has been manually controlled by one person to track the speaker during the lecture. But the synchronization of two cameras is challenging and spending a lot of time to record the videos for speakers' movements are time consuming. Thus, a high resolusion 4k camera is used in Livius project to record the lectures and by means of image analysis, computer vision and machine learning approaches, one detects not only the slides, but also tracks the speaker in an intelligent manner as automatic as possible.
+As it was mentioned, we try to have both speaker and slide parts in a single video and then broadcast it on the net. In summer school 2013, there were some efforts to do it manually or to make it by helping of two cameras. One camera has been concentrated on the slides to record the video and another one has been manually controlled by a person to track the speaker during the lecture. But the synchronization of two cameras is challenging and recording the videos for speakers' movements is time consuming. Thus, a high resolution 4k camera is used in Livius project to record the lectures and by means of image analysis, computer vision and machine learning approaches, one detects not only the slides, but also tracks the speaker in an intelligent manner as automatic as possible.
 
 
-One can see the whole framework of the project in the figure \ref{fig_framework}. The whole project can be divided into three major tasks. The first one is video processing and it is related to all algorithms, pre- and post-processing steps for slide detection and speaker tracking. Here, the processing tasks can be done either on the video file itself or on the separate frames. The second one can be called video editing and it includes all necessary works for the codecs of the video, the final layout, the background image, the logo and concatenating all together to form the final version of the video. The third part is audio processing and it refers to all works on audio signal either stereo or mono. Finally, the improved version of Audio signal will be concatenated and synchronized with video file to create the final video with desired layout \ref{fig_layout}. 
+One can see the whole framework of the project in the figure \ref{fig_framework}. The whole project can be divided into three major tasks. The first one is video processing and it is related to all algorithms, pre- and post-processing steps for slide detection and speaker tracking. Here, the processing tasks can be done either on the video file itself or on the separate frames. The second one can be called video editing and it includes all necessary works for the codecs of the video, the final layout, the background image, the logo and concatenating all together to form the final version of the video. The third part is audio processing and it refers to all works on audio signal either stereo or mono. Finally, the improved version of audio signal will be reconnected and synchronized with video file to create the final video with desired layout (see figure \ref{fig_layout}). 
 
 
 \subsection{Output video layout}
 
-In order to broadcast the final video, the full HD size is used. The final video size to stream is 1920x1320. Figure \ref{fig_layout} depicts the final layout and the the title and background images.
+In order to broadcast the final video, the full HD size is used. The final video size to stream is 1920x1320. Figure \ref{fig_layout} depicts the final layout and the first page and background images.
 
 
 \begin{figure}[ht]
@@ -258,7 +258,13 @@ ann/.style= {above, text width=10em, text centered},
 
 \subsection{Hardware}
 
-The current hardware and tools are shown in figure \ref{fig_hw}. Figure \ref{fig_hw_c} indicates the 4k Blackmagic Camera, its power supply, audio cables and the ultrasonic 24mm lens. Figure \ref{fig_hw_c} is the 2-TB USB3.0 external hard disk for any mobility.  Figure \ref{fig_hw_d} shows the 1-TB Solid State Drive (SSD) which suits with Blackmagic camera and \ref{fig_hw_d} includes Sata HDD docking station and reader along with its secondary power supply and USB3.0 port. Besides the shown laptop, there is another desktop PC as an implementation platform with following properties.
+The current hardware and tools are shown in figure \ref{fig_hw}. 
+Figure \ref{fig_hw_b} indicates the 4-TB SSD hard along with the corresponding docking station. There are 4 SSDs, totally 16 TB. These Hard drives should be used for the backup of raw videos. 
+Figure \ref{fig_hw_c} is the 2-TB USB3.0 external hard disk for any mobility.  
+Figure \ref{fig_hw_d} shows the 1-TB Solid State Drive (SSD) which suits with Blackmagic camera. There should exist two of them.
+Fig \ref{fig_hw_e} includes Sata HDD docking station and reader along with its secondary power supply and USB3.0 port. 
+Figure \ref{fig_hw_f} indicates the 4k Blackmagic Camera, its power supply, audio cables and the ultrasonic 24mm lens. 
+Besides the shown laptop, there is another desktop PC as an implementation platform with following properties.
 
 \begin{itemize}
 	\item Processor: Intel® Core™ i7-5930K CPU @ 3.50GHz × 12 
@@ -271,30 +277,36 @@ The current hardware and tools are shown in figure \ref{fig_hw}. Figure \ref{fig
 
 \begin{figure}[ht]
 	\centering
-	\begin{subfigure}[b]{0.18\textwidth}
+	\begin{subfigure}[b]{0.29\textwidth}
 	       \includegraphics[width=\textwidth]{figures/1_(1).png}
 	       \caption{}
 		\label{fig_hw_a}
 	\end{subfigure} 
-	\begin{subfigure}[b]{0.18\textwidth}
-	      \includegraphics[width=\textwidth]{figures/1_(2).jpg}
+	\begin{subfigure}[b]{0.30\textwidth}
+	      \includegraphics[width=\textwidth]{figures/n1.jpg}
 	      \caption{}
 		\label{fig_hw_b}
 	\end{subfigure}	        
-	\begin{subfigure}[b]{0.18\textwidth}
+	\begin{subfigure}[b]{0.30\textwidth}
 	       \includegraphics[width=\textwidth]{figures/1_(3).png}
 	       \caption{}
 	\label{fig_hw_c}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.18\textwidth}
-	      \includegraphics[width=\textwidth]{figures/1_(2).png}
+
+	\begin{subfigure}[b]{0.30\textwidth}
+	      \includegraphics[width=\textwidth]{figures/n3.jpg}
 	      \caption{}
 		\label{fig_hw_d}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.18\textwidth}
+	\begin{subfigure}[b]{0.30\textwidth}
 	      \includegraphics[width=\textwidth]{figures/1_(4).png}
 	      \caption{}
 		\label{fig_hw_e}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.30\textwidth}
+	      \includegraphics[width=\textwidth]{figures/1_(2).jpg}
+	      \caption{}
+		\label{fig_hw_f}
 	\end{subfigure}
 	\caption{The hardwares}
 	\label{fig_hw}
@@ -340,7 +352,7 @@ In order to get Livius framework running  on your local machine/laptop, one can 
 
 \paragraph{Python}
 
-The first assumption to run the system is to have python installed on your local machine. You may find different Python versions released in the \url{https://www.python.org/downloads/}. For a promising tutorial for How to manually install Python, please note the \url{http://askubuntu.com/questions/101591/how-do-i-install-python-2-7-2-on-ubuntu}. To check whether you have already installed the python or not and find the version, you can use the command \texttt{which python} and \texttt{python --version} in terminal. If you do not have it, then firstly you need to install some dependencies, therefore:
+The first assumption to run the system is to have python installed on your local machine. You may find different Python versions   released in the \url{https://www.python.org/downloads/} \cite{python}. To check whether you have already installed the python or not and find the version, you can use the command \texttt{which python} and \texttt{python --version} in terminal. If you do not have it, then firstly you need to install some dependencies, therefore:
 
 \begin{framed}
  
@@ -395,39 +407,30 @@ you have to install the listed python packages.
 
 sudo apt-get install python-pygame
 
-
 sudo apt-get install python-matplotlib 
-
 
 sudo apt-get install python-scipy
 
-
 sudo apt-get install python-numpy
+
 
 \end{framed}
 
 \paragraph{Moviepy}
 
-As it was mentioned, \lq\lq moviepy\rq\rq is one of the requirements to get the framework running as we use many methods from that \url{https://github.com/Zulko/moviepy}.
+As it was mentioned, \lq\lq moviepy\rq\rq is one of the requirements to get the framework running as we use many methods from that \cite{moviepy} .
 MoviePy depends on the Python modules Numpy, imageio, Decorator, and tqdm, which will be automatically installed during MoviePy's installation. 
 
 \begin{framed}
 
-sudo pip install moviepy
+(sudo) pip install moviepy
 
 \end{framed}
 
 
 \paragraph{ffmpeg}
 
-In order to install \lq\lq ffmpeg\rq\rq on your local computer, please follow the instruction on the website \url{https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu}. You might use the following command as well:
-
-\begin{framed}
-
-
-sudo apt-get install ffmpeg
-
-\end{framed}
+In order to install \lq\lq ffmpeg\rq\rq on your local computer, please follow the instruction on the website \url{https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu}.
 
 
 \paragraph{OpenCV}
@@ -441,7 +444,7 @@ sudo apt-get install cmake
 \end{framed} 
 
 
-As a dependency for libopencv-dev, you have to install the following package.
+ If you are running 13.10 and you don't have a nvidia card then ensure you install \lq\lq ocl-icd-libopencl1\rq\rq. Ubuntu 13.10 will install nvidia-319-updates as a dependency for libopencv-dev by default if ocl-icd-libopencl1 is not installed.
 
  \begin{framed}
 
@@ -458,7 +461,7 @@ sudo apt-get install libopencv-dev python-opencv
 
 \end{framed} 
 
-Please note that, you will probably not have installed the latest version of OpenCV and you may miss some features (for example: Python 3 bindings do not exist in the repository). Therefore, install it manually with the help of mentioned link.
+However, you will probably not have installed the latest version of OpenCV and you may miss some features (for example: Python 3 bindings do not exist in the repository). Therefore, install it manually with the help of mentioned link.
 
 \paragraph{pykalman}
 
@@ -502,7 +505,7 @@ The installation instruction can be found in \url{https://github.com/pykalman/py
 
 \subsection{Camera Setting}
 
-4k Blackmagic camera has different coding formats to store the recorded data and it supports two full HD sizes such as 4k and 2k video . The 4k has 1920x1080 pixels while the size of the 4f video recording is 3840x2160. For each one, there are four different codecs. The codecs are ProRes Proxy, ProRes LT, ProRes 422 and ProRes HQ so that the first one has the lowest quality and the last one takes the highest. Figure \ref{fig_cam} shows the main menu and the sub-menus of the 4k blackmagic camera. This camera has two  disk formats like HFS+ and exFAT (Figure \ref{fig_cam_b}). The former supports Mac OS and the latter works for windows. There in no format for Linux. The most important part of the menu is setting by which one is able to specify various adjustments. The setting part has 4 different sections.  
+4k Blackmagic camera has different coding formats to store the recorded data and it supports two full HD sizes such as 4k and 2k videos . The 2k has 1920x1080 pixels while the size of the 4k video recording is 3840x2160. For each one, there are four different codecs. The codecs are ProRes Proxy, ProRes LT, ProRes 422 and ProRes HQ so that the first one has the lowest quality and the last one takes the highest. Figure \ref{fig_cam} shows the main menu and the sub-menus of the 4k blackmagic camera. This camera has two  disk formats like HFS+ and exFAT (Figure \ref{fig_cam_b}). The former supports Mac OS and the latter works for windows. There in no format for Linux. The most important part of the menu is setting by which one is able to specify various adjustments. The setting part has 4 different sections.  
 
 \begin{enumerate}
 
@@ -519,6 +522,7 @@ The installation instruction can be found in \url{https://github.com/pykalman/py
 	The third part supports the recording task and provides different options. In recording format, one can choose either the raw data or one of the 8 codecs. Here, one might determine the fps and time lapse. In our experiments, we use 30 fps.	
 
 	\item Display
+
 	It includes some adjustments corresponding to the screen display of camera like brightness and so on.
 
 
@@ -561,7 +565,7 @@ The installation instruction can be found in \url{https://github.com/pykalman/py
 
 \subsection{ Camera Codec Formats}
 
-The camera has 8 various recording formats as listed in table \ref{table_codecs}. After trying them, we reached the conclusion that base on the fact that the bit-depth of the video for all formats is 10 bits and according to the size, $PSNR$ values and video quality,  the \textbf{4k ProRes Proxy} was chosen to record the videos with 30 frame per second (fps). Moreover, different codings with the appropriate container have been examined as shown in table \ref{table_con}. One can compare the quality of coded videos. The \textbf{.mp4} container and \textbf{x264} coder might be selected as the most promising ones for the final video.
+The camera has 8 various recording formats as listed in table \ref{table_codecs}. After trying them, we reached the conclusion that base on the fact that the bit-depth of the video for all formats is 10 bits and according to the size, $PSNR$ values and video quality,  the \textbf{4k ProRes Proxy} was chosen to record the videos with 30 frame per second (fps). Moreover, different codings with the appropriate container have been examined as shown in table \ref{table_con}. One can compare the quality of coded videos. The \textbf{.mp4} container and \textbf{x264} coder might be selected as the most promising one for the final video.
 
 \begin{table}[ht] 
 		\centering % used for centering table 
@@ -612,7 +616,7 @@ The camera has 8 various recording formats as listed in table \ref{table_codecs}
 
 \subsection{Code Hierarchy}
 
-In this work, the Python language has been used to develop the methods. To access,follow, add and develop the source code, we have used the package and module hierarchy as follow. 
+In this work, the Python language has been used to develop the methods. To access, follow, add and develop the source code, we have used the package and module hierarchy as follow. 
 
 \vspace{1cm}
 
@@ -773,16 +777,16 @@ ann/.style= {above, text width=10em, text centered},
 
 
 
-The main folder is the \lq\lq SourceCode\rq\rq which includes a file \texttt{demo.py}. This file is to run the whole framework. One can simply specify the path to the input video, the path to the input background image, add some comments as the information of talk as the input arguments and get the final video with the corresponding sound.
+The main folder is the \lq\lq SourceCode\rq\rq which includes a file \texttt{demo.py}. This file is to run the whole framework. One can simply specify the path to the input video, the path to the input background image, add some comments as the information of talk as the input arguments and get the final video with the corresponding sound. Here the audio file does not modify.
 
-According to figure \ref{fig_framework}, the input file will be extracted into audio and video parts. For each part, one package is defined, i.e. two packages (\lq\lq audio\rq\rq and \lq\lq video\rq\rq) are defined. Furthermore, it has a package named \lq\lq util\rq\rq composed of all methods for the utilities. If you intend to add any methods for secondary implementations, please ad it into \texttt{tools.py} or simply write a module and put it inside the \lq\lq util\rq\rq package like \texttt{templateMatching.py}.
+According to figure \ref{fig_framework}, the input file will be extracted into audio and video parts. For each part, one package is defined, i.e. two packages (\lq\lq audio\rq\rq and \lq\lq video\rq\rq) are defined. Furthermore, it has a package named \lq\lq util\rq\rq composed of all methods for the utilities. If you intend to add any methods for secondary implementations, please add it into \texttt{tools.py} or simply write a module and put it inside the \lq\lq util\rq\rq package like \texttt{templateMatching.py}.
 
 The \lq\lq audio\rq\rq package is composed of the \texttt{audioProcessing.py} module in which one may add some methods/classes for audio analyses (For now, it is empty).
 
-The \lq\lq video\rq\rq package is composed two sub-packages (editing and processing) as shown in figure \ref{fig_framework}.  \lq\lq editing\rq\rq has one module named \texttt{layout.py} to form the final layout, concatenate the audio file and write the final video. \lq\lq processing\rq\rq is composed of four modules such as \texttt{preProcessing.py} , \texttt{postProcessing.py}, \texttt{slideDetection.py} and \texttt{speakerTracking.py} and different number of sub-packages like \lq\lq CMT\rq\rq that contains all modules for the corresponding algorithm. If you need to use a ready written package for video processing, easily put it in the folder \lq\lq processing\rq\rq.
+The \lq\lq video\rq\rq package is composed of two sub-packages (editing and processing) as shown in figure \ref{fig_framework}.  \lq\lq editing\rq\rq has one module named \texttt{layout.py} to form the final layout, concatenate the audio file and write the final video. \lq\lq processing\rq\rq is composed of four modules such as \texttt{preProcessing.py} , \texttt{postProcessing.py}, \texttt{slideDetection.py} and \texttt{speakerTracking.py} and different number of sub-packages like \lq\lq CMT\rq\rq that contains all files for the corresponding algorithm. If you need to use a ready written package for video processing, simply put it in the folder \lq\lq processing\rq\rq.
 
 \begin{itemize}
-\item preProcessing: it can be considered as the module to have all pre -processing functions such as segmentation, contrast enhancement and so on.
+\item preProcessing: It can be considered as a module to have all pre -processing functions such as segmentation, contrast enhancement and so on.
 
 \item slideDetection: This module implements various algorithms for slide detection. For each algorithm, 
 one class has been defined in which there is a method named \textit{slideDetector} to call.
@@ -813,7 +817,7 @@ function \textit{speakerTracker}, all classes are the same. It includes the foll
 \item \texttt{FOV\_specification}
 \end{enumerate}
 
-\item postProcessing: all functions for post-processing like \textit{perspective\_transformation}
+\item postProcessing: All functions for post-processing like \textit{perspective\_transformation}
 
 In the next section, a short overview of main tasks will be discussed.
 
@@ -827,7 +831,7 @@ In the next section, a short overview of main tasks will be discussed.
 \subsubsection{CMT}
 Speaker tracking is still an unsolved problem due to various type of changes, poses, appearances and local and global illumination changes. In our work, we use one of the most promising algorithms named \lq\lq Consensus-based tracking and matching of the keypoints \rq\rq or so called CMT. As a short introduction of CMT, one has to mention that it is a free-model object tracking in a combination of both matching and tracking framework. It does not need a specific knowledge  and training samples. 
 
-In CMT, the object of interest (ex. the speaker) is selected in the first frame and some keypoints are extracted. It is possible to use different detectors, descriptors such as SIFT/SURF, ORB, Brisk, etc to obtain the keypoints. In the downloaded version of CMT, the Brisk detector and descriptor are used. After obtaining all of the desired keypoints corresponding to the object of interest, the main idea is to again find the kepoints which were already included in the initial selection. This progress is done by employing two different steps.
+In CMT, the object of interest (ex. the speaker) is selected in the first frame and some keypoints are extracted. It is possible to use different detectors, descriptors such as SIFT/SURF, ORB, Brisk, etc to obtain the keypoints. In the downloaded version of CMT, the Brisk detector and descriptor are used. After obtaining all of the desired keypoints corresponding to the object of interest, the main idea is to again find the keypoints which were already included in the initial selection. This progress is done by employing two different steps.
 
 \begin{enumerate}
 
@@ -838,7 +842,7 @@ In CMT, the object of interest (ex. the speaker) is selected in the first frame 
 \end{enumerate}
 
 Let's assume, we have a sequence of the frames (from $I_1$ to $I_n$) and the desire object of interest inside the first frame. As you can see in the table, it is called $b_1$. 
-So, the output is to find the selected object inside all of the next frames ($b_2$ to $b_n$). Then, by means of Brisk detector, the keypoints will be computed as well as the corresponding descriptors. We assign all of the desired keypoints which we want to look for them through the whole frames into $O$ set. It means, $O$ includes all of the keypoints of the object of interest. After that, for all of the frames (from 2nd to n-th), the candidate keypoints are computed so that they can be inside or outside the region of interest. Hence, $P$ is a set composing of all candidate keypoints. For each of the $P$'s member, the hamming distance between their descriptor and the descriptor of desired keypoints are calculated and matched by meand of nearest-neighbor matcher. The results will be put into $M$. In order to track the keypoints, we compute the displacement of them from frame $I_{t-1}$ and $I_{t}$ by Lucas and Kanade method for estimating the optical flow. Afterwards, to discard all tracked keypoints which are matched as well, we fuse $T$ and $M$ keypoints and form the set of keypoints names $K$. Due to some failure in the tracking and matching progress, $K$ can be included the outliers. Therefore, one voting factor is used to estimate the center of object and a consensus-based method is applied to eliminate the outliers. In this case, the votes are clustered based on euclidean distance and a threshold value and then the consensus voting will be identified based on the highest number of votes. The votes inside the consensus cluster are kept and the remaining will be prone out. As an output of CMT for each frame, the mean value of the center of the object calculated by voted keypoints are extracted. Then, this loop will be continued till the last frame \cite{nebehay2014consensus}.
+So, the output is to find the selected object inside all of the next frames ($b_2$ to $b_n$). Then, by means of Brisk detector, the keypoints will be computed as well as the corresponding descriptors. We assign all of the desired keypoints which we want to look for them through the whole frames into $O$ set. It means, $O$ includes all of the keypoints of the object of interest. After that, for all of the frames (from 2nd to n-th), the candidate keypoints are computed so that they can be inside or outside the region of interest. Hence, $P$ is a set composing of all candidate keypoints. For each of the $P$'s member, the hamming distance between their descriptor and the descriptor of desired keypoints are calculated and matched by means of nearest-neighbor matcher. The results will be put into $M$. In order to track the keypoints, we compute the displacement of them from frame $I_{t-1}$ and $I_{t}$ by Lucas and Kanade method for estimating the optical flow. Afterwards, to discard all tracked keypoints which are matched as well, we fuse $T$ and $M$ keypoints and form the set of keypoints names $K$. Due to some failure in the tracking and matching progress, $K$ can be included the outliers. Therefore, one voting factor is used to estimate the center of object and a consensus-based method is applied to eliminate the outliers. In this case, the votes are clustered based on euclidean distance and a threshold value and then the consensus voting will be identified based on the highest number of votes. The votes inside the consensus cluster are kept and the remaining will be prone out. As an output of CMT for each frame, the mean value of the center of the object calculated by voted keypoints are extracted. Then, this loop will be continued till the last frame \cite{nebehay2014consensus}. The whole CMT algorithm can be summarized as follow:
 
 
 \begin{enumerate}
@@ -927,10 +931,4 @@ I would like to express my very great appreciation to all of team members, Micha
 
 \bibliography{refs}
 \bibliographystyle{ieeetr}
-
-
 \end{document}
-
-
-
-

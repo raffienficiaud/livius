@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.4.8)  22 MAY 2015 17:34
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.4.8)  26 MAY 2015 12:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1077,14 +1077,14 @@ File: figures/title_example.png Graphic file (type png)
 <use figures/title_example.png>
 Package pdftex.def Info: figures/title_example.png used on input line 240.
 (pdftex.def)             Requested size: 136.5746pt x 76.81757pt.
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 264.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 270.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 264.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 270.
 Missing character: There is no Â in font cmr10!
 Missing character: There is no ® in font cmr10!
 Missing character: There is no â in font cmr10!
@@ -1093,86 +1093,98 @@ Missing character: There is no ¢ in font cmr10!
 Missing character: There is no Ã in font cmr10!
 Missing character: There is no — in font cmr10!
 
-<figures/1_(1).png, id=114, 2360.82pt x 3276.24pt>
+<figures/1_(1).png, id=115, 2360.82pt x 3276.24pt>
 File: figures/1_(1).png Graphic file (type png)
  <use figures/1_(1).png>
-Package pdftex.def Info: figures/1_(1).png used on input line 275.
-(pdftex.def)             Requested size: 81.9406pt x 113.68028pt.
+Package pdftex.def Info: figures/1_(1).png used on input line 281.
+(pdftex.def)             Requested size: 132.01772pt x 183.16824pt.
 
-<figures/1_(2).jpg, id=115, 3276.24pt x 2457.18pt>
-File: figures/1_(2).jpg Graphic file (type jpg)
- <use figures/1_(2).jpg>
-Package pdftex.def Info: figures/1_(2).jpg used on input line 280.
-(pdftex.def)             Requested size: 81.9406pt x 61.45184pt.
+<figures/n1.jpg, id=116, 2457.18pt x 3276.24pt>
+File: figures/n1.jpg Graphic file (type jpg)
+ <use figures/n1.jpg>
+Package pdftex.def Info: figures/n1.jpg used on input line 286.
+(pdftex.def)             Requested size: 136.5746pt x 182.06844pt.
 
-<figures/1_(3).png, id=116, 2457.18pt x 3276.24pt>
+<figures/1_(3).png, id=117, 2457.18pt x 3276.24pt>
 File: figures/1_(3).png Graphic file (type png)
  <use figures/1_(3).png>
-Package pdftex.def Info: figures/1_(3).png used on input line 285.
-(pdftex.def)             Requested size: 81.9406pt x 109.23106pt.
+Package pdftex.def Info: figures/1_(3).png used on input line 291.
+(pdftex.def)             Requested size: 136.5746pt x 182.06844pt.
 
-<figures/1_(2).png, id=117, 2457.18pt x 3276.24pt>
-File: figures/1_(2).png Graphic file (type png)
- <use figures/1_(2).png>
-Package pdftex.def Info: figures/1_(2).png used on input line 290.
-(pdftex.def)             Requested size: 81.9406pt x 109.23106pt.
+<figures/n3.jpg, id=118, 3276.24pt x 2457.18pt>
+File: figures/n3.jpg Graphic file (type jpg)
+ <use figures/n3.jpg>
+Package pdftex.def Info: figures/n3.jpg used on input line 297.
+(pdftex.def)             Requested size: 136.5746pt x 102.39474pt.
 
-<figures/1_(4).png, id=118, 3276.24pt x 2457.18pt>
+<figures/1_(4).png, id=119, 3276.24pt x 2457.18pt>
 File: figures/1_(4).png Graphic file (type png)
  <use figures/1_(4).png>
-Package pdftex.def Info: figures/1_(4).png used on input line 295.
-(pdftex.def)             Requested size: 81.9406pt x 61.45184pt.
+Package pdftex.def Info: figures/1_(4).png used on input line 302.
+(pdftex.def)             Requested size: 136.5746pt x 102.39474pt.
+
+<figures/1_(2).jpg, id=120, 3276.24pt x 2457.18pt>
+File: figures/1_(2).jpg Graphic file (type jpg)
+ <use figures/1_(2).jpg>
+Package pdftex.def Info: figures/1_(2).jpg used on input line 307.
+(pdftex.def)             Requested size: 136.5746pt x 102.39474pt.
 
 [2 <./figures/video.png (PNG copy)> <./figures/layout.png (PNG copy)> <./figure
 s/background_example.png> <./figures/title_example.png>]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 312.
+(Font)              <7> on input line 324.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 312.
+(Font)              <5> on input line 324.
 
-Overfull \hbox (7.40367pt too wide) in paragraph at lines 312--313
+Overfull \hbox (7.40367pt too wide) in paragraph at lines 324--325
 \OT1/cmr/m/n/10 doc-u-men-ta-tions. It seems to be for de-sign, film edit-ing, 
 vi-su-al-iza-tion, etc. []$\OT1/cmtt/m/n/10 https : / / www . thefoundry .
  []
 
-[3 <./figures/1_(1).png> <./figures/1_(2).jpg> <./figures/1_(3).png> <./figures
-/1_(2).png> <./figures/1_(4).png>] [4]
-<figures/camera2.png, id=166, 1492.57625pt x 929.4725pt>
+[3 <./figures/1_(1).png> <./figures/n1.jpg> <./figures/1_(3).png> <./figures/n3
+.jpg> <./figures/1_(4).png> <./figures/1_(2).jpg>]
+
+LaTeX Warning: Citation `python' on page 4 undefined on input line 355.
+
+
+LaTeX Warning: Citation `moviepy' on page 4 undefined on input line 421.
+
+[4] [5] <figures/camera2.png, id=170, 1492.57625pt x 929.4725pt>
 File: figures/camera2.png Graphic file (type png)
 
 <use figures/camera2.png>
-Package pdftex.def Info: figures/camera2.png used on input line 532.
+Package pdftex.def Info: figures/camera2.png used on input line 536.
 (pdftex.def)             Requested size: 136.5746pt x 85.0388pt.
 
-<figures/camera1.png, id=167, 2310.6325pt x 1445.4pt>
+<figures/camera1.png, id=171, 2310.6325pt x 1445.4pt>
 File: figures/camera1.png Graphic file (type png)
 
 <use figures/camera1.png>
-Package pdftex.def Info: figures/camera1.png used on input line 538.
+Package pdftex.def Info: figures/camera1.png used on input line 542.
 (pdftex.def)             Requested size: 100.15425pt x 62.6362pt.
 
-<figures/camera3.png, id=168, 1647.15375pt x 1027.84pt>
+<figures/camera3.png, id=172, 1647.15375pt x 1027.84pt>
 File: figures/camera3.png Graphic file (type png)
 
 <use figures/camera3.png>
-Package pdftex.def Info: figures/camera3.png used on input line 543.
+Package pdftex.def Info: figures/camera3.png used on input line 547.
 (pdftex.def)             Requested size: 100.15425pt x 62.48328pt.
 
-<figures/camera4.png, id=169, 2031.59pt x 1269.74374pt>
+<figures/camera4.png, id=173, 2031.59pt x 1269.74374pt>
 File: figures/camera4.png Graphic file (type png)
 
 <use figures/camera4.png>
-Package pdftex.def Info: figures/camera4.png used on input line 548.
+Package pdftex.def Info: figures/camera4.png used on input line 552.
 (pdftex.def)             Requested size: 100.15425pt x 62.58029pt.
 
-<figures/camera5.png, id=170, 2456.17625pt x 1535.7375pt>
+<figures/camera5.png, id=174, 2456.17625pt x 1535.7375pt>
 File: figures/camera5.png Graphic file (type png)
 
 <use figures/camera5.png>
-Package pdftex.def Info: figures/camera5.png used on input line 553.
+Package pdftex.def Info: figures/camera5.png used on input line 557.
 (pdftex.def)             Requested size: 100.15425pt x 62.61414pt.
- [5] [6 <./figures/camera2.png> <./figures/camera1.png> <./figures/camera3.png>
- <./figures/camera4.png> <./figures/camera5.png>]
+ [6 <./figures/camera2.png> <./figures/camera1.png> <./figures/camera3.png> <./
+figures/camera4.png> <./figures/camera5.png>]
 \pgf@layerbox@background=\box64
 \pgf@layerboxsaved@background=\box65
 \pgf@layerbox@foreground=\box66
@@ -1180,11 +1192,11 @@ Package pdftex.def Info: figures/camera5.png used on input line 553.
 File: figures/video.png Graphic file (type png)
 
 <use figures/video.png>
-Package pdftex.def Info: figures/video.png used on input line 767.
+Package pdftex.def Info: figures/video.png used on input line 771.
 (pdftex.def)             Requested size: 68.28383pt x 38.40877pt.
 File: figures/layout.png Graphic file (type png)
  <use figures/layout.png>
-Package pdftex.def Info: figures/layout.png used on input line 767.
+Package pdftex.def Info: figures/layout.png used on input line 771.
 (pdftex.def)             Requested size: 68.28383pt x 38.40877pt.
 Missing character: There is no p in font nullfont!
 Missing character: There is no a in font nullfont!
@@ -1193,27 +1205,30 @@ Missing character: There is no h in font nullfont!
 Missing character: There is no s in font nullfont!
  [7] [8] [9] [10]
 (./documentation.bbl)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 932.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 934.
  [11
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 932.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 934.
  (./documentation.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 932.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 932.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 934.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 934.
 Package rerunfilecheck Info: File `documentation.out' has not changed.
 (rerunfilecheck)             Checksum: 30FC4164344DA4B26F67FA046BA6F5FF;960.
 
 
+LaTeX Warning: There were undefined references.
+
+
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 932.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 934.
  ) 
 Here is how much of TeX's memory you used:
- 23815 strings out of 493304
- 456055 string characters out of 6139872
- 530931 words of memory out of 5000000
- 26697 multiletter control sequences out of 15000+600000
+ 23825 strings out of 493304
+ 456167 string characters out of 6139872
+ 535706 words of memory out of 5000000
+ 26705 multiletter control sequences out of 15000+600000
  10066 words of font info for 35 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
  56i,12n,99p,10534b,896s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1231,10 +1246,10 @@ cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy1
 /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/s
 hare/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/t
 exlive/texmf-dist/fonts/type1/urw/zapfding/uzdr.pfb>
-Output written on documentation.pdf (11 pages, 60282568 bytes).
+Output written on documentation.pdf (11 pages, 53806557 bytes).
 PDF statistics:
- 344 PDF objects out of 1000 (max. 8388607)
- 277 compressed objects within 3 object streams
+ 342 PDF objects out of 1000 (max. 8388607)
+ 275 compressed objects within 3 object streams
  100 named destinations out of 1000 (max. 500000)
- 307 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 312 words of extra memory for PDF output out of 10000 (max. 10000000)
 
