@@ -8,7 +8,8 @@ The livius directory contains the main parts like:
  - SourceCode: It includes all of the required all Python packages and modules to run the framework.
    I side this folder, there is a Python file named 'demo.py' running the whole framework.
  - Videos: It includes some video samples.
- - background_example: which is a sample of background image.
+ - background_image: which is a sample of background image.
+ - final_image: which is a sample of final image.
 
 Please note that:
 _________________ 
@@ -26,7 +27,8 @@ usage: demo.py [-h] [--t TIMEFRAME] [--speakerInfo SPEAKERINFO]
                [--dateInfo DATEINFO] [--sizeOfLayout SIZEOFLAYOUT]
                [--sizeOfScreen SIZEOFSCREEN] [--sizeOfSpeaker SIZEOFSPEAKER]
                [--skip SKIP]
-               [pathToVideoFile] [pathToBackgroundImage]
+               [pathToVideoFile] [pathToBackgroundImage][pathToFinalImage]
+
 
 Welcome to Livius Project.
 
@@ -34,6 +36,9 @@ positional arguments:
   pathToVideoFile       The input path to video file.
   pathToBackgroundImage
                         The input path to background image.
+  pathToFinalImage      The input path to final image for sponsers and team
+                        members.
+
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -62,7 +67,7 @@ Command Line Arguments
 ----------------------
 
 Input:
-	1. The path to your video file and the path to the background image (Required)
+	1. The path to your video file and the path to the background image and final image (Required)
 	2. Any input arguments which you need to modify (Optional)
 
 output: 
@@ -71,8 +76,9 @@ output:
 --------------------------------------------------------------------------
 Example:
 
-python demo.py /media/pbahar/Data\ Raid/Videos/18.03.2015/video_5.mp4  
-~/Downloads/EdgarFiles/background_images_mlss2013/background_example.png 
+python demo.py ../video_5.mp4  
+../background_image.png 
+../final_image.png 
 --t 1 
 --talkInfo 'How to estimate missing data' 
 --speakerInfo 'Prof. Dr. Schmidt' 
