@@ -96,7 +96,7 @@ if not pathToBackgroundImage:
     
 pathBase = os.path.basename(pathToFile)
 pathDirectory = os.path.dirname(pathToFile)
-baseName = pathDirectory + '/' + os.path.splitext(pathBase)[0] + '_'
+baseName = os.path.join(pathDirectory, os.path.splitext(pathBase)[0] + '_')
     
 speakerInfo      = args.speakerInfo
 talkInfo         = args.talkInfo
