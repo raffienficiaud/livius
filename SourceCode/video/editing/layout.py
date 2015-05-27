@@ -15,6 +15,7 @@ from pylab import *
 
 def createFinalVideo(slideClip,speakerClip,
                         pathToBackgroundImage,
+                        pathToFinalImage,
                         audio,
                         fps,
                         sizeOfLayout = (1920, 1080), 
@@ -35,7 +36,8 @@ def createFinalVideo(slideClip,speakerClip,
     Inputs:
         slideClip: The slide clip -- video object of moviepy
         speakerClip: The screen clip -- video object of moviepy
-        pathToBackgroundImage: The path of background image -- string
+        pathToBackgroundImage: The path of background image
+        pathToFinalImage: The path of final image for supporting groups and organizations
         audio: The audio file to be attached to the video file -- audio object of moviepy
         fps: frame per second
         sizeOfLayout: The desired size of whole layout, default=(1920, 1080) -- tuple
@@ -113,6 +115,7 @@ def createFinalVideo(slideClip,speakerClip,
     Example:
         createFinalVideo(slideClip,speakerClip,
                         pathToBackgroundImage,
+                        pathToFinalImage,
                         audio,
                         fps = 30, 
                         sizeOfLayout = (1920, 1080), 
@@ -136,7 +139,10 @@ def createFinalVideo(slideClip,speakerClip,
         print "[layout] Error: The fps of two videos should be the same"
     '''
     backgroundImage = ImageClip(pathToBackgroundImage)
+    finalImage = ImageClip(pathToFinalImage)
+    # Resize the videos and images to the desire size
     backgroundImageResized = backgroundImage.resize((sizeOfLayout[0],sizeOfLayout[1]))
+    finalImageResized = finalImage.resize((sizeOfLayout[0],sizeOfLayout[1]))
     slideClipResized = slideClip.resize((sizeOfScreen[0],sizeOfScreen[1]))
     speakerClipResized = speakerClip.resize((sizeOfSpeaker[0],sizeOfSpeaker[1]))
 
@@ -185,7 +191,7 @@ def createFinalVideo(slideClip,speakerClip,
     maxNumHorizontalPixel = sizeOfLayout[0] - pixelLeftMargin - pixelRightMargin  
     
     lenStringTitleText = len(titleText)
-    print lenStringTitleText
+    #print lenStringTitleText
     pixelPerCharTitleText = int((maxNumHorizontalPixel / lenStringTitleText))
     
     
@@ -211,7 +217,7 @@ def createFinalVideo(slideClip,speakerClip,
     txtClipDateText = txtClipDateText.set_pos(((sizeOfLayout[0]/3)-100, sizeOfLayout[1]/3 +350)).set_duration(firstPause)
 
     
-    outputVideo = CompositeVideoClip([backgroundImageResized.set_duration((slideClip.duration+firstPause+5)),
+    outputVideo = CompositeVideoClip([backgroundImageResized.set_duration((slideClip.duration+firstPause)),
                                     speakerClipResized.set_pos((10,360)).set_start(firstPause),
                                     slideClipResized.set_pos((640,60)).set_start(firstPause), 
                                     txtClipInfo1.set_start(firstPause),
@@ -223,7 +229,8 @@ def createFinalVideo(slideClip,speakerClip,
                                     txtClipSpeakerText.set_start(0),
                                     txtClipInstituteText.set_start(0),
                                     txtClipDefaultText.set_start(0),
-                                    txtClipDateText.set_start(0) ])
+                                    txtClipDateText.set_start(0),
+                                    finalImageResized.set_duration(10).set_start(slideClip.duration)])
     
     
 
@@ -252,6 +259,7 @@ if __name__ == '__main__':
     audio = AudioFileClip(targetVideo)
     
     createFinalVideo(slideClip,speakerClip,
+                        pathToBackgroundImage,
                         pathToBackgroundImage,
                         audio,
                         fps = 30, 
