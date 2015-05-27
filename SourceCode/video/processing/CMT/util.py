@@ -37,7 +37,7 @@ current_pos = None
 tl = None
 br = None
 
-def get_rect(im, title='Please draw a rectangle around the object.'):
+def get_rect(im, title='Please draw a rectangle around the object and leave the window open.'):
 
 	global current_pos
 	global tl
