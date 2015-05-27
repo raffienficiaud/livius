@@ -142,7 +142,7 @@ ann/.style= {above, text width=10em, text centered},
 \node [block, right =1cm of ap2]  (ap3) {Transcoding/ Filtering};
 \node [block, right =1cm of ap3]  (ap4) {Final Audio file};
 
-\node [ann, below right=1cm of vp4]  (bk) {Background Image};
+\node [ann, below right=1cm of vp4]  (bk) {Background Image/Final Image};
 \node [ann, below =0.01cm of bk]  (info) {Talk/Speaker Info.};
 
 \begin{pgfonlayer}{background}
@@ -247,9 +247,18 @@ ann/.style= {above, text width=10em, text centered},
 
 
 
+\subsection{List of Recorded Videos}
 
+\begin{itemize}
 
+\item (05.03.2015) : Checkboard - Slides for check  - Videos
+\item (09.03.2015) : Slides for check 
+\item (18.02.2015) : MRZ talk
+\item (18.03.2015) : MPH talk
+\item (18.05.2015) : MPH talk
+\item (2014) : Michael and Edgar in MPH 
 
+\end{itemize}
 
 \section{Requirements}
 
@@ -259,7 +268,80 @@ ann/.style= {above, text width=10em, text centered},
 \subsection{Hardware}
 
 The current hardware and tools are shown in figure \ref{fig_hw}. 
-Figure \ref{fig_hw_b} indicates the 4-TB SSD hard along with the corresponding docking station. There are 4 SSDs, totally 16 TB. These Hard drives should be used for the backup of raw videos. 
+Figure \ref{fig_hw_b} indicates the 4-TB SSD hard along with the corresponding docking station. There are 4 SSDs, totally 16 TB. These Hard drives should be used for the backup of the raw recorded videos. In order to mount them, one has to plug in the hard disk into docking station and connect them into PC. Then, the file systems have to be generated, mounting the device and setting the write access. You may follow the commands as below:
+
+- Display all the devices drivers loaded in to kernel:
+
+\begin{framed}
+ 
+dmesg -T
+
+\end{framed}
+
+- Find your desired device, for example:
+
+\begin{framed}
+
+[Di Mai 26 12:54:37 2015] sd 14:0:0:0: [sdg] Very big device. Trying to use READ CAPACITY(16)
+
+\textbf{[Di Mai 26 12:54:37 2015] sd 14:0:0:0: [sdg] 7814037168 512-byte logical blocks: (4.00 TB/3.63 TiB)}
+
+[Di Mai 26 12:54:37 2015] sd 14:0:0:0: [sdg] Write Protect is off
+
+[Di Mai 26 12:54:37 2015] sd 14:0:0:0: [sdg] Mode Sense: 03 00 00 00
+
+[Di Mai 26 12:54:37 2015] sd 14:0:0:0: [sdg] No Caching mode page found
+
+...
+
+...
+
+\end{framed}
+
+- Make the file systems:
+
+\begin{framed}
+ 
+sudo mkfs.ext4 /dev/sdg
+
+\end{framed}
+
+
+- Mount it:
+
+ 
+\begin{framed}
+ 
+mount
+
+\end{framed}
+
+- Identify your device code. for example:
+
+\begin{framed}
+
+...
+
+\textbf{/dev/sdg on /media/pbahar/7ba9138e-90c3-4e08-a099-aac2e5edd279 type ext4 (rw,nosuid,nodev,uhelper=udisks2)}
+
+...
+
+...
+
+\end{framed}
+
+
+- Write access:
+
+\begin{framed}
+ 
+sudo chown pbahar /media/pbahar/7ba9138e-90c3-4e08-a099-aac2e5edd279/
+
+
+\end{framed}
+
+
+
 Figure \ref{fig_hw_c} is the 2-TB USB3.0 external hard disk for any mobility.  
 Figure \ref{fig_hw_d} shows the 1-TB Solid State Drive (SSD) which suits with Blackmagic camera. There should exist two of them.
 Fig \ref{fig_hw_e} includes Sata HDD docking station and reader along with its secondary power supply and USB3.0 port. 
@@ -505,7 +587,7 @@ The installation instruction can be found in \url{https://github.com/pykalman/py
 
 \subsection{Camera Setting}
 
-4k Blackmagic camera has different coding formats to store the recorded data and it supports two full HD sizes such as 4k and 2k videos . The 2k has 1920x1080 pixels while the size of the 4k video recording is 3840x2160. For each one, there are four different codecs. The codecs are ProRes Proxy, ProRes LT, ProRes 422 and ProRes HQ so that the first one has the lowest quality and the last one takes the highest. Figure \ref{fig_cam} shows the main menu and the sub-menus of the 4k blackmagic camera. This camera has two  disk formats like HFS+ and exFAT (Figure \ref{fig_cam_b}). The former supports Mac OS and the latter works for windows. There in no format for Linux. The most important part of the menu is setting by which one is able to specify various adjustments. The setting part has 4 different sections.  
+4k Blackmagic camera has different coding formats to store the recorded data and it supports two full HD sizes such as 4k and 2k videos . The 2k has 1920x1080 pixels while the size of the 4k video recording is 3840x2160. For each one, there are four different codecs. The codecs are ProRes Proxy, ProRes LT, ProRes 422 and ProRes HQ so that the first one has the lowest quality and the last one takes the highest. Figure \ref{fig_cam} shows the main menu and the sub-menus of the 4k blackmagic camera. This camera has two  disk formats like HFS+ and exFAT (Figure \ref{fig_cam_b}). The former supports Mac OS and the latter works for windows. One can use the exFAT format under Linux. IT administrator  recommended to stick to exFAT format under Linux. The most important part of the menu is setting by which one is able to specify various adjustments. The setting part has 4 different sections.  
 
 \begin{enumerate}
 
@@ -616,7 +698,10 @@ The camera has 8 various recording formats as listed in table \ref{table_codecs}
 
 \subsection{Code Hierarchy}
 
-In this work, the Python language has been used to develop the methods. To access, follow, add and develop the source code, we have used the package and module hierarchy as follow. 
+In this work, the Python language has been used to develop the methods. To access, follow, add and develop the source code, we have used the package and module hierarchy as follow. The source code has been pushed to the livius repository. The repository is located here:
+
+\underline{\texttt{ssh://git@git.tuebingen.mpg.de/livius.git}.}
+
 
 \vspace{1cm}
 
@@ -706,7 +791,7 @@ ann/.style= {above, text width=10em, text centered},
 \node [bigblock, below=4cm of vp4]  (ap1) {audioProcessing.py};
 
 
-\node [ann, below right=1cm of vp4]  (bk) {Background Image};
+\node [ann, below right=1cm of vp4]  (bk) {Images};
 \node [ann, below =0.01cm of bk]  (info) {Talk/Speaker Info.};
 
 \begin{pgfonlayer}{background}
@@ -813,7 +898,7 @@ function \textit{speakerTracker}, all classes are the same. It includes the foll
 \item \texttt{CMT\_algorithm\_kalman\_filter\_stripe}
 \item \texttt{CMT\_algorithm\_kalman\_filter\_downsample}
 \item \texttt{CMT\_algorithm\_kalman\_filter\_no\_vertical}
-\item \texttt{CMT\_algorithm\_kalman\_filter\_downsample\_no\_vertical}
+\item \texttt{CMT\_algorithm\_kalman\_filter\_neighboring}
 \item \texttt{FOV\_specification}
 \end{enumerate}
 
@@ -847,7 +932,7 @@ So, the output is to find the selected object inside all of the next frames ($b_
 
 \begin{enumerate}
 
-\item Initialise detector, descriptor, matcher
+\item Initialize detector, descriptor, matcher
 \item Get initial keypoints in whole image (first frame)
 \item In each frame, in order to localize the object of interest, a voting factor is used to vote and compute the center of the object.
 \item Finally, a consensus scheme is applied to remove the outliers and keep the related keypoints.
@@ -863,9 +948,9 @@ So, the output is to find the selected object inside all of the next frames ($b_
     \item It reads the first frame and get the rectangle input from the user.
   \end{enumerate}
 
-\item Initialization:  (function: \texttt{initialise} in \texttt{CMT} module in \texttt{CMT} package)
+\item Initialization:  (function: \texttt{initialize} in \texttt{CMT} module in \texttt{CMT} package)
   \begin{enumerate}
-    	\item Initialise detector, descriptor, matcher
+    	\item Initialize detector, descriptor, matcher
   	  \item Get initial keypoints in whole image
 	\item Remember keypoints that are in the rectangle as selected keypoints and those which are not in the rectangle as background keypoints
 	\item Assign each keypoint a class starting from 1, background is 0
@@ -917,7 +1002,25 @@ So, the output is to find the selected object inside all of the next frames ($b_
 
 
 
+\section{Conclusion and Future Work}
 
+In Livuis project, we have tried to design, implement and develop a framework for both slide detection and speaker tracking as intelligent as possible. The mechanism is based on a high resolution 4K camera to capture the whole scene and then divide the video into two parts, slides and speaker. The current demo applies a conservative method for slide detection and that is to ask user to determine the four corners of the slides. For speaker tracking, the CMT algorithm associated with Kalman filter are employed. The implementations have been done by Python language with different modules and it can be modified or developed.
+
+
+As the future works, it is worthy to have a try the data fusion  methods. The main purpose is to combine different algorithms with various weighting factors to improve the results. For example, CMT can be combined with face recognition/body recognition methods to decide about the unknown states. 
+
+
+Another suggestion is to use Kalman bank-filters and use several models to bias the Kalman filter. In the current demo, we take the advantage of Kalman filter and smoother via one model.
+
+Outliers detection via likelihood assessment of measurement.
+
+Ground truth dataset for challenging problems.
+
+Appearance improvement.
+
+A list of useful filters, white balance, contrast enhancement, normalization of the frame as a pre-processing step or applying histogram equalization based on region of interest for speaker tracking.
+
+Audio processing, wighted mixture, changing weights according to the position of the speaker, rotate audio channels.
 
 
 
