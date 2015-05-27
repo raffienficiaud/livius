@@ -8,7 +8,9 @@ and get the final video layout to stream it on the web.
 
 Input needed:
 	1. path to your video file
-	2. any input arguments which you need to modify (please use "--help" to check all possibilities.)
+    2. path to the background image
+    3. path to the final image
+	4. any input arguments which you need to modify (please use "--help" to check all possibilities.)
 
 output: a video with your desired layout
 
@@ -19,8 +21,9 @@ subpackage, it attaches the improved version of audio file into the modified ver
 
 Example:
 
-python demo.py /media/pbahar/Data\ Raid/Videos/18.03.2015/video_5.mp4  
-~/Downloads/EdgarFiles/background_images_mlss2013/background_example.png 
+python demo.py ../video_5.mp4  
+../background_image.png 
+../final_image.png 
 --t 1 
 --talkInfo 'How to estimate missing data' 
 --speakerInfo 'Prof. Dr. Schmidt' 
@@ -60,6 +63,8 @@ parser.add_argument('pathToVideoFile', nargs='?',
                     help='The input path to video file.')
 parser.add_argument('pathToBackgroundImage', nargs='?', 
                     help='The input path to background image.')
+parser.add_argument('pathToFinalImage', nargs='?', 
+                    help='The input path to final image for sponsers and team members.')
 parser.add_argument('--t', dest='timeFrame', default=20,
                     help='Specify the time to select the frame for cropping purpose.')
 parser.add_argument('--speakerInfo', dest='speakerInfo', default=None, 
@@ -93,6 +98,10 @@ if not pathToFile:
 pathToBackgroundImage = args.pathToBackgroundImage
 if not pathToBackgroundImage:
     sys.exit("[Demo] Error: You have not specified the input path to the background image.")
+    
+pathToFinalImage = args.pathToFinalImage
+if not pathToFinalImage:
+    sys.exit("[Demo] Error: You have not specified the input path to the final image.")
     
 pathBase = os.path.basename(pathToFile)
 pathDirectory = os.path.dirname(pathToFile)
@@ -200,6 +209,7 @@ nameToSaveFile = baseName +  'output'
 # You may modify the input arguments as you intend.
 createFinalVideo(slideClip,speakerClip,
                         pathToBackgroundImage,
+                        pathToFinalImage,
                         audio,
                         fps = video.fps, 
                         sizeOfLayout = sizeOfLayout, 
