@@ -28,7 +28,7 @@ classes:
 - CMT_algorithm_kalman_filter_vertical_mean
     --> to run the CMT, predict, update and smooth the results by kalman filter (no vertical coordinate estimation --
     we assume, the speaker wont jump during the lecture)
-- CMT_algorithm_kalman_filter_neighbering
+- CMT_algorithm_kalman_filter_neighboring
     --> to run the CMT, predict, update and smooth the results by kalman filter (keypoint calculation is only for neighboring window)
 - FOV_specification 
     --> to get a certain amount of field of view including the speaker
@@ -841,7 +841,7 @@ class CMT_algorithm_kalman_filter_vertical_mean():
 
     
 
-class CMT_algorithm_kalman_filter_neighbering():
+class CMT_algorithm_kalman_filter_neighboring():
 
 
 
