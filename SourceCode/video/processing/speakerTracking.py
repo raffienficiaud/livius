@@ -50,6 +50,22 @@ from moviepy.video.fx.crop import crop as moviepycrop
 import matplotlib.pyplot as plt
 from pylab import *
 
+import logging
+
+# logging facility
+FORMAT = '[%(asctime)-15s] %(message)s'
+logging.basicConfig(format=FORMAT)
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# temporary path
+_tmp_path = os.path.join(os.path.dirname(__file__), os.pardir, 'tmp')
+if not os.path.exists(_tmp_path):
+    os.makedirs(_tmp_path)
+
+debug = True
+
 
 def counterFunction(func):
     @wraps(func)
@@ -233,10 +249,14 @@ class CMT_algorithm_kalman_filter():
         # Read first frame
         status, im0 = cap.read()
         imGray0 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
-        imDraw = np.copy(im0)
-
-        (tl, br) = cmtutil.get_rect(imDraw)
-
+        
+        if debug:
+            # speaker bounding box used for debugging
+            (tl, br) = (1848, 840), (2136, 1116)
+        else:
+            imDraw = np.copy(im0)
+            (tl, br) = cmtutil.get_rect(imDraw)
+        
         print '[speakerTrackering] Using', tl, br, 'as initial bounding box for the speaker'
 
         self.CMT.initialise(imGray0, tl, br)
@@ -252,13 +272,37 @@ class CMT_algorithm_kalman_filter():
                 break
             im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
             
+            logging.debug('[tracker] processing frame %d', count)  
+            
             self.CMT.process_frame(im_gray)
+            
+            # debug
+            if debug:
+                im_debug  = np.copy(im)
+                cmtutil.draw_keypoints(self.CMT.active_keypoints, im_debug, (0,0,255))
+            
+            
 
             print 'frame: {2:4d}, Center: {0:.2f},{1:.2f}'.format(self.CMT.center[0], self.CMT.center[1] , count)
-            if not (math.isnan(self.CMT.center[0]) or math.isnan(self.CMT.center[1])
-                or (self.CMT.center[0] <= 0) or (self.CMT.center[1] <= 0)):
+            if not (math.isnan(self.CMT.center[0]) 
+                    or math.isnan(self.CMT.center[1])
+                    or (self.CMT.center[0] <= 0) 
+                    or (self.CMT.center[1] <= 0)):
                 measuredTrack[count,0] = self.CMT.center[0]
-                measuredTrack[count,1] = self.CMT.center[1]               
+                measuredTrack[count,1] = self.CMT.center[1]
+            else:
+                # take the previous estimate if none is found in the current frame
+                measuredTrack[count,0] = measuredTrack[count-1,0]
+                measuredTrack[count,1] = measuredTrack[count-1,1]
+            
+            if debug:
+                cmtutil.draw_bounding_box((int(measuredTrack[count,0]-50), int(measuredTrack[count,1]-50)), 
+                                          (int(measuredTrack[count,0]+50), int(measuredTrack[count,1]+50)),
+                                          im_debug)
+                
+                
+                cv2.imwrite(os.path.join(_tmp_path, 'debug_file_%.6d.png' % count), im_debug)
+                
             count += 1                
         
         numMeas=measuredTrack.shape[0]
@@ -467,7 +511,6 @@ class CMT_algorithm_kalman_filter_stripe():
             grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             im_gray = grayFrame[y1:y2, x1:x2]
             
-                       
             plt.imshow(im_gray, cmap = cm.Greys_r)
             plt.show()
             
