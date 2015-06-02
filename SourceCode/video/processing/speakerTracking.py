@@ -280,6 +280,7 @@ class CMT_algorithm_kalman_filter():
             if debug:
                 im_debug  = np.copy(im)
                 cmtutil.draw_keypoints(self.CMT.active_keypoints, im_debug, (0,0,255))
+                cmtutil.draw_keypoints(self.CMT.tracked_keypoints, im_debug, (0,255,0))
             
             
 
@@ -302,6 +303,10 @@ class CMT_algorithm_kalman_filter():
                 
                 
                 cv2.imwrite(os.path.join(_tmp_path, 'debug_file_%.6d.png' % count), im_debug)
+                
+                im_debug  = np.copy(im)
+                cmtutil.draw_keypoints([kp.pt for kp in self.CMT.keypoints_cv], im_debug, (0,0,255))
+                cv2.imwrite(os.path.join(_tmp_path, 'all_keypoints_%.6d.png' % count), im_debug)
                 
             count += 1                
         
