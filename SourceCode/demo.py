@@ -51,7 +51,7 @@ import time
 from util.tools import *
 from video.processing.slideDetection import *
 from video.editing.layout import createFinalVideo
-from video.processing.postProcessing import transformation3D
+from video.processing.postProcessing import transformation3D, get_histograms
 from video.processing.speakerTracking import *
 
 #--------------------------------------------------------------------
@@ -168,6 +168,8 @@ else:
     np.savetxt(saveNameSlide, slideCoordinates)
 
     
+
+    
 #--------------------------------------------------------------------
 # Post-Prossesing the video for slide detection and stream writing
 #--------------------------------------------------------------------
@@ -184,10 +186,10 @@ slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
 
 # Create an object from "CMT_algorithm_kalman_filter" class for speaker tracking
 # If you need to use other classes, simply change this line
-objCMTAlgorithm = CMT_algorithm_kalman_filter(pathToFile,skip)  
+#objCMTAlgorithm = CMT_algorithm_kalman_filter(pathToFile,skip)  
 # Call method "speakerTracker" to get four corners - slideCoordinates is a 4x2 numpy array
 # output is a single frame and it is updated. It is using streaming function to have one frame at once in the RAM.
-speakerClip = objCMTAlgorithm.speakerTracker()
+#speakerClip = objCMTAlgorithm.speakerTracker()
 
 #--------------------------------------------------------------------
 # Prossing the audio file
@@ -201,28 +203,35 @@ speakerClip = objCMTAlgorithm.speakerTracker()
 
 slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
 
+    
+#--------------------------------------------------------------------
+# retrieving a histogram of the slideClip every second and save it
+#--------------------------------------------------------------------
+get_histograms(slideClip)
+
+
 nameToSaveFile = baseName +  'output'
 
 # call "createFinalVideo" method from "layout.py" module in editing package to form the final layout 
 # and concatenate all required information and files together. 
 # If "flagWrite" sets to True, the output video will be written in he same path of the input file.
 # You may modify the input arguments as you intend.
-createFinalVideo(slideClip,speakerClip,
-                        pathToBackgroundImage,
-                        pathToFinalImage,
-                        audio,
-                        fps = video.fps, 
-                        sizeOfLayout = sizeOfLayout, 
-                        sizeOfScreen = sizeOfScreen,
-                        sizeOfSpeaker = sizeOfSpeaker,
-                        talkInfo = talkInfo,
-                        speakerInfo = speakerInfo,
-                        instituteInfo = instituteInfo,
-                        dateInfo = dateInfo,
-                        firstPause = 10,
-                        nameToSaveFile = nameToSaveFile,
-                        codecFormat = 'libx264',
-                        container = '.mp4',
-                        flagWrite = True)    
+# createFinalVideo(slideClip,speakerClip,
+#                         pathToBackgroundImage,
+#                         pathToFinalImage,
+#                         audio,
+#                         fps = video.fps, 
+#                         sizeOfLayout = sizeOfLayout, 
+#                         sizeOfScreen = sizeOfScreen,
+#                         sizeOfSpeaker = sizeOfSpeaker,
+#                         talkInfo = talkInfo,
+#                         speakerInfo = speakerInfo,
+#                         instituteInfo = instituteInfo,
+#                         dateInfo = dateInfo,
+#                         firstPause = 10,
+#                         nameToSaveFile = nameToSaveFile,
+#                         codecFormat = 'libx264',
+#                         container = '.mp4',
+#                         flagWrite = True)    
     
     
