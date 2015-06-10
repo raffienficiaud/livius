@@ -36,6 +36,7 @@ classes:
 
 import cv2
 import exceptions
+import json
 
 from numpy import empty, nan
 import os
@@ -1171,11 +1172,12 @@ class DummyTracker(object):
 
 
     def _resize(self, im):
+        """Resizes the input image according to the initial parameters"""
         if self.resize_max is None:
             return im
         
+        # assuming landscape orientation
         dest_size = self.resize_max, int(im.shape[0] * (float(self.resize_max) / im.shape[1]))
-        
         return cv2.resize(im, dest_size)
     
     
@@ -1236,6 +1238,8 @@ class DummyTracker(object):
         measuredTrack=np.zeros((self.numFrames+10,2))-1
            
         count = 0
+        previous_hist_plane = None
+        distances_histogram = {}
         
         while count <= self.numFrames:
             
@@ -1244,11 +1248,17 @@ class DummyTracker(object):
                 break
             
             count += 1
+            current_time_stamp = datetime.timedelta(seconds=int(count/float(self.fps))) 
             
             if (self.fps is not None) and (count % self.fps) != 0:
                 continue
             
-            logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s', count, self.numFrames, datetime.timedelta(seconds=count/self.fps), datetime.timedelta(seconds=self.numFrames/self.fps))
+            logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s - %3.3f %%', 
+                         count, 
+                         self.numFrames, 
+                         current_time_stamp, 
+                         datetime.timedelta(seconds=self.numFrames/self.fps),
+                         100*float(count)/self.numFrames)
             status, im = cap.retrieve()
             
             if not status:
@@ -1261,22 +1271,59 @@ class DummyTracker(object):
             
             # color diff
             im_diff = (im_lab - im0_lab) ** 2
+            im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
             
             # background
             fgmask = self.fgbg.apply(im0)
-            fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, self.kernel)
+            fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
+            
+            # threshold the diff
+            # histogram
+            hist = []
+            for i in range(im_diff.shape[2]):
+                hist.append(cv2.calcHist([im_diff], [i], None, [256], [0, 256]))
+            
+            hist_plane = []
+            # dividing the plane vertically by N=3
+            N_stripes = 3
+            for i in range(N_stripes):
+                location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
+                current_plane = im_diff_lab[location[0]:location[1], :]
+                print current_plane.min(), current_plane.max()
+                hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
+                
+            
+            # histogram distance
             
             # location of all the connected components
+            
+            if previous_hist_plane is not None:
+                distances_histogram[count] = {}
+                element = distances_histogram[count]
+                #element['timestamp'] = current_time_stamp
+                element['dist_stripes'] = {}
+                for e, h1, h2 in zip(range(N_stripes), previous_hist_plane, hist_plane):
+                    element['dist_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
+         
+            
                         
             # debug
             if debug:
                 cv2.imwrite(os.path.join(_tmp_path, 'background_%.6d.png' % count), fgmask)
                 cv2.imwrite(os.path.join(_tmp_path, 'diff_%.6d.png' % count), im_diff)
+                cv2.imwrite(os.path.join(_tmp_path, 'diff_lab_%.6d.png' % count), im_diff_lab)
+                
+                with open(os.path.join(_tmp_path, 'info_%.6d.json' % count), 'w') as f:
+                    f.write(json.dumps(distances_histogram))
+                #cv2.imwrite(os.path.join(_tmp_path, 'diff_thres_%.6d.png' % count), color_mask)
             
             
             im0 = im
             im0_lab = im_lab
             im0_gray = im_gray
+            
+            if count > 0:
+                previous_hist_plane = hist_plane
             
             continue
             
