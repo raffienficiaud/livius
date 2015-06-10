@@ -62,7 +62,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # temporary path
-_tmp_path = os.path.join(os.path.dirname(__file__), os.pardir, 'tmp')
+_tmp_path = os.path.join('/media/renficiaud/linux-data/livius/tmp')
 if not os.path.exists(_tmp_path):
     os.makedirs(_tmp_path)
 
@@ -1174,7 +1174,7 @@ class DummyTracker(object):
         if self.resize_max is None:
             return im
         
-        dest_size = self.resize_max, int(im.shape[1] * (float(self.resize_max) / im.shape[0]))
+        dest_size = self.resize_max, int(im.shape[0] * (float(self.resize_max) / im.shape[1]))
         
         return cv2.resize(im, dest_size)
     
@@ -1193,7 +1193,7 @@ class DummyTracker(object):
             self.numFrames = cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
             
             self.width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
-            self.heigth= cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
+            self.height= cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
             
             self.tracker.set_size(self.width, self.height)
             
@@ -1248,7 +1248,7 @@ class DummyTracker(object):
             if (self.fps is not None) and (count % self.fps) != 0:
                 continue
             
-            logging.info('[VIDEO] processing frame %d', count)
+            logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s', count, self.numFrames, datetime.timedelta(seconds=count/self.fps), datetime.timedelta(seconds=self.numFrames/self.fps))
             status, im = cap.retrieve()
             
             if not status:
