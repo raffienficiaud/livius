@@ -35,6 +35,8 @@ classes:
 """
 
 import cv2
+import exceptions
+
 from numpy import empty, nan
 import os
 import sys
@@ -1132,21 +1134,228 @@ class CMT_algorithm_kalman_filter_neighboring():
             
         return newFrames
 
+
+
+class BBoxTracker(object):
+    
+    def __init__(self):
+        self.bboxes = []
+        
+    def set_size(self, width, height):
+        
+        self.width = width
+        self.height= height
+        
+    def add_bounding_box(self, timestamp, center, width):
+        # TODO resize according to the original size
+        self.bboxes.append((timestamp, center, width))
+
+class DummyTracker(object):
+
+    def __init__(self, inputPath, resize_max = None, fps = None, skip = None):
+        """
+        :param resize_max: max size
+        :param fps: frame per second in use if the video is a sequence of image files
+        """
+        
+        if inputPath is None:
+            raise exceptions.RuntimeError("no input specified")
+        
+        self.inputPath = inputPath     # 'The input path.'
+        self.skip = skip               # 'Skip the first n frames.'
+        
+        self.resize_max = resize_max
+        self.tracker = BBoxTracker()
+        self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
+        self.fgbg = cv2.BackgroundSubtractorMOG()
+
+
+    def _resize(self, im):
+        if self.resize_max is None:
+            return im
+        
+        dest_size = self.resize_max, int(im.shape[1] * (float(self.resize_max) / im.shape[0]))
+        
+        return cv2.resize(im, dest_size)
     
     
+    def speakerTracker(self):
+        
+
+        # Clean up
+        cv2.destroyAllWindows()
+
+        # If a path to a file was given, assume it is a single video file
+        if os.path.isfile(self.inputPath):
+            cap = cv2.VideoCapture(self.inputPath)
+            clip  = VideoFileClip(self.inputPath,audio=False)
+            self.fps = cap.get(cv2.cv.CV_CAP_PROP_FPS)
+            self.numFrames = cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+            
+            self.width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
+            self.heigth= cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
+            
+            self.tracker.set_size(self.width, self.height)
+            
+            logger.info("[VIDEO] #frames %d, frames size (%d x %d)", self.numFrames, self.width, self.height)
+            
+            pathBase = os.path.basename(self.inputPath)
+            pathDirectory = os.path.dirname(self.inputPath)
+            baseName = pathDirectory + '/' + os.path.splitext(pathBase)[0] + '_' + 'speakerCoordinates.txt'
+            
+
+            #Skip first frames if required
+            if self.skip is not None:
+                cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, self.skip)
+
+        # Otherwise assume it is a format string for reading images
+        else:
+            cap = cmtutil.FileVideoCapture(self.inputPath)
+
+            #Skip first frames if required
+            if self.skip is not None:
+                cap.frame = 1 + self.skip
+
+
+        # Read first frame
+        status, im0_not_resized = cap.read()
+        
+        im0 = self._resize(im0_not_resized)
+        im0_lab = cv2.cvtColor(im0, cv2.COLOR_BGR2LAB)
+        im0_gray = cv2.cvtColor(im0_not_resized, cv2.COLOR_BGR2GRAY)
+        
+        if debug:
+            # speaker bounding box used for debugging
+            (tl, br) = (2052, 948), (2376, 1608)
+        else:
+            imDraw = np.copy(im0)
+            (tl, br) = cmtutil.get_rect(imDraw)
+        
+        
+        logger.info('[TRACKER] Using %s, %s as initial bounding box for the speaker', tl, br)
+        measuredTrack=np.zeros((self.numFrames+10,2))-1
+           
+        count = 0
+        
+        while count <= self.numFrames:
+            
+            status = cap.grab()
+            if not status:
+                break
+            
+            count += 1
+            
+            if (self.fps is not None) and (count % self.fps) != 0:
+                continue
+            
+            logging.info('[VIDEO] processing frame %d', count)
+            status, im = cap.retrieve()
+            
+            if not status:
+                logger.error('[VIDEO] error reading frame %d', count)
+            
+            # resize and color conversion
+            im = self._resize(im)
+            im_lab = cv2.cvtColor(im, cv2.COLOR_BGR2LAB)
+            im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+            
+            # color diff
+            im_diff = (im_lab - im0_lab) ** 2
+            
+            # background
+            fgmask = self.fgbg.apply(im0)
+            fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, self.kernel)
+            
+            # location of all the connected components
+                        
+            # debug
+            if debug:
+                cv2.imwrite(os.path.join(_tmp_path, 'background_%.6d.png' % count), fgmask)
+                cv2.imwrite(os.path.join(_tmp_path, 'diff_%.6d.png' % count), im_diff)
+            
+            
+            im0 = im
+            im0_lab = im_lab
+            im0_gray = im_gray
+            
+            continue
+            
+            
+            print 'frame: {2:4d}, Center: {0:.2f},{1:.2f}'.format(self.CMT.center[0], self.CMT.center[1] , count)
+            if not (math.isnan(self.CMT.center[0]) 
+                    or math.isnan(self.CMT.center[1])
+                    or (self.CMT.center[0] <= 0) 
+                    or (self.CMT.center[1] <= 0)):
+                measuredTrack[count,0] = self.CMT.center[0]
+                measuredTrack[count,1] = self.CMT.center[1]
+            else:
+                # take the previous estimate if none is found in the current frame
+                measuredTrack[count,0] = measuredTrack[count-1,0]
+                measuredTrack[count,1] = measuredTrack[count-1,1]
+            
+            if debug:
+                cmtutil.draw_bounding_box((int(measuredTrack[count,0]-50), int(measuredTrack[count,1]-50)), 
+                                          (int(measuredTrack[count,0]+50), int(measuredTrack[count,1]+50)),
+                                          im_debug)
+                
+                
+                cv2.imwrite(os.path.join(_tmp_path, 'debug_file_%.6d.png' % count), im_debug)
+                
+                im_debug  = np.copy(im)
+                cmtutil.draw_keypoints([kp.pt for kp in self.CMT.keypoints_cv], im_debug, (0,0,255))
+                cv2.imwrite(os.path.join(_tmp_path, 'all_keypoints_%.6d.png' % count), im_debug)
+                
+
+                   
+        return 
+    
+    
+    def crop (self,frame):
+    
+        windowSize = (2*640,2*360)
+        newFrames = np.zeros((windowSize[0],windowSize[1],3))
+        imGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        self.CMT.process_frame(imGray)
+
+        if not (math.isnan(self.CMT.center[0]) or math.isnan(self.CMT.center[1])
+                or (self.CMT.center[0] <= 0) or (self.CMT.center[1] <= 0)): 
+            
+            x1 = np.floor(self.CMT.center[1] - windowSize[1]/2)
+            y1 = np.floor(self.CMT.center[0] - windowSize[0]/2)
+            x2 = np.floor(x1 + windowSize[1])
+            y2 = np.floor(y1 + windowSize[0])
+            
+            # Corner correction (Height)
+            if (x1 <= 0):                 
+                x1 = 0
+                x2 = np.floor(x1 + windowSize[1])
+            if (x2 >= imGray.shape[0]):
+                x2 = np.floor(imGray.shape[0])
+                x1 = np.floor(x2 - windowSize[1])
+            # Corner correction (Width)
+            if (y1 <= 0):                 
+                y1 = 0
+                y2 = np.floor(y1 + windowSize[0])
+            if (y2 >= imGray.shape[1]):
+                y2 = np.floor(imGray.shape[1])
+                y1 = np.floor(y2 - windowSize[0])
+            newFrames = frame[x1:x2,y1:y2,:]
+            
+        #print 'Center: {0:.2f},{1:.2f}'.format(CMT.center[0], CMT.center[1])
+        return newFrames
+
+
+
 if __name__ == '__main__':
 
-
-    '''
-    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_13.mp4"
-    obj = CMT_algorithm_kalman_filter(targetVideo)   
-    new_clip = obj.speakerTracker()
-    new_clip.write_videofile("speaker_original_13.mp4")
-    '''
+    storage = '/media/renficiaud/linux-data/'
+    filename = 'BlackmagicProductionCamera 4K_1_2015-01-16_1411_C0000.mov'
     
-    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
-    obj = CMT_algorithm_kalman_filter(targetVideo)   
-    new_clip = obj.speakerTracker()    
+    obj = DummyTracker(os.path.join(storage, filename), resize_max=600)   
+    new_clip = obj.speakerTracker()
+    
+    sys.exit(0)
     new_clip.write_videofile("video_CMT_algorithm_kalman_filter.mp4")
     
 
