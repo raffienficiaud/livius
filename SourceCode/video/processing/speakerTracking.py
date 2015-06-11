@@ -1406,11 +1406,11 @@ def plot_histogram_distances():
     with open(last_file) as f:
         distances_histogram = json.load(f)
         
-    frame_indices = distances_histogram.keys()
-    frame_indices.sort()
+    frame_indices = [(i, int(i)) for i in distances_histogram.keys()]
+    frame_indices.sort(key=lambda x: x[1])
     
     plots_dict = {}
-    for count in frame_indices:
+    for count, count_integer in frame_indices:
         current_sample = distances_histogram[count]['dist_stripes']
         for i in current_sample.keys():
             
@@ -1423,15 +1423,21 @@ def plot_histogram_distances():
     
     from matplotlib import pyplot as plt
     
-    plt.title('Histgoram distance for each stripe')
+    
     x = frame_indices 
     
-    for i in plots_dict.keys():
-        plt.subplot(N_stripes+1, 1, i)
-        plt.plot(x, plots_dict[i])
-        plt.ylabel('Stripe %d' % i)
+    for i in sorted(plots_dict.keys()):
+        if i == 0:
+            plt.title('Histgoram distance for each stripe')
         
-    plt.xlabel('frame #')
+        plt.subplot(N_stripes+1, 1, i+1)#, sharex=True)
+        plt.plot(x, plots_dict[i], aa=False, linewidth=1)
+        
+        #lines.set_linewidth(1)
+        plt.ylabel('Stripe %d' % i)
+    
+    plt.xlabel('frame #')    
+    
     plt.savefig(os.path.join(_tmp_path, 'histogram_distance.png'))
         
         
@@ -1440,12 +1446,13 @@ if __name__ == '__main__':
     storage = '/media/renficiaud/linux-data/'
     filename = 'BlackmagicProductionCamera 4K_1_2015-01-16_1411_C0000.mov'
     
+    #plot_histogram_distances()
+    #sys.exit(0)
+    
+    #obj = DummyTracker(os.path.join(storage, filename), resize_max=600)   
+    #new_clip = obj.speakerTracker()
+    
     plot_histogram_distances()
-    sys.exit(0)
-    
-    obj = DummyTracker(os.path.join(storage, filename), resize_max=600)   
-    new_clip = obj.speakerTracker()
-    
     sys.exit(0)
     new_clip.write_videofile("video_CMT_algorithm_kalman_filter.mp4")
     
