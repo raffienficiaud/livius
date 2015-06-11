@@ -144,32 +144,34 @@ if instituteInfo is None:
 
 # Getting a frame to pop-up in t = timeFrame, if timeFrame is not specified, it pops up the first frame
 
-desiredFrame = video.get_frame(float(timeFrame)) 
+# desiredFrame = video.get_frame(float(timeFrame)) 
 
-# Create an object from "getUserCropping" class for slide detection
-# If you need to use other classes, simply change this line
-objGetUserCropping = getUserCropping(desiredFrame)  
-# Call method "slideDetector" to get four corners - slideCoordinates is a 4x2 numpy array
-# with the order of [TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT ]
-slideCoordinates = objGetUserCropping.slideDetector()
+# # Create an object from "getUserCropping" class for slide detection
+# # If you need to use other classes, simply change this line
+# objGetUserCropping = getUserCropping(desiredFrame)  
+# # Call method "slideDetector" to get four corners - slideCoordinates is a 4x2 numpy array
+# # with the order of [TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT ]
+# slideCoordinates = objGetUserCropping.slideDetector()
 
-print "[Demo] Info: The selected coordinates of the slide are: \n" , slideCoordinates
+# print "[Demo] Info: The selected coordinates of the slide are: \n" , slideCoordinates
 
-# Save the coordinates in a .txt file
+# # Save the coordinates in a .txt file
 
 saveNameSlide = baseName + 'slide_coordinates' + '.txt'
 
-if os.path.isfile(saveNameSlide):
-    if (prompt_yes_no_terminal("[Demo] Warning: The file to store the coordinates exists. Replace?")):
-        np.savetxt(saveNameSlide, slideCoordinates)
-    else:
-        print "[Demo] Warning: No new file was created."
-else:
-    np.savetxt(saveNameSlide, slideCoordinates)
+# if os.path.isfile(saveNameSlide):
+#     if (prompt_yes_no_terminal("[Demo] Warning: The file to store the coordinates exists. Replace?")):
+#         np.savetxt(saveNameSlide, slideCoordinates)
+#     else:
+#         print "[Demo] Warning: No new file was created."
+# else:
+#     np.savetxt(saveNameSlide, slideCoordinates)
 
-    
 
-    
+# Bypassing the User cropping, just loading the slide coordinates from file
+slideCoordinates = np.loadtxt(saveNameSlide, dtype=float32)
+
+
 #--------------------------------------------------------------------
 # Post-Prossesing the video for slide detection and stream writing
 #--------------------------------------------------------------------
@@ -178,7 +180,6 @@ else:
 # video.fx and fl_image are predefined moviepy functions to do that "streaming". \
 # you only have one frame at once in the RAM.
 slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
-    
        
 #--------------------------------------------------------------------
 # Prossing the video for speaker tracking

@@ -19,9 +19,12 @@ hist_reds = []
 
 for i in range(0,60):	
 	# Load Histograms  
-	hist_blues.append(np.load('histogram_blue' + str(i) + '.npy')) 
+	hist_blues.append(np.load('histogram_blue' + str(i) + '.npy'))
 	hist_greens.append(np.load('histogram_green' + str(i) + '.npy'))
 	hist_reds.append(np.load('histogram_red' + str(i) + '.npy'))
+
+	# 255 * (h - min) / (max - min)
+
 
 	# Calculate distance
 	if i > 0:

@@ -34,6 +34,11 @@ def transformation3D(clip, coordinates, desiredScreenLayout=(1280,960)):
     return clip.fl_image(new_tranformation)
 
 
+def get_histogram_min_max(hist):
+    """Gets the 1- and 99-percentile 
+    """    
+
+
 def get_histograms(clip):
     hist_dir = os.path.join(os.getcwd(), 'histograms')
 
