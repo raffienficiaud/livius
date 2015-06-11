@@ -34,9 +34,32 @@ def transformation3D(clip, coordinates, desiredScreenLayout=(1280,960)):
     return clip.fl_image(new_tranformation)
 
 
-def get_histogram_min_max(hist):
-    """Gets the 1- and 99-percentile 
+def get_min_max_boundaries_for_normalized_histogram(hist):
+    """Gets the 1- and 99-percentile as an approximation of the boundaries
+       of the histogram.
+
+       Note: 
+        The Histogram is expected to be normalized
+
+       Returns both the min and the max value for the histogram for each chanel
     """    
+    t_min = 0
+    t_max = 255
+
+    min_mass = 0
+    max_mass = 0
+
+    # Integrate until we reach 1% of the mass from each direction
+    while min_mass < 0.01:
+        min_mass = min_mass + hist[t_min]
+        t_min = t_min + 1
+
+    while max_mass < 0.01:
+        max_mass = max_mass + hist[t_max]
+        t_max = t_max - 1
+
+    return t_min, t_max
+
 
 
 def get_histograms(clip):
@@ -53,31 +76,74 @@ def get_histograms(clip):
         if frame_count % fps == 0:
             frame_count = 0
 
-            min_val = 50.0
-            max_val = 200.0
+            # Get Histograms of the frame for each color channel
+            hist_blue = cv2.calcHist([frame],[0],None,[256],[0,256])
+            hist_green = cv2.calcHist([frame],[1],None,[256],[0,256])
+            hist_red = cv2.calcHist([frame],[2],None,[256],[0,256])
 
+            # Histogram for grayscale picture
+            grayscale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY);
+            hist_gray = cv2.calcHist([grayscale], [0], None, [256], [0,256])
 
+            # Normalize
+            # hist_blue = hist_blue.astype(float32) / (frame.shape[0] * frame.shape[1])
+            # hist_green = hist_green.astype(float32) / (frame.shape[0] * frame.shape[1])
+            # hist_red = hist_red.astype(float32) / (frame.shape[0] * frame.shape[1])
 
-            framecorrected = 255.0 * (np.maximum(frame.astype(float32) - min_val, np.zeros(frame.shape))) / (max_val - min_val)
+            # Normalize
+            hist_blue = cv2.normalize(hist_blue)
+            hist_green = cv2.normalize(hist_green)
+            hist_red = cv2.normalize(hist_red)
+            hist_gray = cv2.normalize(hist_gray)
+
+            # Obtain the estimated boundaries for each color channel
+            min_blue, max_blue = get_min_max_boundaries_for_normalized_histogram(hist_blue)
+            min_green, max_green = get_min_max_boundaries_for_normalized_histogram(hist_green)
+            min_red, max_red = get_min_max_boundaries_for_normalized_histogram(hist_red)
+
+            min_val = min(min_blue, min_green, min_red)
+            max_val = max(max_blue, max_green, max_red) 
+
+            print min_val, max_val
+
+            framecorrected = 255.0 * (np.maximum(frame.astype(float32) - min_val, np.zeros(frame.shape)))
+            framecorrected = framecorrected / (max_val - min_val)
+            framecorrected = np.minimum(framecorrected, 255.0)
 
             framecorrected = framecorrected.astype(uint8)
 
-            # This shows the current picture in a window
+
+            # This tries out using the grayscale image
+            # min_val, max_val = get_min_max_boundaries_for_normalized_histogram(hist_gray)
+
+            # print min_val, max_val
+
+            # compare = 255.0 * (np.maximum(frame.astype(float32) - min_val, np.zeros(frame.shape)))
+            # compare = compare / (max_val - min_val)
+            # compare = np.minimum(compare, 255.0)
+            # compare = compare.astype(uint8)
+
+
+            # This shows the current picture and the color correction in a window
             fig = figure()
-            fig.add_subplot(2,1,0)            
+            fig.add_subplot(2,1,1)            
             plt.imshow(frame)
 
-            fig.add_subplot(2,1,1)
+            fig.add_subplot(2,1,2)
             plt.imshow(framecorrected)
 
             plt.show()            
             # cv2.destroyAllWindows()
 
-            # Histogram for each color channel
-            hist_blue = cv2.calcHist([frame],[0],None,[256],[0,256])
-            hist_green = cv2.calcHist([frame],[1],None,[256],[0,256])
-            hist_red = cv2.calcHist([frame],[2],None,[256],[0,256])
+            # framecorrected = 255.0 * (frame.astype(float32) - min_val) / (max_val - min_val)
+            # framecorrected = np.empty(frame.shape, dtype=float32)
+            # framecorrected[:,:,red] = 255.0 * (np.maximum(frame[:,:,red].astype(float32) - min_red, np.zeros(frame.shape[:2]))) / (max_red - min_red)   
+            # framecorrected[:,:,green] = 255.0 * (np.maximum(frame[:,:,green].astype(float32) - min_green, np.zeros(frame.shape[:2]))) / (max_green - min_green)
+            # framecorrected[:,:,blue] = 255.0 * (np.maximum(frame[:,:,blue].astype(float32) - min_blue, np.zeros(frame.shape[:2]))) / (max_blue - min_blue)
+            
 
+
+            # Save Histogram for each color channel
             np.save('histograms/histogram_blue' + str(hist_count), hist_blue)
             np.save('histograms/histogram_green' + str(hist_count), hist_green)
             np.save('histograms/histogram_red' + str(hist_count), hist_red)
@@ -92,10 +158,6 @@ def get_histograms(clip):
 
             # plt.savefig('histograms/histogram' + str(hist_count) + '.png')
             # plt.clf()
-
-            # # Histogram for grayscale picture
-            # grayscale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY);
-            # hist_gray = cv2.calcHist([grayscale], [0], None, [256], [0,256])
 
             # plt.plot(hist_gray)
             # plt.xlim([0,256])
