@@ -34,14 +34,16 @@ classes:
     --> to get a certain amount of field of view including the speaker
 """
 
+import os
 import cv2
 import exceptions
 import json
+import glob
+import time
+import logging
 
 from numpy import empty, nan
-import os
 import sys
-import time
 import math
 import CMT.CMT
 import CMT.util as cmtutil
@@ -53,7 +55,6 @@ from moviepy.video.fx.crop import crop as moviepycrop
 import matplotlib.pyplot as plt
 from pylab import *
 
-import logging
 
 # logging facility
 FORMAT = '[%(asctime)-15s] %(message)s'
@@ -1289,7 +1290,7 @@ class DummyTracker(object):
             for i in range(N_stripes):
                 location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
                 current_plane = im_diff_lab[location[0]:location[1], :]
-                print current_plane.min(), current_plane.max()
+                #print current_plane.min(), current_plane.max()
                 hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
                 
             
@@ -1393,11 +1394,54 @@ class DummyTracker(object):
         return newFrames
 
 
+def plot_histogram_distances():
+    """Reads back the sequence of histograms and plots the distance between two consecutive histograms over time"""
+    
+    list_files = glob.glob(os.path.join(_tmp_path, 'info_*.json'))
+    list_files.sort()
+    # the last one contains all the necessary information
+    last_file = list_files[-1]
+    
+    
+    with open(last_file) as f:
+        distances_histogram = json.load(f)
+        
+    frame_indices = distances_histogram.keys()
+    frame_indices.sort()
+    
+    plots_dict = {}
+    for count in frame_indices:
+        current_sample = distances_histogram[count]['dist_stripes']
+        for i in current_sample.keys():
+            
+            if not plots_dict.has_key(int(i)):
+                plots_dict[int(i)] = []
+                
+            plots_dict[int(i)].append(float(current_sample[i]))
 
+    N_stripes = max(plots_dict.keys())
+    
+    from matplotlib import pyplot as plt
+    
+    plt.title('Histgoram distance for each stripe')
+    x = frame_indices 
+    
+    for i in plots_dict.keys():
+        plt.subplot(N_stripes+1, 1, i)
+        plt.plot(x, plots_dict[i])
+        plt.ylabel('Stripe %d' % i)
+        
+    plt.xlabel('frame #')
+    plt.savefig(os.path.join(_tmp_path, 'histogram_distance.png'))
+        
+        
 if __name__ == '__main__':
 
     storage = '/media/renficiaud/linux-data/'
     filename = 'BlackmagicProductionCamera 4K_1_2015-01-16_1411_C0000.mov'
+    
+    plot_histogram_distances()
+    sys.exit(0)
     
     obj = DummyTracker(os.path.join(storage, filename), resize_max=600)   
     new_clip = obj.speakerTracker()
