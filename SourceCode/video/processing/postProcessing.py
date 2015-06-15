@@ -50,11 +50,11 @@ def get_min_max_boundaries_for_normalized_histogram(hist):
     max_mass = 0
 
     # Integrate until we reach 1% of the mass from each direction
-    while min_mass < 0.001:
+    while min_mass < 0.01:
         min_mass = min_mass + hist[t_min]
         t_min = t_min + 1
 
-    while max_mass < 0.001:
+    while max_mass < 0.01:
         max_mass = max_mass + hist[t_max]
         t_max = t_max - 1
 

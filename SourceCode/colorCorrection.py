@@ -45,53 +45,53 @@ for i in range(0,60):
 # plt.show()
 
 
-def get_video_segments_from_histogram_diffs(histogram_diffs, tolerance):
+def get_video_segments_from_histogram_diffs(histogram_diffs, tolerance, fps, min_segment_length_in_seconds):
     """Segments the video using the histogram differences
 
-       If the correlation betwen two histograms is less than (1 - tolerance), 
+       If there is a spike with a correlation of less than (1 - tolerance), then
        we assume that we need to adapt the histogram bounds and thus start a
-       new segment. 
+       new segment.
+
+       If there is a region with many small spikes we assume that we cannot apply
+       any contrast enhancement / color correction (or apply a conservative default one). 
 
        Returns a list of tuples marking the beginning and end of each segment
     """ 
-
-    # @todo(Stephan):
-    # This does not handle two consecutive changes very well. What should be the strategy here?
-    # See the two datapoints:
-    # 233 and 234 with the respective frame index 6990 and 7020
-    # They have both correlations around 0.5 
-
     segments = []
     segment_start = 0
     frame_index = 0
-    new_segment = False
 
     lower_bounds = 1.0 - tolerance
+
     frames_per_histogram_entry = 30
+    min_segment_length_in_frames = min_segment_length_in_seconds * fps
 
-    for corr in histogram_diffs:
+    i = 0
+    end = len(histogram_diffs)
 
-        # We advanced the segment_start manually, so we need to skip one comparison
-        if new_segment:
-            new_segment = False
-            continue
+    while i < end:
 
-        if corr < lower_bounds:
-            new_segment = True
+        # As long as we stay over the boundary, we count it towards the same segment
+        while (i < end) and (histogram_diffs[i] >= lower_bounds):
+            i = i + 1
+            frame_index = frame_index + frames_per_histogram_entry
+
+        # Append segment if it is big enough
+        if (frame_index - segment_start) > min_segment_length_in_frames:
+            # print 'appending', segment_start, frame_index
             segments.append((segment_start, frame_index))
 
-            # Advance the segment_start, so we have inclusive boundaries in each tuple
-            segment_start = frame_index + 1
-
-        frame_index = frame_index + frames_per_histogram_entry
-
-    # The rest of the frames build a segment as well
-    if segment_start < len(histogram_diffs) * frames_per_histogram_entry:
-        segments.append((segment_start, len(histogram_diffs) * frames_per_histogram_entry))
+        # Skip the elements below the boundary
+        while (i < end) and (histogram_diffs[i] < lower_bounds):
+            i = i + 1
+            frame_index = frame_index + frames_per_histogram_entry
+        
+        # The new segment starts as soon as we are over the boundary again
+        segment_start = frame_index
 
     return segments
 
-def get_segment_histogram_boundary(segment, hist_bounds):
+def get_histogram_boundary_for_segment(segment, hist_bounds):
     """Returns the averaged histogram boundary for a complete segment"""
     start, end = segment
 
@@ -132,7 +132,7 @@ def plot_histogram_distances():
     # Compute the Segments for the last stripe with a tolerance of 0.15
     last_stripe = plots_dict[2]
 
-    segments = get_video_segments_from_histogram_diffs(last_stripe, 0.15)
+    segments = get_video_segments_from_histogram_diffs(last_stripe, tolerance=0.01, fps=30, min_segment_length_in_seconds=5)
     print "Segmented Video into: ", segments
 
 
@@ -140,7 +140,7 @@ def plot_histogram_distances():
     # Use the real bounds here and test if we then can apply this to a whole segment correctly 
 
     fake_bounds = zip(range(len(last_stripe)), range(len(last_stripe)))
-    averaged_boundaries = get_segment_histogram_boundary(segments[0], fake_bounds)
+    averaged_boundaries = get_histogram_boundary_for_segment(segments[0], fake_bounds)
     print "Average Boundaries for fake bounds: ", averaged_boundaries
 
     # for i in sorted(plots_dict.keys()):
