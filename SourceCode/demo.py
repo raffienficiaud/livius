@@ -51,7 +51,7 @@ import time
 from util.tools import *
 from video.processing.slideDetection import *
 from video.editing.layout import createFinalVideo
-from video.processing.postProcessing import transformation3D, get_histograms
+from video.processing.postProcessing import PostProcessor
 from video.processing.speakerTracking import *
 
 #--------------------------------------------------------------------
@@ -179,18 +179,21 @@ slideCoordinates = np.loadtxt(saveNameSlide, dtype=float32)
 # Call "transformation3D" from postProcesing module for perspective transformation
 # video.fx and fl_image are predefined moviepy functions to do that "streaming". \
 # you only have one frame at once in the RAM.
-slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
+# slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
        
 #--------------------------------------------------------------------
 # Prossing the video for speaker tracking
 #--------------------------------------------------------------------
 
-# Create an object from "CMT_algorithm_kalman_filter" class for speaker tracking
-# If you need to use other classes, simply change this line
-#objCMTAlgorithm = CMT_algorithm_kalman_filter(pathToFile,skip)  
-# Call method "speakerTracker" to get four corners - slideCoordinates is a 4x2 numpy array
-# output is a single frame and it is updated. It is using streaming function to have one frame at once in the RAM.
-#speakerClip = objCMTAlgorithm.speakerTracker()
+# # Create an object from "CMT_algorithm_kalman_filter" class for speaker tracking
+# # If you need to use other classes, simply change this line
+# objCMTAlgorithm = CMT_algorithm_kalman_filter(pathToFile,skip)  
+# # Call method "speakerTracker" to get four corners - slideCoordinates is a 4x2 numpy array
+# # output is a single frame and it is updated. It is using streaming function to have one frame at once in the RAM.
+# speakerClip = objCMTAlgorithm.speakerTracker()
+
+
+speakerClip = None
 
 #--------------------------------------------------------------------
 # Prossing the audio file
@@ -201,14 +204,18 @@ slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
 #--------------------------------------------------------------------
 # editing the video and audio and forming the final layout
 #--------------------------------------------------------------------
+histogram_differences = None
+postProcessor = PostProcessor(histogram_differences)
+slideClip = postProcessor(video, slideCoordinates, (1280, 90))
 
-slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
+
+# slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
 
     
 #--------------------------------------------------------------------
 # retrieving a histogram of the slideClip every second and save it
 #--------------------------------------------------------------------
-get_histograms(slideClip)
+# get_histograms(slideClip)
 
 
 nameToSaveFile = baseName +  'output'
@@ -217,22 +224,22 @@ nameToSaveFile = baseName +  'output'
 # and concatenate all required information and files together. 
 # If "flagWrite" sets to True, the output video will be written in he same path of the input file.
 # You may modify the input arguments as you intend.
-# createFinalVideo(slideClip,speakerClip,
-#                         pathToBackgroundImage,
-#                         pathToFinalImage,
-#                         audio,
-#                         fps = video.fps, 
-#                         sizeOfLayout = sizeOfLayout, 
-#                         sizeOfScreen = sizeOfScreen,
-#                         sizeOfSpeaker = sizeOfSpeaker,
-#                         talkInfo = talkInfo,
-#                         speakerInfo = speakerInfo,
-#                         instituteInfo = instituteInfo,
-#                         dateInfo = dateInfo,
-#                         firstPause = 10,
-#                         nameToSaveFile = nameToSaveFile,
-#                         codecFormat = 'libx264',
-#                         container = '.mp4',
-#                         flagWrite = True)    
+createFinalVideo(slideClip,speakerClip,
+                        pathToBackgroundImage,
+                        pathToFinalImage,
+                        audio,
+                        fps = video.fps, 
+                        sizeOfLayout = sizeOfLayout, 
+                        sizeOfScreen = sizeOfScreen,
+                        sizeOfSpeaker = sizeOfSpeaker,
+                        talkInfo = talkInfo,
+                        speakerInfo = speakerInfo,
+                        instituteInfo = instituteInfo,
+                        dateInfo = dateInfo,
+                        firstPause = 10,
+                        nameToSaveFile = nameToSaveFile,
+                        codecFormat = 'libx264',
+                        container = '.mp4',
+                        flagWrite = True)    
     
     

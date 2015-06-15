@@ -144,7 +144,9 @@ def createFinalVideo(slideClip,speakerClip,
     backgroundImageResized = backgroundImage.resize((sizeOfLayout[0],sizeOfLayout[1]))
     finalImageResized = finalImage.resize((sizeOfLayout[0],sizeOfLayout[1]))
     slideClipResized = slideClip.resize((sizeOfScreen[0],sizeOfScreen[1]))
-    speakerClipResized = speakerClip.resize((sizeOfSpeaker[0],sizeOfSpeaker[1]))
+    
+    # @todo(Stephan): Reenable this   
+    #  speakerClipResized = speakerClip.resize((sizeOfSpeaker[0],sizeOfSpeaker[1]))
 
     if (sizeOfLayout[0] < (sizeOfScreen[0] or sizeOfSpeaker[0])) and (sizeOfLayout[1] < (sizeOfScreen[1] or sizeOfSpeaker[1])):
         print "[layout] Warning: The selected sizes are not appropriate."
@@ -218,7 +220,7 @@ def createFinalVideo(slideClip,speakerClip,
 
     
     outputVideo = CompositeVideoClip([backgroundImageResized.set_duration((slideClip.duration+firstPause)),
-                                    speakerClipResized.set_pos((10,360)).set_start(firstPause),
+                                    # speakerClipResized.set_pos((10,360)).set_start(firstPause),    @todo(Stephan): Reenable
                                     slideClipResized.set_pos((640,60)).set_start(firstPause), 
                                     txtClipInfo1.set_start(firstPause),
                                     txtClipInfo2.set_start(firstPause),
