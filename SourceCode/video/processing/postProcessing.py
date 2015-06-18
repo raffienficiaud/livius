@@ -40,130 +40,42 @@ class PostProcessor():
            If a frame is not contained in a segment, we interpolate the min/max values between the two segments,
            it is located in.
         """
+
+        # @todo(Stephan): Handle missing fps data.
         if clip.fps is None:
             raise
-
-        print "Incoming Clip size", clip.size
 
         self.fps = clip.fps
 
         # Warp slides into perspective
         self.clip = self.transformation3D(clip, slide_coordinates, desiredScreenLayout)
 
-        # # Histogram pass, compute bounds for the histograms of the slide images every second
-        # self.compute_histogram_bounds(interval_in_seconds=1)
+        # Histogram pass, compute bounds for the histograms of the slide images every second
+        self.compute_histogram_bounds(interval_in_seconds=1)
 
-        # print len(self.histogram_differences)
-        # print len(self.histogram_bounds)
+        # Compute segments according to the histogram differences
+        self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.05, min_segment_length_in_seconds=2)
 
-        # # Compute segments according to the histogram differences
-        # self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.05, min_segment_length_in_seconds=5)
-        # self.segment_histogram_boundaries = map(self.get_histogram_boundaries_for_segment, self.segments)
+        self.segment_histogram_boundaries = map(self.get_histogram_boundaries_for_segment, self.segments)
 
-        # # Apply the contrast enhancement
-        # return self.clip.fl(self.contrast_enhancement)
+        debug = True
+        if debug:
+            print clip.duration
+            print "Incoming Clip size", clip.size
+            print "Nr of Histogram Differences:", len(self.histogram_differences)
+            print "Histogram Differences:", self.histogram_differences
 
-        return self.clip
+            print "Nr of Histogram Bounds:", len(self.histogram_bounds)
+            print "Histogram Bounds:", self.histogram_bounds
 
-    def contrast_enhancement(self, get_frame, t):
-        """Performs contrast enhancement by putting the colors into their full range."""
-        frame = get_frame(t)
+            print "Nr of Computed Segments:", len(self.segments)
+            print "Computed Segments:", self.segments
 
-        min_val, max_val = self.get_histogram_boundaries_at_time(t)
+            print "Nr of Histogram Boundaries for the Segments:",len(self.segment_histogram_boundaries)
+            print "Histogram Boundaries for the Segments", self.segment_histogram_boundaries
 
-        # Perform the contrast enhancement
-        framecorrected = 255.0 * (np.maximum(frame.astype(float32) - min_val, 0)) / (max_val - min_val)
-        framecorrected = np.minimum(framecorrected, 255.0)
-        framecorrected = framecorrected.astype(uint8)
-
-        return framecorrected
-
-    def get_histogram_boundaries_for_segment(self, segment):
-        """Returns the histogram boundaries for a whole segment by taking
-           the average of each histogram contained in this segment."""
-        start, end = segment
-
-        sliced = self.histogram_bounds[start:end]
-        n_hists = len(sliced)
-
-        summed = map(sum, zip(*sliced))
-
-        return (summed[0] / n_hists, summed[1] / n_hists)
-
-    def get_histogram_boundaries_at_time(self, t):
-        """Returns the histogram boundaries for the frame at time t.
-
-           If this frame is inside a known segment, we already have computed the
-           boundaries for it.
-
-           If it is _not_ inside a known segment, we interpolate linearly between the
-           two segments it is located.
-        """
-
-        def linear_interpolation(x, x0, x1, y0, y1):
-            """Lerps x between the two points (x0, y0) and (x1, y1)"""
-            # @todo(Stephan):
-            # Do these in float?
-            return y0 + (y1 - y0) * ((x - x0) / (x1 - x0))
-
-        if self.fps is None:
-            raise
-
-        # @todo(Stephan): Check how to get the frame index from t
-        frame_index = int(t * self.fps)
-
-        segment_index = 0
-
-        for (start,end) in self.segments:
-            if (frame_index >= start) and (frame_index <= end):
-                # We are inside a segment and thus know the boundaries
-                return self.segment_histogram_boundaries[segment_index]
-
-            elif (frame_index < start):
-                # We are between two segments and thus have to interpolate
-                x0 = self.segments[segment_index - 1][1]   # End of last segment
-                x1 = self.segments[segment_index][0]       # Start of new segment
-
-                min0, max0 = self.segment_histogram_boundaries[segment_index - 1]
-                min1, max1 = self.segment_histogram_boundaries[segment_index]
-
-                lerped_min = linear_interpolation(frame_index, end0, start1, min0, min1)
-                lerped_max = linear_interpolation(frame_index, end0, start1, max0, max1)
-
-                return (lerped_min, lerped_max)
-
-            segment_index = segment_index + 1
-
-    def compute_histogram_bounds(self, interval_in_seconds=1):
-        """Computes the histogram bounds of every interval_in_seconds of the current clip.
-
-           Uses the 1- and 99-percentile as the approximated min/max bounds for the grayscale histogram.
-        """
-        interval_in_frames = interval_in_seconds * self.fps
-
-        # iter_frames should return the already warped slide images
-        for frame in self.clip.iter_frames():
-            if (self.frame_count % interval_in_frames) == 0:
-                self.frame_count = 0
-
-                print "Frame shape when itering for histogram bounds:", frame.shape
-
-                # fig = figure()
-
-                # plt.imshow(frame)
-                # plt.title("Original Frame")
-                # plt.show()
-
-                # Histogram for grayscale picture
-                grayscale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY);
-                hist_gray = cv2.calcHist([grayscale], [0], None, [256], [0,256])
-                # Normalize
-                hist_gray = cv2.normalize(hist_gray)
-                # Get Histogram boundaries
-                bounds = PostProcessor.get_min_max_boundaries_for_normalized_histogram(hist_gray)
-                self.histogram_bounds.append(bounds)
-
-            self.frame_count = self.frame_count + 1
+        # Apply the contrast enhancement
+        return self.clip.fl(self.contrast_enhancement)
 
     def perspective_transformation2D(self, img, coordinates, desiredScreenLayout=(1280,960)):
         """Cuts out the slides from the video and warps them into perspective.
@@ -185,6 +97,132 @@ class PostProcessor():
 
         return clip.fl_image(new_tranformation)
 
+    def contrast_enhancement(self, get_frame, t):
+        """Performs contrast enhancement by putting the colors into their full range."""
+        frame = get_frame(t)
+
+        # Retrieve histogram boundaries for this frame
+        min_val, max_val = self.get_histogram_boundaries_at_time(t)
+
+        # Perform the contrast enhancement
+        framecorrected = 255.0 * (np.maximum(frame.astype(float32) - min_val, 0)) / (max_val - min_val)
+        framecorrected = np.minimum(framecorrected, 255.0)
+        framecorrected = framecorrected.astype(uint8)
+
+        return framecorrected
+
+    def get_histogram_boundaries_for_segment(self, segment):
+        """Returns the histogram boundaries for a whole segment by taking
+           the average of each histogram contained in this segment."""
+        start, end = segment
+
+        # @todo(Stephan): Synch the fps and the amount of histograms we look at
+        start /= 30
+        end /= 30
+
+        hist_bounds_in_segment = self.histogram_bounds[start:end]
+        n_hists = len(hist_bounds_in_segment)
+
+        min_max_sum = map(sum, zip(*hist_bounds_in_segment))
+
+        return (min_max_sum[0] / n_hists, min_max_sum[1] / n_hists)
+
+    def get_histogram_boundaries_at_time(self, t):
+        """Returns the histogram boundaries for the frame at time t.
+
+           If this frame is inside a known segment, we already have computed the
+           boundaries for it.
+
+           If it is _not_ inside a known segment, we interpolate linearly between the
+           two segments it is located.
+        """
+
+        def linear_interpolation(x, x0, x1, y0, y1):
+            """Lerps x between the two points (x0, y0) and (x1, y1)"""
+            # @todo(Stephan):
+            # Do these in float?
+            return y0 + (y1 - y0) * ((x - x0) / (x1 - x0))
+
+        frame_index = int(t * self.fps)
+        segment_index = 0
+
+        debug = False
+        if debug:
+           print "Getting histogram_boundaries for time %s and Frame %s", (t, frame_index)
+
+        for (start,end) in self.segments:
+
+            if (frame_index >= start) and (frame_index <= end):
+                # We are inside a segment and thus know the boundaries
+                return self.segment_histogram_boundaries[segment_index]
+
+            elif (frame_index < start):
+                if segment_index == 0:
+                    # @todo(Stephan):
+                    # In this case, we are before the first segment.
+                    # What to do here? A conservative default contrast enhancement?
+
+                    # For now, do nothing
+                    return (0, 255)
+
+                else:
+                    # We are between two segments and thus have to interpolate
+                    x0 = self.segments[segment_index - 1][1]   # End of last segment
+                    x1 = self.segments[segment_index][0]       # Start of new segment
+
+                    min0, max0 = self.segment_histogram_boundaries[segment_index - 1]
+                    min1, max1 = self.segment_histogram_boundaries[segment_index]
+
+                    lerped_min = linear_interpolation(frame_index, x0, x1, min0, min1)
+                    lerped_max = linear_interpolation(frame_index, x0, x1, max0, max1)
+
+                    return (lerped_min, lerped_max)
+
+            segment_index += 1
+
+        # We are behind the last computed segment, since we have no end value to
+        # interpolate, we just return the bounds of the last computed segment
+        return self.segments[-1]
+
+    def compute_histogram_bounds(self, interval_in_seconds=1):
+        """Computes the histogram bounds of every interval_in_seconds of the current clip.
+
+           Uses the 1- and 99-percentile as the approximated min/max bounds for the grayscale histogram.
+        """
+        interval_in_frames = interval_in_seconds * self.fps
+
+        # @todo(Stephan): Remove this once we get the histogram differences passed
+        self.histogram_differences = []
+        last_histogram = None
+
+        # Get a frame every second
+        # @todo(Stephan):
+        # This seems very slow!
+        # Should get better with given histogram_differences, but we still need to compute the histograms
+        # on the warped (and resized) images.
+        #
+        # Maybe resize the image before computing the histogram? What's the performance tradeoff there?
+        for t in xrange(int(self.clip.duration) + 1):
+
+            frame = self.clip.get_frame(t)
+
+            # Histogram for grayscale picture
+            grayscale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY);
+            hist_gray = cv2.calcHist([grayscale], [0], None, [256], [0,256])
+
+            # Normalize
+            hist_gray = cv2.normalize(hist_gray)
+
+            # Get Histogram boundaries
+            bounds = PostProcessor.get_min_max_boundaries_for_normalized_histogram(hist_gray)
+            self.histogram_bounds.append(bounds)
+
+            # @todo(Stephan): Remove this once we get the histogram differences passed
+            if last_histogram is not None:
+                corr = cv2.compareHist(last_histogram, hist_gray, cv2.cv.CV_COMP_CORREL)
+                self.histogram_differences.append(corr)
+            last_histogram = hist_gray
+
     def get_video_segments_from_histogram_diffs(self, tolerance, min_segment_length_in_seconds):
         """Segments the video using the histogram differences
 
@@ -203,10 +241,9 @@ class PostProcessor():
 
         lower_bounds = 1.0 - tolerance
 
-        frames_per_histogram_entry = 30
-
-        if self.fps is None:
-            raise
+        # @todo(Stephan):
+        # This information should probably be passed together with the histogram differences
+        frames_per_histogram_differences_entry = 30
 
         min_segment_length_in_frames = min_segment_length_in_seconds * self.fps
 
@@ -217,8 +254,8 @@ class PostProcessor():
 
             # As long as we stay over the boundary, we count it towards the same segment
             while (i < end) and (self.histogram_differences[i] >= lower_bounds):
-                i = i + 1
-                frame_index = frame_index + frames_per_histogram_entry
+                i += 1
+                frame_index += frames_per_histogram_differences_entry
 
             # Append segment if it is big enough
             if (frame_index - segment_start) > min_segment_length_in_frames:
@@ -226,8 +263,8 @@ class PostProcessor():
 
             # Skip the elements below the boundary
             while (i < end) and (self.histogram_differences[i] < lower_bounds):
-                i = i + 1
-                frame_index = frame_index + frames_per_histogram_entry
+                i += 1
+                frame_index += frames_per_histogram_differences_entry
 
             # The new segment starts as soon as we are over the boundary again
             segment_start = frame_index
@@ -252,15 +289,17 @@ class PostProcessor():
 
         # Integrate until we reach 1% of the mass from each direction
         while min_mass < 0.01:
-            min_mass = min_mass + hist[t_min]
-            t_min = t_min + 1
+            min_mass += hist[t_min]
+            t_min += 1
 
         while max_mass < 0.01:
-            max_mass = max_mass + hist[t_max]
-            t_max = t_max - 1
+            max_mass += hist[t_max]
+            t_max -= 1
 
         return t_min, t_max
 
+
+# @todo(Stephan): Remove
 # def get_histograms(clip):
 #     hist_dir = os.path.join(os.getcwd(), 'histograms')
 

@@ -206,7 +206,7 @@ speakerClip = None
 #--------------------------------------------------------------------
 histogram_differences = None
 postProcessor = PostProcessor(histogram_differences)
-slideClip = postProcessor.get_post_processed_slide_clip(video, slideCoordinates, (1280, 90))
+slideClip = postProcessor.get_post_processed_slide_clip(video, slideCoordinates, (1280, 960))
 
 
 # slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
@@ -218,7 +218,7 @@ slideClip = postProcessor.get_post_processed_slide_clip(video, slideCoordinates,
 # get_histograms(slideClip)
 
 
-nameToSaveFile = baseName +  'output'
+nameToSaveFile = baseName +  'output_contrast_enhanced'
 
 slideClip.write_videofile(nameToSaveFile + '.mp4')
 
