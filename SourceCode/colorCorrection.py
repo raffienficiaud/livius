@@ -1,12 +1,13 @@
 """Tests for determining the appropriate color correction"""
 
 import numpy as np
-import os 
+import os
 import cv2
 import json
 
 import matplotlib.pyplot as plt
 
+os.chdir('Example Data')
 os.chdir('histograms')
 
 # Setup arrays
@@ -18,8 +19,8 @@ hist_blues = []
 hist_greens = []
 hist_reds = []
 
-for i in range(0,60):	
-	# Load Histograms  
+for i in range(0,60):
+	# Load Histograms
 	hist_blues.append(np.load('histogram_blue' + str(i) + '.npy'))
 	hist_greens.append(np.load('histogram_green' + str(i) + '.npy'))
 	hist_reds.append(np.load('histogram_red' + str(i) + '.npy'))
@@ -29,20 +30,20 @@ for i in range(0,60):
 
 	# Calculate distance
 	if i > 0:
-		hist_diffs_blue[i-1] = cv2.compareHist(hist_blues[i-1], hist_blues[i], cv2.cv.CV_COMP_CHISQR)
-		hist_diffs_green[i-1] = cv2.compareHist(hist_greens[i-1], hist_greens[i], cv2.cv.CV_COMP_CHISQR)
-		hist_diffs_red[i-1] = cv2.compareHist(hist_reds[i-1], hist_reds[i], cv2.cv.CV_COMP_CHISQR)
+		hist_diffs_blue[i-1] = cv2.compareHist(hist_blues[i-1], hist_blues[i], cv2.cv.CV_COMP_CORREL)
+		hist_diffs_green[i-1] = cv2.compareHist(hist_greens[i-1], hist_greens[i], cv2.cv.CV_COMP_CORREL)
+		hist_diffs_red[i-1] = cv2.compareHist(hist_reds[i-1], hist_reds[i], cv2.cv.CV_COMP_CORREL)
 
 
 # Output
-# print hist_diffs_blue
-# print hist_diffs_green
-# print hist_diffs_red
+print hist_diffs_blue
+print hist_diffs_green
+print hist_diffs_red
 
-# plt.plot(hist_diffs_blue, color='b')
-# plt.plot(hist_diffs_green, color='g')
-# plt.plot(hist_diffs_red, color='r')
-# plt.show()
+plt.plot(hist_diffs_blue, color='b')
+plt.plot(hist_diffs_green, color='g')
+plt.plot(hist_diffs_red, color='r')
+plt.show()
 
 
 def get_video_segments_from_histogram_diffs(histogram_diffs, tolerance, fps, min_segment_length_in_seconds):
@@ -53,10 +54,10 @@ def get_video_segments_from_histogram_diffs(histogram_diffs, tolerance, fps, min
        new segment.
 
        If there is a region with many small spikes we assume that we cannot apply
-       any contrast enhancement / color correction (or apply a conservative default one). 
+       any contrast enhancement / color correction (or apply a conservative default one).
 
        Returns a list of tuples marking the beginning and end of each segment
-    """ 
+    """
     segments = []
     segment_start = 0
     frame_index = 0
@@ -85,7 +86,7 @@ def get_video_segments_from_histogram_diffs(histogram_diffs, tolerance, fps, min
         while (i < end) and (histogram_diffs[i] < lower_bounds):
             i = i + 1
             frame_index = frame_index + frames_per_histogram_entry
-        
+
         # The new segment starts as soon as we are over the boundary again
         segment_start = frame_index
 
@@ -107,28 +108,28 @@ def plot_histogram_distances():
 
     with open('info.json') as f:
         distances_histogram = json.load(f)
-        
+
     frame_indices = [(i, int(i)) for i in distances_histogram.keys()]
     frame_indices.sort(key=lambda x: x[1])
-    
+
     plots_dict = {}
     for count, count_integer in frame_indices:
         current_sample = distances_histogram[count]['dist_stripes']
         for i in current_sample.keys():
-            
+
             if not plots_dict.has_key(int(i)):
                 plots_dict[int(i)] = []
-                
+
             plots_dict[int(i)].append(float(current_sample[i]))
 
     N_stripes = max(plots_dict.keys())
-    
+
     from matplotlib import pyplot as plt
 
-    
-    
-    x = frame_indices 
-    
+
+
+    x = frame_indices
+
     # Compute the Segments for the last stripe with a tolerance of 0.15
     last_stripe = plots_dict[2]
 
@@ -137,7 +138,7 @@ def plot_histogram_distances():
 
 
     # @todo(Stephan):
-    # Use the real bounds here and test if we then can apply this to a whole segment correctly 
+    # Use the real bounds here and test if we then can apply this to a whole segment correctly
 
     fake_bounds = zip(range(len(last_stripe)), range(len(last_stripe)))
     averaged_boundaries = get_histogram_boundary_for_segment(segments[0], fake_bounds)
@@ -146,17 +147,17 @@ def plot_histogram_distances():
     # for i in sorted(plots_dict.keys()):
     #     if i == 0:
     #         plt.title('Histgoram distance for each stripe')
-        
+
     #     plt.subplot(N_stripes+1, 1, i+1)#, sharex=True)
     #     plt.plot(x, plots_dict[i], aa=False, linewidth=1)
-        
+
     #     #lines.set_linewidth(1)
     #     plt.ylabel('Stripe %d' % i)
-    
-    # plt.xlabel('frame #')    
-    
+
+    # plt.xlabel('frame #')
+
     # plt.savefig(os.path.join(os.getcwd(), 'histogram_distance.png'))
-        
+
 
 os.chdir('../')
 plot_histogram_distances()
