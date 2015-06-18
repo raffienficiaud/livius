@@ -1,7 +1,7 @@
 # Import Basic modules
 
 import numpy as np
-import os 
+import os
 
 # Import everything needed to edit video clips
 from moviepy.editor import *
@@ -21,7 +21,7 @@ import cv2
 class PostProcessor():
     """The PostProcessor takes care of enhancing the slide images.
 
-       The main functionality is in the __call__ method, where the 
+       The main functionality is in the get_post_processed_slide_clip method, where the
        transformations are executed.
     """
     def __init__(self, histogram_differences):
@@ -29,12 +29,11 @@ class PostProcessor():
         self.histogram_bounds = []
         self.frame_count = 0
 
-    def __call__(self, clip, slide_coordinates, desiredScreenLayout=(1280,960)):
+    def get_post_processed_slide_clip(self, clip, slide_coordinates, desiredScreenLayout=(1280,960)):
         """Computes the images of the slides and does contrast enhancement.
 
-
            This function first crops the slides from the given coordinates and warps them into perspective.
-           
+
            Then we compute segments of the video according to the histogram_differences. For each of these
            segments, we compute the bounds for the contrast enhancement by averaging over all min/max values
            of all histograms contained in the segment.
@@ -42,25 +41,29 @@ class PostProcessor():
            it is located in.
         """
         if clip.fps is None:
-            raise 
+            raise
+
+        print "Incoming Clip size", clip.size
 
         self.fps = clip.fps
 
-        # Warp pass        
+        # Warp slides into perspective
         self.clip = self.transformation3D(clip, slide_coordinates, desiredScreenLayout)
 
-        # Histogram pass, compute bounds for the histograms of the slide images every second
-        self.analyse_histograms()
+        # # Histogram pass, compute bounds for the histograms of the slide images every second
+        # self.compute_histogram_bounds(interval_in_seconds=1)
 
-        print len(self.histogram_differences)
-        print len(self.histogram_bounds)
+        # print len(self.histogram_differences)
+        # print len(self.histogram_bounds)
 
-        # Compute segments according to the histogram differences
-        self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.05, min_segment_length_in_seconds=5)
-        self.segment_histogram_boundaries = map(self.get_histogram_boundaries_for_segment, self.segments)
+        # # Compute segments according to the histogram differences
+        # self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.05, min_segment_length_in_seconds=5)
+        # self.segment_histogram_boundaries = map(self.get_histogram_boundaries_for_segment, self.segments)
 
-        # Apply the contrast enhancement
-        return self.clip.fl(self.contrast_enhancement)
+        # # Apply the contrast enhancement
+        # return self.clip.fl(self.contrast_enhancement)
+
+        return self.clip
 
     def contrast_enhancement(self, get_frame, t):
         """Performs contrast enhancement by putting the colors into their full range."""
@@ -93,13 +96,13 @@ class PostProcessor():
            If this frame is inside a known segment, we already have computed the
            boundaries for it.
 
-           If it is _not_ inside a known segment, we interpolate linearly between the 
+           If it is _not_ inside a known segment, we interpolate linearly between the
            two segments it is located.
         """
 
         def linear_interpolation(x, x0, x1, y0, y1):
             """Lerps x between the two points (x0, y0) and (x1, y1)"""
-            # @todo(Stephan): 
+            # @todo(Stephan):
             # Do these in float?
             return y0 + (y1 - y0) * ((x - x0) / (x1 - x0))
 
@@ -117,25 +120,39 @@ class PostProcessor():
                 return self.segment_histogram_boundaries[segment_index]
 
             elif (frame_index < start):
-                # We are between two segments and thus have to interpolate 
+                # We are between two segments and thus have to interpolate
                 x0 = self.segments[segment_index - 1][1]   # End of last segment
                 x1 = self.segments[segment_index][0]       # Start of new segment
 
                 min0, max0 = self.segment_histogram_boundaries[segment_index - 1]
                 min1, max1 = self.segment_histogram_boundaries[segment_index]
 
-                lerped_min = linear_interpolation(frame_index, end0, start1, min0, min1) 
-                lerped_max = linear_interpolation(frame_index, end0, start1, max0, max1) 
+                lerped_min = linear_interpolation(frame_index, end0, start1, min0, min1)
+                lerped_max = linear_interpolation(frame_index, end0, start1, max0, max1)
 
                 return (lerped_min, lerped_max)
 
             segment_index = segment_index + 1
 
-    def analyse_histograms(self):
+    def compute_histogram_bounds(self, interval_in_seconds=1):
+        """Computes the histogram bounds of every interval_in_seconds of the current clip.
+
+           Uses the 1- and 99-percentile as the approximated min/max bounds for the grayscale histogram.
+        """
+        interval_in_frames = interval_in_seconds * self.fps
+
+        # iter_frames should return the already warped slide images
         for frame in self.clip.iter_frames():
-        # Compute Histogram on slide every second
-            if (self.fps is not None) and (self.frame_count % self.fps == 0):
+            if (self.frame_count % interval_in_frames) == 0:
                 self.frame_count = 0
+
+                print "Frame shape when itering for histogram bounds:", frame.shape
+
+                # fig = figure()
+
+                # plt.imshow(frame)
+                # plt.title("Original Frame")
+                # plt.show()
 
                 # Histogram for grayscale picture
                 grayscale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY);
@@ -144,14 +161,12 @@ class PostProcessor():
                 hist_gray = cv2.normalize(hist_gray)
                 # Get Histogram boundaries
                 bounds = PostProcessor.get_min_max_boundaries_for_normalized_histogram(hist_gray)
-                self.histogram_bounds.append(bounds)   
+                self.histogram_bounds.append(bounds)
 
             self.frame_count = self.frame_count + 1
 
-
-
     def perspective_transformation2D(self, img, coordinates, desiredScreenLayout=(1280,960)):
-        """Cuts out the slides from the video and warps them into perspective. 
+        """Cuts out the slides from the video and warps them into perspective.
            Computes a histogram of the slides every second of the Clip.
         """
         # Extract Slides
@@ -178,10 +193,10 @@ class PostProcessor():
            new segment.
 
            If there is a region with many small spikes we assume that we cannot apply
-           any contrast enhancement / color correction (or apply a conservative default one). 
+           any contrast enhancement / color correction (or apply a conservative default one).
 
            Returns a list of tuples marking the beginning and end of each segment
-        """ 
+        """
         segments = []
         segment_start = 0
         frame_index = 0
@@ -213,7 +228,7 @@ class PostProcessor():
             while (i < end) and (self.histogram_differences[i] < lower_bounds):
                 i = i + 1
                 frame_index = frame_index + frames_per_histogram_entry
-            
+
             # The new segment starts as soon as we are over the boundary again
             segment_start = frame_index
 
@@ -224,11 +239,11 @@ class PostProcessor():
         """Gets the 1- and 99-percentile as an approximation of the boundaries
            of the histogram.
 
-           Note: 
+           Note:
             The Histogram is expected to be normalized
 
            Returns both the min and the max value for the histogram
-        """    
+        """
         t_min = 0
         t_max = 255
 
@@ -249,7 +264,7 @@ class PostProcessor():
 # def get_histograms(clip):
 #     hist_dir = os.path.join(os.getcwd(), 'histograms')
 
-#     if not os.path.exists(hist_dir):    
+#     if not os.path.exists(hist_dir):
 #         os.makedirs(hist_dir)
 
 #     fps = clip.fps
@@ -281,7 +296,7 @@ class PostProcessor():
 #             min_red, max_red = get_min_max_boundaries_for_normalized_histogram(hist_red)
 
 #             min_val = min(min_blue, min_green, min_red)
-#             max_val = max(max_blue, max_green, max_red) 
+#             max_val = max(max_blue, max_green, max_red)
 
 #             print "Min Frame :", frame[:,:,0].min()
 #             print "Min Frame :", frame[:,:,1].min()
@@ -316,10 +331,10 @@ class PostProcessor():
 #             fig = figure()
 
 #             fig.add_subplot(3,1,1)
-#             plt.imshow(frame)     
-#             plt.title("Original Frame")       
+#             plt.imshow(frame)
+#             plt.title("Original Frame")
 
-#             fig.add_subplot(3,1,2)            
+#             fig.add_subplot(3,1,2)
 #             plt.imshow(compare)
 #             plt.title("Color correction using the 1 and 99 percentile of the grayscale histogram")
 
@@ -328,15 +343,15 @@ class PostProcessor():
 #             plt.title("Color correction using min and max of all color channel percentile boundaries")
 
 
-#             plt.show()            
+#             plt.show()
 #             # cv2.destroyAllWindows()
 
 #             # framecorrected = 255.0 * (frame.astype(float32) - min_val) / (max_val - min_val)
 #             # framecorrected = np.empty(frame.shape, dtype=float32)
-#             # framecorrected[:,:,red] = 255.0 * (np.maximum(frame[:,:,red].astype(float32) - min_red, np.zeros(frame.shape[:2]))) / (max_red - min_red)   
+#             # framecorrected[:,:,red] = 255.0 * (np.maximum(frame[:,:,red].astype(float32) - min_red, np.zeros(frame.shape[:2]))) / (max_red - min_red)
 #             # framecorrected[:,:,green] = 255.0 * (np.maximum(frame[:,:,green].astype(float32) - min_green, np.zeros(frame.shape[:2]))) / (max_green - min_green)
 #             # framecorrected[:,:,blue] = 255.0 * (np.maximum(frame[:,:,blue].astype(float32) - min_blue, np.zeros(frame.shape[:2]))) / (max_blue - min_blue)
-            
+
 
 
 #             # Save Histogram for each color channel
