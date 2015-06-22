@@ -180,7 +180,7 @@ class PostProcessor():
 
         # We are behind the last computed segment, since we have no end value to
         # interpolate, we just return the bounds of the last computed segment
-        return self.segments[-1]
+        return self.segment_histogram_boundaries[-1]
 
     def compute_histogram_bounds(self, interval_in_seconds=1.0):
         """Computes the histogram bounds of every interval_in_seconds of the current clip.
