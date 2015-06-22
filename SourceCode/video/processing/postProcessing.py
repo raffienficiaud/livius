@@ -54,7 +54,7 @@ class PostProcessor():
         self.compute_histogram_bounds(interval_in_seconds=1)
 
         # Compute segments according to the histogram differences
-        self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.05, min_segment_length_in_seconds=2)
+        self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.09, min_segment_length_in_seconds=2)
 
         self.segment_histogram_boundaries = map(self.get_histogram_boundaries_for_segment, self.segments)
 
@@ -139,9 +139,7 @@ class PostProcessor():
 
         def linear_interpolation(x, x0, x1, y0, y1):
             """Lerps x between the two points (x0, y0) and (x1, y1)"""
-            # @todo(Stephan):
-            # Do these in float?
-            return y0 + (y1 - y0) * ((x - x0) / (x1 - x0))
+            return y0 + float(y1 - y0) * (float(x - x0) / float(x1 - x0))
 
         frame_index = int(t * self.fps)
         segment_index = 0
@@ -184,13 +182,11 @@ class PostProcessor():
         # interpolate, we just return the bounds of the last computed segment
         return self.segments[-1]
 
-    def compute_histogram_bounds(self, interval_in_seconds=1):
+    def compute_histogram_bounds(self, interval_in_seconds=1.0):
         """Computes the histogram bounds of every interval_in_seconds of the current clip.
 
            Uses the 1- and 99-percentile as the approximated min/max bounds for the grayscale histogram.
         """
-        interval_in_frames = interval_in_seconds * self.fps
-
         # @todo(Stephan): Remove this once we get the histogram differences passed
         self.histogram_differences = []
         last_histogram = None
@@ -202,6 +198,8 @@ class PostProcessor():
         # on the warped (and resized) images.
         #
         # Maybe resize the image before computing the histogram? What's the performance tradeoff there?
+
+        # for t in np.linspace(start=0, stop=self.clip.duration, num=self.clip.duration / interval_in_seconds):
         for t in xrange(int(self.clip.duration) + 1):
 
             frame = self.clip.get_frame(t)
@@ -258,7 +256,7 @@ class PostProcessor():
                 frame_index += frames_per_histogram_differences_entry
 
             # Append segment if it is big enough
-            if (frame_index - segment_start) > min_segment_length_in_frames:
+            if (frame_index - segment_start) >= min_segment_length_in_frames:
                 segments.append((segment_start, frame_index))
 
             # Skip the elements below the boundary

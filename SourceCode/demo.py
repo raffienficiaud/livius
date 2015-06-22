@@ -220,7 +220,20 @@ slideClip = postProcessor.get_post_processed_slide_clip(video, slideCoordinates,
 
 nameToSaveFile = baseName +  'output_contrast_enhanced'
 
-slideClip.write_videofile(nameToSaveFile + '.mp4')
+
+
+# slideClip.write_videofile(nameToSaveFile + '.mp4')
+
+slideClip.save_frame(baseName + "0.png", t=0)
+slideClip.save_frame(baseName + "1.png", t=0.5)
+slideClip.save_frame(baseName + "2.png", t=1)
+slideClip.save_frame(baseName + "3.png", t=1.5)
+slideClip.save_frame(baseName + "4.png", t=2)
+slideClip.save_frame(baseName + "5.png", t=2.5)
+slideClip.save_frame(baseName + "6.png", t=3)
+slideClip.save_frame(baseName + "7.png", t=3.5)
+slideClip.save_frame(baseName + "8.png", t=4)
+
 
 # call "createFinalVideo" method from "layout.py" module in editing package to form the final layout
 # and concatenate all required information and files together.
