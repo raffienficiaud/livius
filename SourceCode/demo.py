@@ -139,7 +139,7 @@ if instituteInfo is None:
 
 
 #--------------------------------------------------------------------
-# Prossesing the video for slide detection
+# Processing the video for slide detection
 #--------------------------------------------------------------------
 
 # Getting a frame to pop-up in t = timeFrame, if timeFrame is not specified, it pops up the first frame
@@ -173,16 +173,7 @@ slideCoordinates = np.loadtxt(saveNameSlide, dtype=float32)
 
 
 #--------------------------------------------------------------------
-# Post-Prossesing the video for slide detection and stream writing
-#--------------------------------------------------------------------
-
-# Call "transformation3D" from postProcesing module for perspective transformation
-# video.fx and fl_image are predefined moviepy functions to do that "streaming". \
-# you only have one frame at once in the RAM.
-# slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
-
-#--------------------------------------------------------------------
-# Prossing the video for speaker tracking
+# Processing the video for speaker tracking
 #--------------------------------------------------------------------
 
 # # Create an object from "CMT_algorithm_kalman_filter" class for speaker tracking
@@ -196,33 +187,49 @@ slideCoordinates = np.loadtxt(saveNameSlide, dtype=float32)
 speakerClip = None
 
 #--------------------------------------------------------------------
-# Prossing the audio file
+# Processing the audio file
 #--------------------------------------------------------------------
 
 
+#--------------------------------------------------------------------
+# Post-Processing the video for slide detection and stream writing
+#--------------------------------------------------------------------
+
+
+# @todo(Stephan): Hardcoded for video7 right now
+histogram_correlations = [0.9993370923799508, 0.9982369732081567, 0.8274766510760692, 0.9981254542217526, 0.9992443868217512, 0.9985528938092855, 0.998755704784441,
+                          0.9993968772316724, 0.9994575939439109, 0.9984760901017141, 0.9986031857817385, 0.9992463331766867, 0.9970439821096971, 0.9990769486372814,
+                          0.9976950561842186, 0.9992922369022539, 0.999493045787124, 0.999250076595509, 0.9996035924607937, 0.9995645644267759, 0.9987091577872489,
+                          0.9993047353415527, 0.9958824028190917, 0.9985588212562849, 0.9990434612642667, 0.9995674628568643, 0.999332696860954, 0.9993063000315259,
+                          0.9996031383099585, 0.9996189405773498, 0.9970453030880848, 0.9993458870019144, 0.9996109306985971, 0.9995837493216747, 0.9994109553248358,
+                          0.9997380311868116, 0.9994452559290463, 0.999415374735256, 0.9954753347159024, 0.9980777929872854, 0.9997567302409215, 0.9989969156562254,
+                          0.9991770096161414, 0.9996354970207004, 0.9994027625371246, 0.9995877709046798, 0.9997053844431577, 0.996627344649838, 0.9995042727242337,
+                          0.9997210334216253, 0.9994610828491993, 0.999299613618139, 0.9996237620046838, 0.9995857091278242, 0.9996933577290982, 0.9958667032476024,
+                          0.999344900375841, 0.9996040773234843, 0.9997683631294824, 0.9996325223289707]
+
+histogram_boundaries = [(52, 143), (52, 143), (52, 143), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136),
+                        (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (51, 136), (52, 136), (52, 136),
+                        (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136),
+                        (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136),
+                        (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (52, 136), (51, 136), (51, 136),
+                        (51, 136), (51, 136), (51, 136), (51, 136), (52, 136), (51, 136), (52, 136), (52, 136),
+                        (51, 136), (51, 136), (51, 136), (51, 136), (51, 136), (51, 136), (51, 136), (51, 136),
+                        (51, 136), (51, 136), (51, 136), (51, 136), (51, 136)]
+
+desiredScreenLayout = (1280, 960)
+
+postProcessor = PostProcessor(video, slideCoordinates, desiredScreenLayout, histogram_correlations, histogram_boundaries)
+
+slideClip = postProcessor.process()
 
 #--------------------------------------------------------------------
 # editing the video and audio and forming the final layout
 #--------------------------------------------------------------------
-histogram_differences = None
-postProcessor = PostProcessor(histogram_differences)
-slideClip = postProcessor.get_post_processed_slide_clip(video, slideCoordinates, (1280, 960))
-
-
-# slideClip = video.fx(transformation3D, slideCoordinates ,(1280, 960))
-
-
-#--------------------------------------------------------------------
-# retrieving a histogram of the slideClip every second and save it
-#--------------------------------------------------------------------
-# get_histograms(slideClip)
-
-
 nameToSaveFile = baseName +  'output_contrast_enhanced'
 
 
 
-# slideClip.write_videofile(nameToSaveFile + '.mp4')
+slideClip.write_videofile(nameToSaveFile + '.mp4')
 
 slideClip.save_frame(baseName + "0.png", t=0)
 slideClip.save_frame(baseName + "1.png", t=0.5)
