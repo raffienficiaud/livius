@@ -23,17 +23,16 @@ class VideoAnalysis:
     """Retrieves information about the Video such as histogram_differences, histogram_boundaries."""
 
     def get_histogram_information(self, video, coordinates):
-
-
-
-        return histogram_differences, histogram_boundaries
+        # @todo(Stephan):
+        # Should this be the lab/gray difference and stripe computation as for the speaker tracker?
+        # Probably put this into it's own file.
+        pass
 
 
 class PostProcessor:
     """Chains all PostProcessing effects together."""
 
     def __init__(self, clip, slide_coordinates, desiredScreenLayout, histogram_correlations, histogram_boundaries):
-        # @todo(Stephan): retrieve coordinates, layout, and correlations
         self.clip = clip
         self.warp = Warper(slide_coordinates, desiredScreenLayout)
         self.enhance_contrast = ContrastEnhancer(histogram_correlations, histogram_boundaries)
@@ -61,8 +60,11 @@ class Warper:
         """Cuts out the slides from the video and warps them into perspective.
         """
         # Extract Slides
-        slideShow = np.array([[0,0],[self.desiredScreenLayout[0]-1,0],[self.desiredScreenLayout[0]-1,self.desiredScreenLayout[1]-1],\
-                            [0,self.desiredScreenLayout[1]-1]],np.float32)
+        slideShow = np.array([[0,0],
+                              [self.desiredScreenLayout[0]-1, 0],
+                              [self.desiredScreenLayout[0]-1, self.desiredScreenLayout[1]-1],
+                              [0,self.desiredScreenLayout[1]-1]],
+                             np.float32)
         retval = cv2.getPerspectiveTransform(self.slide_coordinates, slideShow)
         warp = cv2.warpPerspective(image, retval, self.desiredScreenLayout)
 
@@ -114,7 +116,7 @@ class ContrastEnhancer:
 
         for (start,end) in self.segments:
 
-            if (t >= start) and (t <= end):
+            if (start <= t) and (t <= end):
                 # We are inside a segment and thus know the boundaries
                 return self.segment_histogram_boundaries[segment_index]
 
@@ -210,99 +212,6 @@ class ContrastEnhancer:
 
         return (min_max_sum[0] / n_histograms, min_max_sum[1] / n_histograms)
 
-
-
-
-# class PostProcessor():
-#     """The PostProcessor takes care of enhancing the slide images.
-
-#        The main functionality is in the get_post_processed_slide_clip method, where the
-#        transformations are executed.
-#     """
-#     def __init__(self, histogram_differences):
-#         self.histogram_differences = histogram_differences
-#         self.histogram_bounds = []
-
-#     def get_post_processed_slide_clip(self, clip, slide_coordinates, desiredScreenLayout=(1280,960)):
-#         """Computes the images of the slides and does contrast enhancement.
-
-#            This function first crops the slides from the given coordinates and warps them into perspective.
-
-#            Then we compute segments of the video according to the histogram_differences. For each of these
-#            segments, we compute the bounds for the contrast enhancement by averaging over all min/max values
-#            of all histograms contained in the segment.
-#            If a frame is not contained in a segment, we interpolate the min/max values between the two segments,
-#            it is located in.
-#         """
-
-#         # @todo(Stephan): Handle missing fps data.
-#         if clip.fps is None:
-#             raise
-
-#         self.fps = clip.fps
-
-#         # Warp slides into perspective
-#         self.clip = self.transformation3D(clip, slide_coordinates, desiredScreenLayout)
-
-#         # Histogram pass, compute bounds for the histograms of the slide images every second
-#         self.compute_histogram_bounds(interval_in_seconds=1)
-
-#         # Compute segments according to the histogram differences
-#         self.segments = self.get_video_segments_from_histogram_diffs(tolerance=0.09, min_segment_length_in_seconds=2)
-
-#         self.segment_histogram_boundaries = map(self.get_histogram_boundaries_for_segment, self.segments)
-
-#         debug = True
-#         if debug:
-#             print clip.duration
-#             print "Incoming Clip size", clip.size
-#             print "Nr of Histogram Differences:", len(self.histogram_differences)
-#             print "Histogram Differences:", self.histogram_differences
-
-#             print "Nr of Histogram Bounds:", len(self.histogram_bounds)
-#             print "Histogram Bounds:", self.histogram_bounds
-
-#             print "Nr of Computed Segments:", len(self.segments)
-#             print "Computed Segments:", self.segments
-
-#             print "Nr of Histogram Boundaries for the Segments:",len(self.segment_histogram_boundaries)
-#             print "Histogram Boundaries for the Segments", self.segment_histogram_boundaries
-
-#         # Apply the contrast enhancement
-#         return self.clip.fl(self.contrast_enhancement)
-
-    # def perspective_transformation2D(self, img, coordinates, desiredScreenLayout=(1280,960)):
-    #     """Cuts out the slides from the video and warps them into perspective.
-    #     """
-    #     # Extract Slides
-    #     slideShow = np.array([[0,0],[desiredScreenLayout[0]-1,0],[desiredScreenLayout[0]-1,desiredScreenLayout[1]-1],\
-    #                         [0,desiredScreenLayout[1]-1]],np.float32)
-    #     retval = cv2.getPerspectiveTransform(coordinates,slideShow)
-    #     warp = cv2.warpPerspective(img,retval,desiredScreenLayout)
-
-    #     # Return slide image
-    #     return warp
-
-    # def transformation3D(self, clip, coordinates, desiredScreenLayout=(1280,960)):
-    #     """Applies the slide transformation to every frame"""
-    #     def new_tranformation(frame):
-    #         return self.perspective_transformation2D(frame, coordinates, desiredScreenLayout)
-
-    #     return clip.fl_image(new_tranformation)
-
-#     def contrast_enhancement(self, get_frame, t):
-#         """Performs contrast enhancement by putting the colors into their full range."""
-#         frame = get_frame(t)
-
-#         # Retrieve histogram boundaries for this frame
-#         min_val, max_val = self.get_histogram_boundaries_at_time(t)
-
-#         # Perform the contrast enhancement
-#         framecorrected = 255.0 * (np.maximum(frame.astype(float32) - min_val, 0)) / (max_val - min_val)
-#         framecorrected = np.minimum(framecorrected, 255.0)
-#         framecorrected = framecorrected.astype(uint8)
-
-#         return framecorrected
 
 
 #     def compute_histogram_bounds(self, interval_in_seconds=1.0):
