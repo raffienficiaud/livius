@@ -165,7 +165,6 @@ class ContrastEnhancer:
 
         # @todo(Stephan):
         # This information should probably be passed together with the histogram differences
-
         # frames_per_histogram_differences_entry = 30
         seconds_per_correlation_entry = 1
 

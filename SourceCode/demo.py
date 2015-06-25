@@ -227,10 +227,10 @@ slideClip = postProcessor.process()
 #--------------------------------------------------------------------
 nameToSaveFile = baseName +  'output_contrast_enhanced'
 
-
-
+# Write slideclip to disk
 slideClip.write_videofile(nameToSaveFile + '.mp4')
 
+# Just write individual frames for testing
 slideClip.save_frame(baseName + "0.png", t=0)
 slideClip.save_frame(baseName + "1.png", t=0.5)
 slideClip.save_frame(baseName + "2.png", t=1)
