@@ -339,7 +339,7 @@ def read_histogram_correlations_and_boundaries_from_json_file(filepath, slide_st
 
     # N_stripes = max(histogram_correlations_dict.keys())
 
-    return histogram_correlations_dict[slide_stripe], histogram_boundaries_dict[slide_stripe]
+    return histogram_correlations_dict[slide_stripe], histogram_boundaries_dict[slide_stripe], frame_indices
 
 
 class CallbacksPoints:

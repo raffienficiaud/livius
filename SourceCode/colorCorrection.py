@@ -5,10 +5,10 @@ import os
 import cv2
 import json
 
+from util.tools import *
+
 import matplotlib.pyplot as plt
 
-os.chdir('Example Data')
-os.chdir('histograms')
 
 # # Setup arrays
 # hist_diffs_blue = np.empty(59)
@@ -93,72 +93,63 @@ def get_video_segments_from_histogram_correlations(histogram_correlations, toler
 
         return segments
 
-def get_histogram_boundary_for_segment(segment, hist_bounds):
-    """Returns the averaged histogram boundary for a complete segment"""
+def get_histogram_boundaries_for_segment(histogram_boundaries, segment):
+    """Returns the histogram boundaries for a whole segment by taking
+       the average of each histogram contained in this segment."""
     start, end = segment
 
-    sliced = hist_bounds[start:end]
-    n_hists = len(sliced)
+    histogram_bounds_in_segment = histogram_boundaries[int(start):int(end)]
+    n_histograms = len(histogram_bounds_in_segment)
 
-    summed = map(sum, zip(*sliced))
+    min_max_sum = map(sum, zip(*histogram_bounds_in_segment))
 
-    return summed[0] / n_hists, summed[1] / n_hists
+    return (min_max_sum[0] / n_histograms, min_max_sum[1] / n_histograms)
+
 
 def plot_histogram_distances():
-    """Reads back the sequence of histograms and plots the distance between two consecutive histograms over time"""
-
-    with open('video7.json') as f:
-        distances_histogram = json.load(f)
-
-    frame_indices = [(i, int(i)) for i in distances_histogram.keys()]
-    frame_indices.sort(key=lambda x: x[1])
-
-    plots_dict = {}
-    for count, count_integer in frame_indices:
-        current_sample = distances_histogram[count]['dist_stripes']
-        for i in current_sample.keys():
-
-            if not plots_dict.has_key(int(i)):
-                plots_dict[int(i)] = []
-
-            plots_dict[int(i)].append(float(current_sample[i]))
-
-    N_stripes = max(plots_dict.keys())
-
-    from matplotlib import pyplot as plt
+    corr, boundaries, frame_ids = read_histogram_correlations_and_boundaries_from_json_file(os.path.join('Example Data', 'video7_cropped_stripe.json'))
 
 
+    from video.processing.postProcessing import ContrastEnhancer
 
-    x = frame_indices
+    contrast_enhancer = ContrastEnhancer(corr, boundaries)
 
-    # Compute the Segments for the last stripe with a tolerance of 0.15
-    last_stripe = plots_dict[0]
+    segments =  contrast_enhancer.segments
+    segment_boundaries = contrast_enhancer.segment_histogram_boundaries
 
-    segments = get_video_segments_from_histogram_correlations(last_stripe, tolerance=0.09, min_segment_length_in_seconds=2)
-    print "Segmented Video into: ", segments
+    X = frame_ids
+
+    plt.figure()
+
+    plt.subplot(3,1,1)
+    plt.plot(X, corr, 'r')
+    plt.ylim([0,1])
+    for (start, end) in segments:
+        plt.plot(X[int(start):int(end)], corr[int(start):int(end)], 'g')
+
+    plt.subplot(3,1,2)
+    plt.ylim([40, 50])
+    for x in X:
+
+        t = float(x[1]) / 30.0
+
+        min_val, max_val = contrast_enhancer.get_histogram_boundaries_at_time(t)
+
+        print min_val, max_val
+
+        plt.plot(x[1], min_val, 'b')
+
+    plt.subplot(3,1,3)
+    plt.ylim([135,145])
+    for x in frame_ids:
+        t = float(x[1]) / 30.0
+
+        min_val, max_val = contrast_enhancer.get_histogram_boundaries_at_time(t)
+        plt.plot(x[1], max_val, 'g', linewidth=1)
 
 
-    # @todo(Stephan):
-    # Use the real bounds here and test if we then can apply this to a whole segment correctly
 
-    # fake_bounds = zip(range(len(last_stripe)), range(len(last_stripe)))
-    # averaged_boundaries = get_histogram_boundary_for_segment(segments[0], fake_bounds)
-    # print "Average Boundaries for fake bounds: ", averaged_boundaries
-
-    for i in sorted(plots_dict.keys()):
-        if i == 0:
-            plt.title('Histgoram distance for each stripe')
-
-        plt.subplot(N_stripes+1, 1, i+1)#, sharex=True)
-        plt.plot(x, plots_dict[i], aa=False, linewidth=1)
-
-        #lines.set_linewidth(1)
-        plt.ylabel('Stripe %d' % i)
-
-    plt.xlabel('frame #')
-
-    plt.savefig(os.path.join(os.getcwd(), 'histogram_distance.png'))
+    plt.show()
 
 
-os.chdir('../')
 plot_histogram_distances()

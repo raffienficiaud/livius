@@ -196,7 +196,7 @@ speakerClip = None
 #--------------------------------------------------------------------
 
 
-histogram_correlations, histogram_boundaries = read_histogram_correlations_and_boundaries_from_json_file('Example Data/video7.json', slide_stripe=0)
+histogram_correlations, histogram_boundaries = read_histogram_correlations_and_boundaries_from_json_file('Example Data/video7_full_stripe.json', slide_stripe=0)
 
 
 # @todo(Stephan): Hardcoded for video7 right now
