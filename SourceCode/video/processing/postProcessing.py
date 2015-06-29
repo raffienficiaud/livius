@@ -79,6 +79,9 @@ class ContrastEnhancer:
         histogram_boundaries_for_segment = lambda segment: self.get_histogram_boundaries_for_segment(histogram_boundaries, segment)
         self.segment_histogram_boundaries = map(histogram_boundaries_for_segment, self.segments)
 
+        print self.segments
+        print self.segment_histogram_boundaries
+
 
     def __call__(self, image, t):
         """Performs contrast enhancement by putting the colors into their full range."""
