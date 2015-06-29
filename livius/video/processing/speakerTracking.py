@@ -1294,27 +1294,31 @@ class DummyTracker(object):
                 current_plane = im_diff_lab[location[0]:location[1], :]
                 #print current_plane.min(), current_plane.max()
 
-                original_frame_stripe = gray[location[0]:location[1],:]
-
-                original_frame_stripe = original_frame_stripe[10:110, 200:410]
-
                 hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
 
+
+                # Looking at the histograms of the stripes
+                original_frame_stripe = gray[location[0]:location[1],:]
+
+                # Crop Slides out of images
+                original_frame_stripe = original_frame_stripe[10:110, 200:410]
+
+                # Get histogram of cropped image
                 new_histogram = cv2.calcHist([original_frame_stripe], [0], None, [256], [0, 256])
+                histograms.append(new_histogram)
 
                 # plot new histogram and the grayscale image
 
-            #     from matplotlib import pyplot as plt
+                from matplotlib import pyplot as plt
 
-            #     plt.subplot(2*N_stripes, 1, 2*i+1)#, sharex=True)
-            #     plt.imshow(original_frame_stripe, cmap = plt.cm.binary_r)
-            #     plt.subplot(2*N_stripes, 1, 2*i+2)
-            #     plt.hist(original_frame_stripe.ravel(),256,[0,256]);
-
-                histograms.append(new_histogram)
+                plt.subplot(2*N_stripes, 1, 2*i+1)#, sharex=True)
+                plt.imshow(original_frame_stripe, cmap = plt.cm.binary_r)
+                plt.subplot(2*N_stripes, 1, 2*i+2)
+                plt.hist(original_frame_stripe.ravel(),256,[0,256]);
 
 
-            # plt.show()
+
+            plt.show()
 
 
             # histogram distance
@@ -1362,7 +1366,6 @@ class DummyTracker(object):
                     element['boundaries'][e] = {}
                     element['boundaries'][e]['min'] = min_val
                     element['boundaries'][e]['max'] = max_val
-
 
 
 
