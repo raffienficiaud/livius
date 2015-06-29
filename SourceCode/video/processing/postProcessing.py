@@ -75,7 +75,7 @@ class Warper:
 class ContrastEnhancer:
     """Callable object for enhancing the contrast of the slides."""
     def __init__(self, histogram_correlations, histogram_boundaries):
-        self.segments = self.get_video_segments_from_histogram_correlations(histogram_correlations, tolerance=0.09, min_segment_length_in_seconds=2)
+        self.segments = self.get_video_segments_from_histogram_correlations(histogram_correlations, tolerance=0.1, min_segment_length_in_seconds=2)
         histogram_boundaries_for_segment = lambda segment: self.get_histogram_boundaries_for_segment(histogram_boundaries, segment)
         self.segment_histogram_boundaries = map(histogram_boundaries_for_segment, self.segments)
 

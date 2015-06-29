@@ -107,10 +107,6 @@ def get_histogram_boundaries_for_segment(histogram_boundaries, segment):
 
 
 def visualize_environment_changes_and_histogram_interpolation():
-    def is_in_segment(x, segment):
-        return segment[0] <= x[1] and x[1] <= segment[1]
-
-
 
     from video.processing.postProcessing import ContrastEnhancer
 
@@ -121,10 +117,16 @@ def visualize_environment_changes_and_histogram_interpolation():
     segments = contrast_enhancer.segments
     segment_boundaries = contrast_enhancer.segment_histogram_boundaries
 
-    def is_not_in_any_segment(x):
-        any(map(lambda seg: not is_in_segment(x, seg), segments))
+
+    def is_in_segment(frame, segment):
+        return segment[0] <= float(frame) / 30.0 and float(frame) / 30.0 <= segment[1]
+
+    def is_not_in_any_segment(frame):
+        return not any(map(lambda seg: is_in_segment(frame, seg), segments))
 
     X = frame_ids
+
+    print X
 
     plt.figure()
 
@@ -136,33 +138,35 @@ def visualize_environment_changes_and_histogram_interpolation():
 
     plt.subplot(3,1,2)
 
-    min_vals = []
-    max_vals = []
+    frames = range(X[0][1], X[-1][1])
 
-    for x in X:
-        t = float(x[1])/30.0
-        min_val, max_val = contrast_enhancer.get_histogram_boundaries_at_time(t)
-        min_vals.append(min_val)
-        max_vals.append(max_val)
+    non_segment_frames = filter(is_not_in_any_segment, frames)
 
-
-
+    min_max = map(contrast_enhancer.get_histogram_boundaries_at_time, frames)
+    min_max = zip(*min_max)
+    min_vals = min_max[0]
+    max_vals = min_max[1]
 
     for (start, end) in segments:
         plt.plot(X[int(start):int(end)], min_vals[int(start):int(end)], 'b')
         plt.plot(X[int(start):int(end)], max_vals[int(start):int(end)], 'g')
 
-    print X
 
-    non_segment_frames = filter(is_not_in_any_segment, X)
-
-    print non_segment_frames
-
-    for x in non_segment_frames:
-        plt.plot(x, min_vals[x], 'bo')
-        plt.plot(x, max_vals[x], 'go')
+    # @todo(Stephan):
+    # Plot the linear interpolation
 
     plt.show()
+
+    # @todo(Stephan):
+    # Plot the start frames of each segment
+
+    # plt.clf()
+
+    # plt.subplot(1,len(segments))
+    # for (start, end) in segments:
+    #     plt.imshow()
+
+    # plt.show()
 
 
 visualize_environment_changes_and_histogram_interpolation()
