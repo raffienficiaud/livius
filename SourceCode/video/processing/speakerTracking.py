@@ -64,7 +64,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # temporary path
-_tmp_path = os.path.join('/media/renficiaud/linux-data/livius/tmp-2')
+_tmp_path = os.path.join('/media/renficiaud/linux-data/livius/tmp-3')
 if not os.path.exists(_tmp_path):
     os.makedirs(_tmp_path)
 
@@ -1312,6 +1312,7 @@ class DummyTracker(object):
             
             # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
             hist_vertical_stripes = []
+            energy_vertical_stripes = []
             N_vertical_stripes = 10
             if self.speaker_bb_height_location is not None:
                 
@@ -1319,6 +1320,7 @@ class DummyTracker(object):
                     location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
                     current_vertical_stripe = im_diff_lab[self.speaker_bb_height_location[0]:self.speaker_bb_height_location[1], location[0]:location[1]]
                     hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
+                    energy_vertical_stripes.append(current_vertical_stripe.sum())
                     pass
                 pass
             
@@ -1341,7 +1343,15 @@ class DummyTracker(object):
                 element['vert_stripes'] = {}
                 for e, h1, h2 in zip(range(N_vertical_stripes), previous_hist_vertical_stripes, hist_vertical_stripes):
                     element['vert_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
-                
+            
+            # "activity" which is the enery in each stripe
+            element = distances_histogram.get(frame_count, {})
+            distances_histogram[frame_count] = element 
+            element['energy_stripes'] = {}
+            element['peak_stripes'] = {}
+            for e, energy, h1 in zip(range(N_vertical_stripes), energy_vertical_stripes, hist_vertical_stripes):
+                element['energy_stripes'][e] = int(energy)
+                element['peak_stripes'][e] = max([i for i, j in enumerate(h1) if j > 0])
                 
                         
             # debug
@@ -1436,8 +1446,8 @@ def plot_histogram_distances():
     
     list_files = glob.glob(os.path.join(_tmp_path, 'info_*.json'))
     list_files.sort()
-    # the last one contains all the necessary information
-    last_file = list_files[-1]
+    # the last one contains all the necessary information, -2 is used for tests while the script is running
+    last_file = list_files[-2]
     
     
     with open(last_file) as f:
@@ -1447,11 +1457,15 @@ def plot_histogram_distances():
     frame_indices.sort(key=lambda x: x[1])
     
     plots_dict = {}
+    plots_dict_index = []
     for count, count_integer in frame_indices:
+        if 'dist_stripes' not in distances_histogram[count]:
+            continue
+        plots_dict_index.append(count_integer)
         current_sample = distances_histogram[count]['dist_stripes']
         for i in current_sample.keys():
             
-            if not plots_dict.has_key(int(i)):
+            if int(i) not in plots_dict:
                 plots_dict[int(i)] = []
                 
             plots_dict[int(i)].append(float(current_sample[i]))
@@ -1460,14 +1474,29 @@ def plot_histogram_distances():
     
     # vertical stripes are the location of the speaker
     plots_dict_vert_stripes = {}
+    plots_dict_vert_stripes_index = []
     for count, count_integer in frame_indices:
+        if 'vert_stripes' not in distances_histogram[count]:
+            continue
+                
+        plots_dict_vert_stripes_index.append(count_integer)
         current_sample = distances_histogram[count]['vert_stripes']
         for i in current_sample.keys():
-            
-            if not plots_dict_vert_stripes.has_key(int(i)):
+            if int(i) not in plots_dict_vert_stripes:
                 plots_dict_vert_stripes[int(i)] = []
                 
             plots_dict_vert_stripes[int(i)].append(float(current_sample[i]))
+
+    plots_dict_vert_stripes_energy = {}
+    plots_dict_vert_stripes_energy_index = []
+    for count, count_integer in frame_indices:
+        current_sample = distances_histogram[count]['energy_stripes']
+        plots_dict_vert_stripes_energy_index.append(count_integer)
+        for i in current_sample.keys():
+            if int(i) not in plots_dict_vert_stripes_energy:
+                plots_dict_vert_stripes_energy[int(i)] = []
+                
+            plots_dict_vert_stripes_energy[int(i)].append(float(current_sample[i]))
 
     N_stripes_vert = max(plots_dict_vert_stripes.keys())
     
@@ -1477,14 +1506,14 @@ def plot_histogram_distances():
     from matplotlib import pyplot as plt
     
     
-    x = frame_indices 
+    
     
     for i in sorted(plots_dict.keys()):
         if i == 0:
             plt.title('Histogram distance for each stripe')
         
         plt.subplot(N_stripes+1, 1, i+1)#, sharex=True)
-        plt.plot(x, plots_dict[i], aa=False, linewidth=1)
+        plt.plot(plots_dict_index, plots_dict[i], aa=False, linewidth=1)
         
         #lines.set_linewidth(1)
         plt.ylabel('Stripe %d' % i)
@@ -1500,7 +1529,7 @@ def plot_histogram_distances():
             plt.title('Histogram distance for each vertical stripe')
         
         plt.subplot(N_stripes_vert+1, 1, i+1)#, sharex=True)
-        plt.plot(x, plots_dict_vert_stripes[i], aa=False, linewidth=1)
+        plt.plot(plots_dict_vert_stripes_index, plots_dict_vert_stripes[i], aa=False, linewidth=1)
         
         #lines.set_linewidth(1)
         plt.ylabel('%d' % i)
@@ -1527,8 +1556,46 @@ def plot_histogram_distances():
                     top='off',
                     labelbottom='on')
     
-    plt.savefig(os.path.join(_tmp_path, 'histogram_vert_distance.png'))
+    plt.savefig(os.path.join(_tmp_path, 'histogram_vert_distance.png'), dpi=(200) )
         
+
+    # plotting the vertical stripes content: energy       
+    for i in sorted(plots_dict_vert_stripes_energy.keys()):
+        if i == N_stripes_vert-1:
+            plt.title('Histogram energy for each vertical stripe')
+        
+        plt.subplot(N_stripes_vert+1, 1, i+1)#, sharex=True)
+        plt.plot(plots_dict_vert_stripes_energy_index, plots_dict_vert_stripes_energy[i], aa=False, linewidth=1)
+        
+        #lines.set_linewidth(1)
+        plt.ylabel('%d' % i)
+
+        plt.tick_params(axis='x',          # changes apply to the x-axis
+                        which='both',      # both major and minor ticks are affected
+                        bottom='off',      # ticks along the bottom edge are off
+                        top='off',         # ticks along the top edge are off
+                        labelbottom='off') # labels along the bottom edge are off
+
+        plt.tick_params(axis='y',
+                        which='both',
+                        left='off',      # ticks along the bottom edge are off
+                        right='off',         # ticks along the top edge are off
+                        top='off',
+                        bottom='off',
+                        labelleft='on')
+        
+    
+    plt.xlabel('frame #')    
+    plt.tick_params(axis='x',
+                    which='both',
+                    bottom='on',
+                    top='off',
+                    labelbottom='on')
+    
+    plt.savefig(os.path.join(_tmp_path, 'histogram_vert_energy.png'), dpi=(200))
+        
+
+
         
 if __name__ == '__main__':
 
