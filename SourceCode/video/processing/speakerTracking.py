@@ -64,7 +64,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # temporary path
-_tmp_path = os.path.join('/media/renficiaud/linux-data/livius/tmp')
+_tmp_path = os.path.join('/media/renficiaud/linux-data/livius/tmp-2')
 if not os.path.exists(_tmp_path):
     os.makedirs(_tmp_path)
 
@@ -1153,11 +1153,19 @@ class BBoxTracker(object):
         self.bboxes.append((timestamp, center, width))
 
 class DummyTracker(object):
+    """A simple implementation of the speacker tracker"""
 
-    def __init__(self, inputPath, resize_max = None, fps = None, skip = None):
+    def __init__(self, 
+                 inputPath, 
+                 resize_max = None, 
+                 fps = None, 
+                 skip = None,
+                 speaker_bb_height_location = None):
         """
+        :param inputPath: input video file or path containing images
         :param resize_max: max size
         :param fps: frame per second in use if the video is a sequence of image files
+        :param speaker_bb_height_location: if given, this will be used as the possible heights at which the speaker should be tracked.
         """
         
         if inputPath is None:
@@ -1170,6 +1178,9 @@ class DummyTracker(object):
         self.tracker = BBoxTracker()
         self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
         self.fgbg = cv2.BackgroundSubtractorMOG()
+        
+        #TODO this location should be in the full frame, or indicated in the range [0,1] 
+        self.speaker_bb_height_location = speaker_bb_height_location
 
 
     def _resize(self, im):
@@ -1188,6 +1199,8 @@ class DummyTracker(object):
         # Clean up
         cv2.destroyAllWindows()
 
+
+        # TODO move this in a function
         # If a path to a file was given, assume it is a single video file
         if os.path.isfile(self.inputPath):
             cap = cv2.VideoCapture(self.inputPath)
@@ -1238,32 +1251,34 @@ class DummyTracker(object):
         logger.info('[TRACKER] Using %s, %s as initial bounding box for the speaker', tl, br)
         measuredTrack=np.zeros((self.numFrames+10,2))-1
            
-        count = 0
+        frame_count = 0
+        # previous histogram 
         previous_hist_plane = None
+        previous_hist_vertical_stripes = None # previous histograms computed vertically for "activity" recognition on the area where the speaker is
         distances_histogram = {}
         
-        while count <= self.numFrames:
+        while frame_count <= self.numFrames:
             
             status = cap.grab()
             if not status:
                 break
             
-            count += 1
-            current_time_stamp = datetime.timedelta(seconds=int(count/float(self.fps))) 
+            frame_count += 1
+            current_time_stamp = datetime.timedelta(seconds=int(frame_count/float(self.fps))) 
             
-            if (self.fps is not None) and (count % self.fps) != 0:
+            if (self.fps is not None) and (frame_count % self.fps) != 0:
                 continue
             
             logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s - %3.3f %%', 
-                         count, 
+                         frame_count, 
                          self.numFrames, 
                          current_time_stamp, 
                          datetime.timedelta(seconds=self.numFrames/self.fps),
-                         100*float(count)/self.numFrames)
+                         100*float(frame_count)/self.numFrames)
             status, im = cap.retrieve()
             
             if not status:
-                logger.error('[VIDEO] error reading frame %d', count)
+                logger.error('[VIDEO] error reading frame %d', frame_count)
             
             # resize and color conversion
             im = self._resize(im)
@@ -1285,73 +1300,95 @@ class DummyTracker(object):
                 hist.append(cv2.calcHist([im_diff], [i], None, [256], [0, 256]))
             
             hist_plane = []
-            # dividing the plane vertically by N=3
+            
+            # this is part of a pre-processing
+            # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
             N_stripes = 3
             for i in range(N_stripes):
                 location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
                 current_plane = im_diff_lab[location[0]:location[1], :]
                 #print current_plane.min(), current_plane.max()
                 hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
+            
+            # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
+            hist_vertical_stripes = []
+            N_vertical_stripes = 10
+            if self.speaker_bb_height_location is not None:
                 
+                for i in range(N_vertical_stripes):
+                    location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
+                    current_vertical_stripe = im_diff_lab[self.speaker_bb_height_location[0]:self.speaker_bb_height_location[1], location[0]:location[1]]
+                    hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
+                    pass
+                pass
             
             # histogram distance
             
             # location of all the connected components
             
             if previous_hist_plane is not None:
-                distances_histogram[count] = {}
-                element = distances_histogram[count]
+                distances_histogram[frame_count] = {}
+                element = distances_histogram[frame_count]
                 #element['timestamp'] = current_time_stamp
                 element['dist_stripes'] = {}
                 for e, h1, h2 in zip(range(N_stripes), previous_hist_plane, hist_plane):
                     element['dist_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
          
-            
+
+            if previous_hist_vertical_stripes is not None:
+                element = distances_histogram.get(frame_count, {})
+                distances_histogram[frame_count] = element 
+                element['vert_stripes'] = {}
+                for e, h1, h2 in zip(range(N_vertical_stripes), previous_hist_vertical_stripes, hist_vertical_stripes):
+                    element['vert_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
+                
+                
                         
             # debug
             if debug:
-                cv2.imwrite(os.path.join(_tmp_path, 'background_%.6d.png' % count), fgmask)
-                cv2.imwrite(os.path.join(_tmp_path, 'diff_%.6d.png' % count), im_diff)
-                cv2.imwrite(os.path.join(_tmp_path, 'diff_lab_%.6d.png' % count), im_diff_lab)
+                cv2.imwrite(os.path.join(_tmp_path, 'background_%.6d.png' % frame_count), fgmask)
+                cv2.imwrite(os.path.join(_tmp_path, 'diff_%.6d.png' % frame_count), im_diff)
+                cv2.imwrite(os.path.join(_tmp_path, 'diff_lab_%.6d.png' % frame_count), im_diff_lab)
                 
-                with open(os.path.join(_tmp_path, 'info_%.6d.json' % count), 'w') as f:
+                with open(os.path.join(_tmp_path, 'info_%.6d.json' % frame_count), 'w') as f:
                     f.write(json.dumps(distances_histogram))
-                #cv2.imwrite(os.path.join(_tmp_path, 'diff_thres_%.6d.png' % count), color_mask)
+                #cv2.imwrite(os.path.join(_tmp_path, 'diff_thres_%.6d.png' % frame_count), color_mask)
             
             
             im0 = im
             im0_lab = im_lab
             im0_gray = im_gray
             
-            if count > 0:
+            if frame_count > 0:
                 previous_hist_plane = hist_plane
+                previous_hist_vertical_stripes = hist_vertical_stripes
             
             continue
             
             
-            print 'frame: {2:4d}, Center: {0:.2f},{1:.2f}'.format(self.CMT.center[0], self.CMT.center[1] , count)
+            print 'frame: {2:4d}, Center: {0:.2f},{1:.2f}'.format(self.CMT.center[0], self.CMT.center[1] , frame_count)
             if not (math.isnan(self.CMT.center[0]) 
                     or math.isnan(self.CMT.center[1])
                     or (self.CMT.center[0] <= 0) 
                     or (self.CMT.center[1] <= 0)):
-                measuredTrack[count,0] = self.CMT.center[0]
-                measuredTrack[count,1] = self.CMT.center[1]
+                measuredTrack[frame_count,0] = self.CMT.center[0]
+                measuredTrack[frame_count,1] = self.CMT.center[1]
             else:
                 # take the previous estimate if none is found in the current frame
-                measuredTrack[count,0] = measuredTrack[count-1,0]
-                measuredTrack[count,1] = measuredTrack[count-1,1]
+                measuredTrack[frame_count,0] = measuredTrack[frame_count-1,0]
+                measuredTrack[frame_count,1] = measuredTrack[frame_count-1,1]
             
             if debug:
-                cmtutil.draw_bounding_box((int(measuredTrack[count,0]-50), int(measuredTrack[count,1]-50)), 
-                                          (int(measuredTrack[count,0]+50), int(measuredTrack[count,1]+50)),
+                cmtutil.draw_bounding_box((int(measuredTrack[frame_count,0]-50), int(measuredTrack[frame_count,1]-50)), 
+                                          (int(measuredTrack[frame_count,0]+50), int(measuredTrack[frame_count,1]+50)),
                                           im_debug)
                 
                 
-                cv2.imwrite(os.path.join(_tmp_path, 'debug_file_%.6d.png' % count), im_debug)
+                cv2.imwrite(os.path.join(_tmp_path, 'debug_file_%.6d.png' % frame_count), im_debug)
                 
                 im_debug  = np.copy(im)
                 cmtutil.draw_keypoints([kp.pt for kp in self.CMT.keypoints_cv], im_debug, (0,0,255))
-                cv2.imwrite(os.path.join(_tmp_path, 'all_keypoints_%.6d.png' % count), im_debug)
+                cv2.imwrite(os.path.join(_tmp_path, 'all_keypoints_%.6d.png' % frame_count), im_debug)
                 
 
                    
@@ -1421,6 +1458,22 @@ def plot_histogram_distances():
 
     N_stripes = max(plots_dict.keys())
     
+    # vertical stripes are the location of the speaker
+    plots_dict_vert_stripes = {}
+    for count, count_integer in frame_indices:
+        current_sample = distances_histogram[count]['vert_stripes']
+        for i in current_sample.keys():
+            
+            if not plots_dict_vert_stripes.has_key(int(i)):
+                plots_dict_vert_stripes[int(i)] = []
+                
+            plots_dict_vert_stripes[int(i)].append(float(current_sample[i]))
+
+    N_stripes_vert = max(plots_dict_vert_stripes.keys())
+    
+    
+    
+    
     from matplotlib import pyplot as plt
     
     
@@ -1428,7 +1481,7 @@ def plot_histogram_distances():
     
     for i in sorted(plots_dict.keys()):
         if i == 0:
-            plt.title('Histgoram distance for each stripe')
+            plt.title('Histogram distance for each stripe')
         
         plt.subplot(N_stripes+1, 1, i+1)#, sharex=True)
         plt.plot(x, plots_dict[i], aa=False, linewidth=1)
@@ -1439,6 +1492,42 @@ def plot_histogram_distances():
     plt.xlabel('frame #')    
     
     plt.savefig(os.path.join(_tmp_path, 'histogram_distance.png'))
+
+
+    # plotting the vertical stripes content        
+    for i in sorted(plots_dict_vert_stripes.keys()):
+        if i == 0:
+            plt.title('Histogram distance for each vertical stripe')
+        
+        plt.subplot(N_stripes_vert+1, 1, i+1)#, sharex=True)
+        plt.plot(x, plots_dict_vert_stripes[i], aa=False, linewidth=1)
+        
+        #lines.set_linewidth(1)
+        plt.ylabel('%d' % i)
+
+        plt.tick_params(axis='x',          # changes apply to the x-axis
+                        which='both',      # both major and minor ticks are affected
+                        bottom='off',      # ticks along the bottom edge are off
+                        top='off',         # ticks along the top edge are off
+                        labelbottom='off') # labels along the bottom edge are off
+
+        plt.tick_params(axis='y',
+                        which='both',
+                        left='off',      # ticks along the bottom edge are off
+                        right='off',         # ticks along the top edge are off
+                        top='off',
+                        bottom='off',
+                        labelleft='on')
+        
+    
+    plt.xlabel('frame #')    
+    plt.tick_params(axis='x',
+                    which='both',
+                    bottom='on',
+                    top='off',
+                    labelbottom='on')
+    
+    plt.savefig(os.path.join(_tmp_path, 'histogram_vert_distance.png'))
         
         
 if __name__ == '__main__':
@@ -1448,14 +1537,13 @@ if __name__ == '__main__':
     
     #plot_histogram_distances()
     #sys.exit(0)
-    
-    #obj = DummyTracker(os.path.join(storage, filename), resize_max=600)   
-    #new_clip = obj.speakerTracker()
+   
+    if 0:
+        obj = DummyTracker(os.path.join(storage, filename), 
+                           resize_max=640, 
+                           speaker_bb_height_location=(155, 260))   
+        new_clip = obj.speakerTracker()
     
     plot_histogram_distances()
     sys.exit(0)
     new_clip.write_videofile("video_CMT_algorithm_kalman_filter.mp4")
-    
-
- 
-
