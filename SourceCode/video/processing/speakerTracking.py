@@ -1509,11 +1509,10 @@ def plot_histogram_distances():
     
     
     for i in sorted(plots_dict.keys()):
-        if i == 0:
-            plt.title('Histogram distance for each stripe')
-        
         plt.subplot(N_stripes+1, 1, i+1)#, sharex=True)
         plt.plot(plots_dict_index, plots_dict[i], aa=False, linewidth=1)
+        if i == 0:
+            plt.title('Histogram distance for each stripe')
         
         #lines.set_linewidth(1)
         plt.ylabel('Stripe %d' % i)
@@ -1525,12 +1524,13 @@ def plot_histogram_distances():
 
     # plotting the vertical stripes content        
     for i in sorted(plots_dict_vert_stripes.keys()):
-        if i == 0:
-            plt.title('Histogram distance for each vertical stripe')
         
         plt.subplot(N_stripes_vert+1, 1, i+1)#, sharex=True)
         plt.plot(plots_dict_vert_stripes_index, plots_dict_vert_stripes[i], aa=False, linewidth=1)
         
+        if i == 0:
+            plt.title('Histogram distance for each vertical stripe')
+
         #lines.set_linewidth(1)
         plt.ylabel('%d' % i)
 
@@ -1561,14 +1561,13 @@ def plot_histogram_distances():
 
     # plotting the vertical stripes content: energy       
     for i in sorted(plots_dict_vert_stripes_energy.keys()):
-        if i == N_stripes_vert-1:
-            plt.title('Histogram energy for each vertical stripe')
         
         plt.subplot(N_stripes_vert+1, 1, i+1)#, sharex=True)
         plt.plot(plots_dict_vert_stripes_energy_index, plots_dict_vert_stripes_energy[i], aa=False, linewidth=1)
+
+        if i == 0:
+            plt.title('Energy for each vertical stripe')
         
-        #lines.set_linewidth(1)
-        plt.ylabel('%d' % i)
 
         plt.tick_params(axis='x',          # changes apply to the x-axis
                         which='both',      # both major and minor ticks are affected
@@ -1584,6 +1583,10 @@ def plot_histogram_distances():
                         bottom='off',
                         labelleft='on')
         
+        #lines.set_linewidth(1)
+        plt.ylabel('%d' % i, fontsize=3)
+        #plt.axis([0, max(plots_dict_vert_stripes_energy[i])])
+
     
     plt.xlabel('frame #')    
     plt.tick_params(axis='x',
