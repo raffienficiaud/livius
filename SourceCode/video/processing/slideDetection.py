@@ -27,7 +27,7 @@ from scipy.ndimage.measurements import label
 import cv2
 from util.tools import *
 from util.templateMatching import templateMatching as tm
-from video.processing.postProcessing import transformation3D
+# from video.processing.postProcessing import transformation3D
 
 
 
@@ -395,7 +395,7 @@ if __name__ == '__main__':
     points = obj.slideDetector()
     print points
     
-    slideClip = main_clip.fx(transformation3D, points ,(1280, 960))
+    # slideClip = main_clip.fx(transformation3D, points ,(1280, 960))
     slideClip.write_videofile("video_test.mp4")
 
     
