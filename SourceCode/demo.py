@@ -175,6 +175,8 @@ slideCoordinates_01 = np.copy(slideCoordinates)
 slideCoordinates_01[:,0] /= video.size[0]
 slideCoordinates_01[:,1] /= video.size[1]
 
+print slideCoordinates_01
+
 #--------------------------------------------------------------------
 # Processing the video for speaker tracking
 #--------------------------------------------------------------------

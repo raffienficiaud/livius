@@ -1176,7 +1176,8 @@ class DummyTracker(object):
         self.inputPath = inputPath     # 'The input path.'
         self.skip = skip               # 'Skip the first n frames.'
 
-        self.slide_coordinates = self._inner_rectangle(slide_coordinates)
+        self.slide_crop_coordinates = self._inner_rectangle(slide_coordinates)
+        print self.slide_crop_coordinates
         self.resize_max = resize_max
         self.tracker = BBoxTracker()
         self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
@@ -1186,22 +1187,32 @@ class DummyTracker(object):
         self.speaker_bb_height_location = speaker_bb_height_location
 
 
-    def _inner_rectangle_(self, coordinates):
+    def _inner_rectangle(self, coordinates):
+        """Get the inner rectangle of the slide coordinates for cropping the image.
 
+           Returns a 4x1 numpy array in the order:
+           [min_y, max_y, min_x, max_x]
+        """
+
+        # This is specified by the rectify_coordinates() function in slideDetection.py
         top_left = 0
         top_right = 1
         bottom_right = 2
         bottom_left = 3
+
+
 
         x = 0
         y = 1
 
         min_x = max(coordinates[top_left, x], coordinates[bottom_left, x])
         max_x = min(coordinates[top_right, x], coordinates[bottom_right, x])
-        min_y = max(coordinates[bottom_left, y], coordinates[bottom_right, y])
-        max_y = min(coordinates[top_left, y], coordinates[top_right, y])
 
-        return np.array([[min_x, max_y], [max_x, max_y], [max_x, min_y], [min_x, min_y]])
+        # y is flipped, so top and bottom are as well
+        min_y = max(coordinates[top_left, y], coordinates[top_right, y])
+        max_y = min(coordinates[bottom_left, y], coordinates[bottom_right, y])
+
+        return np.array([min_y, max_y, min_x, max_x])
 
     def _resize(self, im):
         """Resizes the input image according to the initial parameters"""
@@ -1328,7 +1339,17 @@ class DummyTracker(object):
             for i in range(N_stripes):
                 location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
                 current_plane = im_diff_lab[location[0]:location[1], :]
-                # current_slide_plane = im_diff_lab
+
+                resized_x = im_diff_lab.shape[1]
+                resized_y = im_diff_lab.shape[0]
+
+                print im_diff_lab.shape
+
+                min_y = min(location[0], self.slide_crop_coordinates[0] * resized_y)
+                max_y = max(location[1], self.slide_crop_coordinates[1] * resized_y)
+                min_x = self.slide_crop_coordinates[2] * resized_x
+                max_x = self.slide_crop_coordinates[3] * resized_x
+                current_slide_plane = im_diff_lab[min_y:max_y, min_x:max_x]
                 #print current_plane.min(), current_plane.max()
                 hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
                 # slide_hist_plane.append(cv2.calcHist())
@@ -1625,18 +1646,22 @@ def plot_histogram_distances():
 
 if __name__ == '__main__':
 
-    storage = '/media/renficiaud/linux-data/'
-    filename = 'BlackmagicProductionCamera 4K_1_2015-01-16_1411_C0000.mov'
+    storage = '/home/livius/Code/livius/SourceCode/Example Data'
+    filename = 'video_7.mp4'
 
     #plot_histogram_distances()
     #sys.exit(0)
 
-    if 0:
+    if True:
         obj = DummyTracker(os.path.join(storage, filename),
+                           slide_coordinates=np.array([[ 0.36004776,  0.01330207],
+                                                       [ 0.68053395,  0.03251761],
+                                                       [ 0.67519468,  0.42169076],
+                                                       [ 0.3592881,   0.41536275]]),
                            resize_max=640,
                            speaker_bb_height_location=(155, 260))
-        new_clip = obj.speakerTracker()
+        # new_clip = obj.speakerTracker()
 
-    plot_histogram_distances()
+    # plot_histogram_distances()
     sys.exit(0)
     new_clip.write_videofile("video_CMT_algorithm_kalman_filter.mp4")
