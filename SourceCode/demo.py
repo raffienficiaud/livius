@@ -171,6 +171,9 @@ saveNameSlide = baseName + 'slide_coordinates' + '.txt'
 # Bypassing the User cropping, just loading the slide coordinates from file
 slideCoordinates = np.loadtxt(saveNameSlide, dtype=float32)
 
+slideCoordinates_01 = np.copy(slideCoordinates)
+slideCoordinates_01[:,0] /= video.size[0]
+slideCoordinates_01[:,1] /= video.size[1]
 
 #--------------------------------------------------------------------
 # Processing the video for speaker tracking
