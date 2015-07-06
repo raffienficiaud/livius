@@ -1,6 +1,6 @@
 
 
-"""This file contains the "preparation" function from the video, such as the 
+"""This file contains the "preparation" functions from the video, such as the 
   
   - creation of the thumnail images
   - computation of the min/max/histograms of the appropriate regions in frames
@@ -11,6 +11,30 @@ import os
 import time
 import json
 import subprocess
+
+
+class Preparation(object):
+    
+    name = "dummy_prepare"
+    filename = name + '.json'
+    
+    def __init__(self, *args, **kwargs):
+        
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+    
+    def is_preparation_needed(self):
+        return False
+     
+    def action_video(self, video_filename):
+        """Runs an action on the video file"""
+        pass
+    
+    def action_frame(self, frame, time_frame):
+        """Runs an action on the provided frame"""
+        pass
+
+
 
 def extract_thumbnails(video_file_name, output_width, output_folder):
     """Extracts the thumbnails using FFMpeg.
@@ -29,6 +53,23 @@ def extract_thumbnails(video_file_name, output_width, output_folder):
         return_code = proc.poll()
         
     return
+
+
+class ExtractThumbnails(Preparation):
+    
+    def __init__(self, *args, **kwargs):
+        super(self, ExtractThumbnails).__init__(*args, **kwargs)
+
+
+    def action_video(self, video_file_name):
+        thumbnail_path = os.path.join(os.path.dirname(video_file_name), 'thumbnails')
+        if not os.path.exists(thumbnail_path):
+            os.makedirs(thumbnail_path)
+
+        extract_thumbnails(video_file_name=video_file_name, 
+                           output_width=640, 
+                           output_folder=thumbnail_path)
+
 
 
 
