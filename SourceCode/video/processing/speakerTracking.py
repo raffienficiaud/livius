@@ -1280,7 +1280,7 @@ class DummyTracker(object):
         logger.info('[TRACKER] Using %s, %s as initial bounding box for the speaker', tl, br)
         measuredTrack=np.zeros((self.numFrames+10,2))-1
 
-        frame_count = 0
+        frame_count = -1
         # previous histogram
         previous_hist_plane = None
         previous_hist_vertical_stripes = None # previous histograms computed vertically for "activity" recognition on the area where the speaker is
@@ -1454,9 +1454,8 @@ class DummyTracker(object):
             im0_lab = im_lab
             im0_gray = im_gray
 
-            if frame_count > 0:
-                previous_hist_plane = hist_plane
-                previous_hist_vertical_stripes = hist_vertical_stripes
+            previous_hist_plane = hist_plane
+            previous_hist_vertical_stripes = hist_vertical_stripes
 
             continue
 
