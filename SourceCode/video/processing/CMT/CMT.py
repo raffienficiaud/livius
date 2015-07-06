@@ -220,12 +220,15 @@ class CMT(object):
 
 	def process_frame(self, im_gray):
 
-		tracked_keypoints, _ = util.track(self.im_prev, im_gray, self.active_keypoints)
-		(center, scale_estimate, rotation_estimate, tracked_keypoints) = self.estimate(tracked_keypoints)
+		self.tracked_keypoints, _ = util.track(self.im_prev, im_gray, self.active_keypoints)
+		(center, scale_estimate, rotation_estimate, tracked_keypoints) = self.estimate(self.tracked_keypoints)
 
 		# Detect keypoints, compute descriptors
-		keypoints_cv = self.detector.detect(im_gray) 
-		keypoints_cv, features = self.descriptor.compute(im_gray, keypoints_cv)
+		self.detection = self.detector.detect(im_gray) 
+		keypoints_cv, features = self.descriptor.compute(im_gray, self.detection)
+		
+		#import ipdb
+		#ipdb.set_trace()
 
 		# Create list of active keypoints
 		active_keypoints = zeros((0, 3)) 

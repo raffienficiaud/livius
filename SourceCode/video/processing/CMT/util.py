@@ -12,11 +12,11 @@ class FileVideoCapture(object):
 
 	def isOpened(self):
 		im = cv2.imread(self.path.format(self.frame))
-		return im != None
+		return im is not None
 			
 	def read(self):
 		im = cv2.imread(self.path.format(self.frame))
-		status = im != None
+		status = im is not None
 		if status:
 			self.frame += 1
 		return status, im
@@ -97,7 +97,7 @@ def in_rect(keypoints, tl, br):
 	C3 = x < br[0]
 	C4 = y < br[1]
 
-	result = C1 & C2 & C3 & C4
+	result = np.logical_and(np.logical_and(C1, C2), np.logical_and(C3, C4)) 
 
 	return result
 
@@ -123,6 +123,11 @@ def draw_keypoints(keypoints, im, color=(255, 0, 0)):
 
 		# Draw circle
 		cv2.circle(im, center, radius, color)
+
+def draw_bounding_box(p1, p2, im, color=(255, 0, 0)):
+	"""Draws a bounding box"""
+	
+	cv2.rectangle(im, p1, p2, color, 3)
 
 def track(im_prev, im_gray, keypoints, THR_FB=20):
 	if type(keypoints) is list:

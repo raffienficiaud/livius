@@ -308,7 +308,7 @@ class harrisCornerDetection():
     """
       
     
-    def __init__(self, inputImage, blockSize, kernelSize, k, borderType, thersh, flagShow):       
+    def __init__(self, inputImage, blockSize, kernelSize, k, borderType, thresh, flagShow):       
         self.inputImage = inputImage
         self.blockSize = blockSize
         self.kernelSize = kernelSize 
