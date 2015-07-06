@@ -64,9 +64,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # temporary path
-# _tmp_path = os.path.join('/media/renficiaud/linux-data/livius/tmp-3')
-# if not os.path.exists(_tmp_path):
-#     os.makedirs(_tmp_path)
+_tmp_path = os.path.join('/home/livius/Code/livius/SourceCode/Example Data/tmp')
+if not os.path.exists(_tmp_path):
+    os.makedirs(_tmp_path)
 
 debug = True
 
@@ -1200,8 +1200,6 @@ class DummyTracker(object):
         bottom_right = 2
         bottom_left = 3
 
-
-
         x = 0
         y = 1
 
@@ -1295,7 +1293,8 @@ class DummyTracker(object):
                 break
 
             frame_count += 1
-            current_time_stamp = datetime.timedelta(seconds=int(frame_count/float(self.fps)))
+            time = float(frame_count)/float(self.fps)
+            current_time_stamp = datetime.timedelta(seconds=int(time))
 
             if (self.fps is not None) and (frame_count % self.fps) != 0:
                 continue
@@ -1333,6 +1332,52 @@ class DummyTracker(object):
             hist_plane = []
             slide_hist_plane = []
 
+            # Compute the histogram for the slide image
+            resized_x = im_diff_lab.shape[1]
+            resized_y = im_diff_lab.shape[0]
+
+            min_y = self.slide_crop_coordinates[0] * resized_y
+            max_y = self.slide_crop_coordinates[1] * resized_y
+            min_x = self.slide_crop_coordinates[2] * resized_x
+            max_x = self.slide_crop_coordinates[3] * resized_x
+            slide = im_gray[min_y : max_y, min_x : max_x]
+            slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
+
+            plt.subplot(2,1,1)
+            plt.imshow(slide, cmap=cm.Greys_r)
+            plt.subplot(2,1,2)
+            plt.plot(slidehist)
+            plt.xlim([0,256])
+
+            # @todo(Stephan): Move this somewhere else?
+            def get_histogram_min_max_boundaries_normalized(hist):
+                """Gets the 1- and 99-percentile as an approximation of the boundaries
+                   of the histogram.
+
+                   Note:
+                        The Histogram is expected to be normalized
+
+                   Returns both the min and the max value for the histogram
+                """
+                t_min = 0
+                t_max = 255
+
+                min_mass = 0
+                max_mass = 0
+
+                # Integrate until we reach 1% of the mass from each direction
+                while min_mass < 0.01:
+                    min_mass += hist[t_min]
+                    t_min += 1
+
+                while max_mass < 0.01:
+                    max_mass += hist[t_max]
+                    t_max -= 1
+
+                return t_min, t_max
+
+            histogram_boundaries = get_histogram_min_max_boundaries_normalized(cv2.normalize(slidehist))
+
             # this is part of a pre-processing
             # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
             N_stripes = 3
@@ -1340,19 +1385,10 @@ class DummyTracker(object):
                 location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
                 current_plane = im_diff_lab[location[0]:location[1], :]
 
-                resized_x = im_diff_lab.shape[1]
-                resized_y = im_diff_lab.shape[0]
 
-                print im_diff_lab.shape
-
-                min_y = min(location[0], self.slide_crop_coordinates[0] * resized_y)
-                max_y = max(location[1], self.slide_crop_coordinates[1] * resized_y)
-                min_x = self.slide_crop_coordinates[2] * resized_x
-                max_x = self.slide_crop_coordinates[3] * resized_x
-                current_slide_plane = im_diff_lab[min_y:max_y, min_x:max_x]
                 #print current_plane.min(), current_plane.max()
                 hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
-                # slide_hist_plane.append(cv2.calcHist())
+                # slide_hist_plane.append(cv2.calcHist(current_slide_plane))
 
             # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
             hist_vertical_stripes = []
@@ -1393,9 +1429,14 @@ class DummyTracker(object):
             distances_histogram[frame_count] = element
             element['energy_stripes'] = {}
             element['peak_stripes'] = {}
+            element['histogram_boundaries'] = {}
             for e, energy, h1 in zip(range(N_vertical_stripes), energy_vertical_stripes, hist_vertical_stripes):
                 element['energy_stripes'][e] = int(energy)
                 element['peak_stripes'][e] = max([i for i, j in enumerate(h1) if j > 0])
+
+            # Store histogram boundaries
+            element['histogram_boundaries']['min'] = histogram_boundaries[0]
+            element['histogram_boundaries']['max'] = histogram_boundaries[1]
 
 
             # debug
@@ -1660,7 +1701,7 @@ if __name__ == '__main__':
                                                        [ 0.3592881,   0.41536275]]),
                            resize_max=640,
                            speaker_bb_height_location=(155, 260))
-        # new_clip = obj.speakerTracker()
+        new_clip = obj.speakerTracker()
 
     # plot_histogram_distances()
     sys.exit(0)
