@@ -83,5 +83,11 @@ class JobTests(unittest.TestCase):
         self.assertIn(Job1, Job2.get_parents())
         self.assertIsNone(Job1.get_parents())
         
+    def test_parent_json(self):
         
+        Job2.add_parent(Job1)
+        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'toto_testp'))
+        job_final.serialize_state()
         
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'toto_testp_job1.json')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'toto_testp_job2.json')))

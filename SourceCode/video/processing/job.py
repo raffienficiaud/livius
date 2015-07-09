@@ -41,6 +41,10 @@ class Job(object):
         return cls.parent_tasks
     
     def __init__(self, **kwargs):
+        """
+        
+        :param json_prefix: the prefix used for serializing the state of this runner
+        """
         
         json_prefix = kwargs.get('json_prefix', '')
         self.json_filename = json_prefix + '_' + self.name + '.json'
@@ -63,7 +67,7 @@ class Job(object):
         for par in self.parent_instances:
             if not par.is_up_to_date():
                 return False
-        return True
+        return self.are_states_equal()
     
     def are_states_equal(self):
         """Returns True is the state of the current object is the same as the one in the serialized json dump"""
@@ -92,10 +96,16 @@ class Job(object):
         
     
     def serialize_state(self):
-        """Flushes the state of the runner into the json file mentioned by self.json_filename"""
+        """Flushes the state of the runner into the json file mentioned by 'json_prefix' (init) to
+        which the name of the current Job has been appended in the form 'json_prefix'_'name'.json
+        Also flushes the state of the parents as well
+        """
         
-        if self.json_filename is None:
+        # no need if there is no change in configuration
+        if self.are_states_equal():
             return
+        
+        assert(self.json_filename is not None)
         
         d = {}
         for k in self.attributes_to_serialize:
@@ -104,6 +114,8 @@ class Job(object):
         with open(self.json_filename, 'w') as f:
             json.dump(d, f)
         
+        for par in self.parent_instances:
+            par.serialize_state()
     
     def run(self):
         """Runs the action and all parents actions"""
