@@ -1,6 +1,8 @@
 from multiprocessing import Pool
 import glob
 import cv2
+import os
+import json
 import re
 import functools
 
@@ -118,20 +120,28 @@ def analyze_chunk(chunk):
     previous_hist_plane = None
     previous_hist_vertical_stripes = None
 
-    results = []
+    result_dict = {}
 
-    for i, info in enumerate(labs):   # t, im_lab, boundaries in labs:
+    for i, info in enumerate(labs):
+
+        # Unpack information we have already computed
+        t, lab, boundaries = info
+
+        # Store the histogram boundaries for the slide enhancement
+        dict_element = result_dict.get(t, {})
+        result_dict[t] = dict_element
+        dict_element['histogram_boundaries'] = {}
+        dict_element['histogram_boundaries']['min'] = boundaries[0]
+        dict_element['histogram_boundaries']['max'] = boundaries[1]
+
         if i == 0:
-            t, lab, boundaries = info
-            result = (t, boundaries)
-            results.append(result)
+            # We have already filled in the histogram boundaries, there's no more information
+            # to compute since the first frame holds no difference computation.
             continue
 
         if i > 0:
+            # Get previous information
             t0, lab0, boundaries0 = labs[i-1]
-            t, lab, boundaries = info
-
-            result = (t, boundaries)
 
             # color diff
             im_diff = (lab - lab0) ** 2
@@ -168,28 +178,28 @@ def analyze_chunk(chunk):
             peak_stripes = []
 
             if previous_hist_plane is not None:
+                dict_element['dist_stripes'] = {}
                 for e, h1, h2 in zip(range(N_stripes), previous_hist_plane, hist_plane):
-                    dist_stripes.append(cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL))
-                result += (dist_stripes,)
+                    dict_element['dist_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
 
 
             if previous_hist_vertical_stripes is not None:
+                dict_element['vert_stripes'] = {}
                 for e, h1, h2 in zip(range(N_vertical_stripes), previous_hist_vertical_stripes, hist_vertical_stripes):
-                    vert_stripes.append(cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL))
-                result += (vert_stripes,)
+                    dict_element['vert_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
 
 
             # "activity" which is the enery in each stripe
+            dict_element['energy_stripes'] = {}
+            dict_element['peak_stripes'] = {}
             for e, energy, h1 in zip(range(N_vertical_stripes), energy_vertical_stripes, hist_vertical_stripes):
-                energy_stripes.append(int(energy))
-                peak_stripes.append(max([i for i, j in enumerate(h1) if j > 0]))
-            result += (energy_stripes, peak_stripes,)
+                dict_element['energy_stripes'][e] = int(energy)
+                dict_element['peak_stripes'][e] = max([i for i, j in enumerate(h1) if j > 0])
 
             previous_hist_plane = hist_plane
             previous_hist_vertical_stripes = hist_vertical_stripes
-            results.append(result)
 
-    return results
+    return result_dict
 
 
 def get_time_from_filename(file_name):
@@ -206,6 +216,8 @@ def initialize_process(kwargs):
 
 
 if __name__ == '__main__':
+
+    _tmp_path = '/home/livius/Code/livius/SourceCode/Example Data/tmp'
 
     directory = '/home/livius/Code/livius/SourceCode/Example Data/thumbnails/'
 
@@ -233,6 +245,11 @@ if __name__ == '__main__':
         """Flatten a 2D list to a 1D list."""
         return [item for sublist in l for item in sublist]
 
+    def combine_dicts(dicts):
+        result = {}
+        map(lambda d: result.update(d), dicts)
+        return result
+
     chunk_size = 20
     chunks = chunk(files, chunk_size)
 
@@ -246,6 +263,10 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
 
-    res = flatten(result)
+    # res = flatten(result)
 
-    print res
+    res = combine_dicts(result)
+
+    with open(os.path.join(_tmp_path, 'test.json'), 'w') as f:
+        json.dump(res, f, indent=2)
+
