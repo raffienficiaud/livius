@@ -61,7 +61,8 @@ class Job(object):
             for par in self.parent_tasks:
                 self.parent_instances.append(par(**kwargs))
                 
-    def get_parent_of_type(self, t):
+    def get_parent_by_type(self, t):
+        """Algorithm is breadth first"""
         if len(self.parent_instances) == 0:
             return None
         
@@ -70,7 +71,23 @@ class Job(object):
                 return par
             
         for par in self.parent_instances:
-            ret = par.get_parent_of_type(t)
+            ret = par.get_parent_by_type(t)
+            if ret is not None:
+                return ret
+        
+        return None
+
+    def get_parent_by_name(self, name):
+        """Algorithm is breadth first"""
+        if len(self.parent_instances) == 0:
+            return None
+        
+        for par in self.parent_instances:
+            if par.name == name:
+                return par
+            
+        for par in self.parent_instances:
+            ret = par.get_parent_by_name(name)
             if ret is not None:
                 return ret
         

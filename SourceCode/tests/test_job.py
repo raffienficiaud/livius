@@ -89,15 +89,21 @@ class JobTests(unittest.TestCase):
     def test_get_parent(self):
 
         Job2.add_parent(Job1)        
-        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'toto_test_uptodate'))
-        job1_instance = job_final.get_parent_of_type(Job1)
+        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'toto_test_parent'))
+        job1_instance = job_final.get_parent_by_type(Job1)
         self.assertIsNotNone(job1_instance)
+        self.assertIsInstance(job1_instance, Job1)
         
-        job2_non_existing = job_final.get_parent_of_type(Job2)
-        self.assertIsNone(job2_non_existing)
+        self.assertIsNone(job_final.get_parent_by_type(Job2))
+        self.assertIsNone(job1_instance.get_parent_by_type(Job1))
         
-        job1_non_existing = job1_instance.get_parent_of_type(Job1)
-        self.assertIsNone(job1_non_existing)
+        job1_instance_bis = job_final.get_parent_by_name('job1')
+        self.assertEqual(id(job1_instance), id(job1_instance_bis))
+        
+        self.assertIsNone(job_final.get_parent_by_name('jobx'))
+        self.assertIsNone(job1_instance.get_parent_by_name('job1'))
+        self.assertIsNone(job1_instance.get_parent_by_name('jobx'))
+        
         
     def test_parent_json(self):
         
@@ -122,7 +128,7 @@ class JobTests(unittest.TestCase):
         job_final.serialize_state()
         self.assertTrue(job_final.is_up_to_date())
         
-        job1_instance = job_final.get_parent_of_type(Job1)
+        job1_instance = job_final.get_parent_by_type(Job1)
         self.assertTrue(hasattr(job1_instance, "job1attr1"))
         job1_instance.job1attr1 = 10
         self.assertFalse(job_final.is_up_to_date())
