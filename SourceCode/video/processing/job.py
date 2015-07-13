@@ -24,7 +24,7 @@ class Job(object):
 
     @classmethod
     def add_parent(cls, obj):
-
+        """Add a specific job as a parent job."""
         if obj is None:
             return
 
@@ -38,6 +38,7 @@ class Job(object):
 
     @classmethod
     def get_parents(cls):
+        """Returns all the parent jobs of this class"""
         return cls.parent_tasks
 
     def __init__(self, **kwargs):
@@ -148,9 +149,26 @@ class Job(object):
         with open(self.json_filename, 'w') as f:
             json.dump(d, f)
 
-    def run(self):
-        """Runs the action and all parents actions"""
-        pass
+    def run(self, *args, **kwargs):
+        """Runs this specific action: should be overridden by an implementation class."""
+        raise RuntimeError("Should be overridden")
+
+    def process(self):
+        """Process the current node and all the parent nodes, and provides the outputs
+        of the parents to this node."""
+
+        if self.is_up_to_date():
+            return
+
+        # if not up to date, we need all the parents
+        parent_outputs = []
+        for par in self.parent_instances:
+            par.process()
+            parent_outputs.append(par.get_outputs())
+
+        self.run(*parent_outputs)
+
+        # after this call, the current instance should be up to date
 
     def get_outputs(self):
         """Returns all the possible outputs of this step"""
@@ -161,12 +179,12 @@ class Job(object):
 
 
 def prepare(video_filename):
-    
-    
+
+
     obj_extract = FFMpegThumbnailsJob(video_filename=video_filename,
                                       video_width=640,
                                       video_fps=1)
-    
+
     if not obj_extract.is_run_up_to_date():
         obj_extract.run()
 
@@ -176,6 +194,6 @@ if __name__ == '__main__':
 
     storage = '/media/renficiaud/linux-data/'
     filename = 'BlackmagicProductionCamera 4K_1_2015-01-16_1411_C0000.mov'
-    
+
     prepare(os.path.join(storage, filename))
-    
+

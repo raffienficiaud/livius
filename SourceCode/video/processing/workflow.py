@@ -1,6 +1,15 @@
 
+import logging
+FORMAT = '[%(asctime)-15s] %(message)s'
+logging.basicConfig(format=FORMAT)
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+
 from .job import Job
 from .ffmpeg_to_thumbnails import factory as ffmpeg_factory
+
 
 def workflow():
     """Returns a workflow definition. The processing of the workflow is performed in another module"""
@@ -14,8 +23,7 @@ def workflow():
 def process(workflow_instance, **kwargs):
     
     instance = workflow_instance(**kwargs)
-    if not instance.is_up_to_date():
-        instance.run()
+    instance.process()
 
     out = instance.get_outputs()
     instance.serialize_state()
