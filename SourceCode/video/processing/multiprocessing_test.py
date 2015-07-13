@@ -8,33 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def extract_lab_and_boundary(file_name, **kwargs):
+def extract_lab_and_boundary(file_name):
+    """Computes the Lab space of the image and the histogram_boundaries for the slide enhancement."""
     t = get_time_from_filename(file_name)
 
     im = cv2.imread(file_name)
     im_lab = cv2.cvtColor(im, cv2.COLOR_BGR2LAB)
     im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-
-    # # color diff
-    # im_diff = (im_lab - im0_lab) ** 2
-    # im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
-
-    # background
-    # fgmask = self.fgbg.apply(im0)
-    # fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
-
-    # threshold the diff
-    # histogram
-    # hist = []
-    # for i in range(im_diff.shape[2]):
-    #     hist.append(cv2.calcHist([im_diff], [i], None, [256], [0, 256]))
-
-    hist_plane = []
-    slide_hist_plane = []
-
-    # Compute the histogram for the slide image
-    # resized_x = im.shape[1]
-    # resized_y = im.shape[0]
 
     resized_y, resized_x = im_gray.shape
     slide_crop_coordinates = extraction_args['slide_coordinates']
@@ -85,105 +65,7 @@ def extract_lab_and_boundary(file_name, **kwargs):
     histogram_boundaries = get_histogram_min_max_boundaries_normalized(cv2.normalize(slidehist))
 
     # return t, histogram_boundaries
-    return t, im_lab.shape, histogram_boundaries
-
-
-def extract_image_differences(time, lab, boundaries, previous_lab):
-
-    # @todo(Stephan):
-    # This does not work yet
-
-    # Pass the extra information that is needed into extration_args
-    # How to get the previous differences
-
-    # color diff
-    im_diff = (lab - previous_lab) ** 2
-    im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
-
-    # @note(Stephan): This is not returned in the json file
-    # # background
-    # fgmask = self.fgbg.apply(im0)
-    # fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
-
-    # threshold the diff
-    # histogram
-    hist = []
-    for i in range(im_diff.shape[2]):
-        hist.append(cv2.calcHist([im_diff], [i], None, [256], [0, 256]))
-
-    hist_plane = []
-    slide_hist_plane = []
-
-    dist_stripes = []
-    vert_stripes = []
-    energy_stripes = []
-    peak_stripes = []
-
-    # this is part of a pre-processing
-    # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
-    N_stripes = 3
-    for i in range(N_stripes):
-        location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
-        current_plane = im_diff_lab[location[0]:location[1], :]
-        #print current_plane.min(), current_plane.max()
-        hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
-
-
-    # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
-    hist_vertical_stripes = []
-    energy_vertical_stripes = []
-    N_vertical_stripes = 10
-    if self.speaker_bb_height_location is not None:
-
-        for i in range(N_vertical_stripes):
-            location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
-            current_vertical_stripe = im_diff_lab[self.speaker_bb_height_location[0]:self.speaker_bb_height_location[1], location[0]:location[1]]
-            hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
-            energy_vertical_stripes.append(current_vertical_stripe.sum())
-            pass
-        pass
-
-
-    # histogram distance
-    # location of all the connected components
-
-    # @todo(Stephan): How to do these tests?
-    if previous_hist_plane is not None:
-        distances_histogram[frame_count] = {}
-        element = distances_histogram[frame_count]
-        #element['timestamp'] = current_time_stamp
-        element['dist_stripes'] = {}
-        for e, h1, h2 in zip(range(N_stripes), previous_hist_plane, hist_plane):
-            element['dist_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
-
-            # dist_stripes.append(cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL))
-
-
-    if previous_hist_vertical_stripes is not None:
-        element = distances_histogram.get(frame_count, {})
-        distances_histogram[frame_count] = element
-        element['vert_stripes'] = {}
-        for e, h1, h2 in zip(range(N_vertical_stripes), previous_hist_vertical_stripes, hist_vertical_stripes):
-            element['vert_stripes'][e] = cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL)
-
-            # vert_stripes.append(cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL))
-
-
-    # "activity" which is the enery in each stripe
-    element = distances_histogram.get(frame_count, {})
-    distances_histogram[frame_count] = element
-    element['energy_stripes'] = {}
-    element['peak_stripes'] = {}
-    element['histogram_boundaries'] = {}
-    for e, energy, h1 in zip(range(N_vertical_stripes), energy_vertical_stripes, hist_vertical_stripes):
-        element['energy_stripes'][e] = int(energy)
-        element['peak_stripes'][e] = max([i for i, j in enumerate(h1) if j > 0])
-
-        # energy_stripes.append(int(energy))
-        # peak_stripes.append(max([i for i, j in enumerate(h1) if j > 0]))
-
-    return t, boundaries, dist_stripes, vert_stripes, energy_stripes, peak_stripes
-
+    return t, im_lab, histogram_boundaries
 
 def _inner_rectangle(coordinates):
     """Get the inner rectangle of the slide coordinates for cropping the image.
@@ -210,8 +92,105 @@ def _inner_rectangle(coordinates):
 
     return np.array([min_y, max_y, min_x, max_x])
 
+
+# @todo(Stephan):
+# - Return dictionaries!
+# - the first and second frame of each chunk (except the first chunk) lack some information that can be computed
+#   afterwards when the other chunks have been analyzed
 def analyze_chunk(chunk):
-    return map(extract_lab_and_boundary, chunk)
+    """Analyzes a chunk of files.
+
+       First computes the image in lab space and the boundaries for the slide enhancement.
+       Then we compute the image differences and the resulting histograms for the horizontal and
+       vertical stripes.
+
+       Returns the computed information on each file of the chunk. The format is as follows:
+
+       [
+       (t, bounds),
+       (t, bounds, energy, peak_energy),
+       (t, bounds, energy, peak_energy, dist_stripes, vert_stripes),
+       ...
+       ]
+    """
+    labs = map(extract_lab_and_boundary, chunk)
+
+    previous_hist_plane = None
+    previous_hist_vertical_stripes = None
+
+    results = []
+
+    for i, info in enumerate(labs):   # t, im_lab, boundaries in labs:
+        if i == 0:
+            t, lab, boundaries = info
+            result = (t, boundaries)
+            results.append(result)
+            continue
+
+        if i > 0:
+            t0, lab0, boundaries0 = labs[i-1]
+            t, lab, boundaries = info
+
+            result = (t, boundaries)
+
+            # color diff
+            im_diff = (lab - lab0) ** 2
+            im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
+
+            # this is part of a pre-processing
+            # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
+            hist_plane = []
+            N_stripes = 3
+            for i in range(N_stripes):
+                location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
+                current_plane = im_diff_lab[location[0]:location[1], :]
+
+                #print current_plane.min(), current_plane.max()
+                hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
+
+            # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
+            hist_vertical_stripes = []
+            energy_vertical_stripes = []
+            N_vertical_stripes = 10
+            if 'speaker_bb_height_location' in extraction_args:
+                speaker_bb_height_location = extraction_args['speaker_bb_height_location']
+                for i in range(N_vertical_stripes):
+                    location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
+                    current_vertical_stripe = im_diff_lab[speaker_bb_height_location[0]:speaker_bb_height_location[1], location[0]:location[1]]
+                    hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
+                    energy_vertical_stripes.append(current_vertical_stripe.sum())
+                    pass
+                pass
+
+            dist_stripes = []
+            vert_stripes = []
+            energy_stripes = []
+            peak_stripes = []
+
+            if previous_hist_plane is not None:
+                for e, h1, h2 in zip(range(N_stripes), previous_hist_plane, hist_plane):
+                    dist_stripes.append(cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL))
+                result += (dist_stripes,)
+
+
+            if previous_hist_vertical_stripes is not None:
+                for e, h1, h2 in zip(range(N_vertical_stripes), previous_hist_vertical_stripes, hist_vertical_stripes):
+                    vert_stripes.append(cv2.compareHist(h1, h2, cv2.cv.CV_COMP_CORREL))
+                result += (vert_stripes,)
+
+
+            # "activity" which is the enery in each stripe
+            for e, energy, h1 in zip(range(N_vertical_stripes), energy_vertical_stripes, hist_vertical_stripes):
+                energy_stripes.append(int(energy))
+                peak_stripes.append(max([i for i, j in enumerate(h1) if j > 0]))
+            result += (energy_stripes, peak_stripes,)
+
+            previous_hist_plane = hist_plane
+            previous_hist_vertical_stripes = hist_vertical_stripes
+            results.append(result)
+
+    return results
+
 
 def get_time_from_filename(file_name):
     """Extract the time of the thumbnail. Assumes that the filename is given as [a-z]-[0-9].png"""
@@ -221,11 +200,13 @@ def get_time_from_filename(file_name):
 
 extraction_args = None
 def initialize_process(kwargs):
+    """Sets additional arguments that we need in order to extract information from the images"""
     global extraction_args
     extraction_args = kwargs
 
 
 if __name__ == '__main__':
+
     directory = '/home/livius/Code/livius/SourceCode/Example Data/thumbnails/'
 
     video7_slide_coordinates = np.array([[0.36004776,  0.01330207],
@@ -233,8 +214,10 @@ if __name__ == '__main__':
                                          [0.67519468,  0.42169076],
                                          [0.3592881,   0.41536275]])
     video7_slide_coordinates = _inner_rectangle(video7_slide_coordinates)
+    # @todo(Stephan): This is from a different video, pass the correct height for the resized frame of video7
+    video7_speaker_bb_height_location = (155, 260)
 
-    # Get all frames
+    # Get all frames sorted by time
     files = glob.glob(directory + '*.png')
     files.sort(key=get_time_from_filename)
 
@@ -248,26 +231,21 @@ if __name__ == '__main__':
 
     def flatten(l):
         """Flatten a 2D list to a 1D list."""
-        return [item for sublist in l for item in sublist ]
+        return [item for sublist in l for item in sublist]
 
     chunk_size = 20
     chunks = chunk(files, chunk_size)
 
-
     # # Put everything that is constant for one video in these arguments
-    args = {'slide_coordinates': video7_slide_coordinates}
+    args = {'slide_coordinates': video7_slide_coordinates,
+            'speaker_bb_height_location': video7_speaker_bb_height_location}
     pool = Pool(processes=8, initializer=initialize_process, initargs=(args,))
 
-
     result = pool.map(analyze_chunk, chunks)
-
-    # # @todo(Stephan): Shift the chunks so we can always pass the previous information as well as the current
-    # # in order to compute the differences
-
-    # # result = [extract_image_differences(result[i-1][1]) for (i,(t, lab, boundaries)) in enumerate(result)]
 
     pool.close()
     pool.join()
 
+    res = flatten(result)
 
-    print flatten(result)
+    print res
