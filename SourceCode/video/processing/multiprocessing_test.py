@@ -33,9 +33,10 @@ def extract_lab_and_boundary(file_name, **kwargs):
     slide_hist_plane = []
 
     # Compute the histogram for the slide image
-    resized_x = im.shape[1]
-    resized_y = im.shape[0]
+    # resized_x = im.shape[1]
+    # resized_y = im.shape[0]
 
+    resized_y, resized_x = im_gray.shape
     slide_crop_coordinates = extraction_args['slide_coordinates']
 
     min_y = slide_crop_coordinates[0] * resized_y
@@ -83,8 +84,8 @@ def extract_lab_and_boundary(file_name, **kwargs):
 
     histogram_boundaries = get_histogram_min_max_boundaries_normalized(cv2.normalize(slidehist))
 
-    return t, histogram_boundaries
-    # return t, im_lab, histogram_boundaries
+    # return t, histogram_boundaries
+    return t, im_lab.shape, histogram_boundaries
 
 
 def extract_image_differences(time, lab, boundaries, previous_lab):
@@ -95,14 +96,14 @@ def extract_image_differences(time, lab, boundaries, previous_lab):
     # Pass the extra information that is needed into extration_args
     # How to get the previous differences
 
-
     # color diff
     im_diff = (lab - previous_lab) ** 2
     im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
 
-    # background
-    fgmask = self.fgbg.apply(im0)
-    fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
+    # @note(Stephan): This is not returned in the json file
+    # # background
+    # fgmask = self.fgbg.apply(im0)
+    # fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
 
     # threshold the diff
     # histogram
@@ -209,6 +210,8 @@ def _inner_rectangle(coordinates):
 
     return np.array([min_y, max_y, min_x, max_x])
 
+def analyze_chunk(chunk):
+    return map(extract_lab_and_boundary, chunk)
 
 def get_time_from_filename(file_name):
     """Extract the time of the thumbnail. Assumes that the filename is given as [a-z]-[0-9].png"""
@@ -225,35 +228,46 @@ def initialize_process(kwargs):
 if __name__ == '__main__':
     directory = '/home/livius/Code/livius/SourceCode/Example Data/thumbnails/'
 
-    video7_slide_coordinates = np.array([[ 0.36004776,  0.01330207],
-                                         [ 0.68053395,  0.03251761],
-                                         [ 0.67519468,  0.42169076],
-                                         [ 0.3592881,   0.41536275]])
+    video7_slide_coordinates = np.array([[0.36004776,  0.01330207],
+                                         [0.68053395,  0.03251761],
+                                         [0.67519468,  0.42169076],
+                                         [0.3592881,   0.41536275]])
     video7_slide_coordinates = _inner_rectangle(video7_slide_coordinates)
 
     # Get all frames
     files = glob.glob(directory + '*.png')
     files.sort(key=get_time_from_filename)
 
-    # @todo(Stephan):
-    # Generate chunks that can fit into memory
-    # Does each process get one chunk or
-    # do we iterate over chunks and use many processes for each chunk?
+    def chunk(l, chunk_size):
+        """Splits the given list into chunks of size chunk_size. The last chunk will evenutally be smaller than chunk_size."""
+        result = []
+        for i in range(0, len(l), chunk_size):
+            result.append(l[i:i+chunk_size])
+
+        return result
+
+    def flatten(l):
+        """Flatten a 2D list to a 1D list."""
+        return [item for sublist in l for item in sublist ]
+
+    chunk_size = 20
+    chunks = chunk(files, chunk_size)
 
 
-    # Put everything that is constant for one video in these arguments
+    # # Put everything that is constant for one video in these arguments
     args = {'slide_coordinates': video7_slide_coordinates}
     pool = Pool(processes=8, initializer=initialize_process, initargs=(args,))
 
-    result = pool.map(extract_lab_and_boundary, files)
 
-    # @todo(Stephan): Shift the chunks so we can always pass the previous information as well as the current
-    # in order to compute the differences
+    result = pool.map(analyze_chunk, chunks)
 
-    # result = [extract_image_differences(result[i-1][1]) for (i,(t, lab, boundaries)) in enumerate(result)]
+    # # @todo(Stephan): Shift the chunks so we can always pass the previous information as well as the current
+    # # in order to compute the differences
+
+    # # result = [extract_image_differences(result[i-1][1]) for (i,(t, lab, boundaries)) in enumerate(result)]
 
     pool.close()
     pool.join()
 
 
-    print result
+    print flatten(result)
