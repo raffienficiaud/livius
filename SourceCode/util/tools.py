@@ -304,6 +304,7 @@ def read_histogram_correlations_and_boundaries_from_json_file(filepath, slide_st
        Note:
        The json file/object must have the following structure:
 
+       @todo(Stephan): update the description of the json file
        {
         "frame_id": {
             "dist_stripes": {"0": , ..., "N_stripes - 1": },

@@ -28,6 +28,7 @@ def extract_lab_and_boundary(file_name):
     slide = im_gray[min_y : max_y, min_x : max_x]
     slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
 
+    # Plotting the slide in order to check the slide location once
     # if t < 2:
     #     plt.subplot(2,1,1)
     #     plt.imshow(slide, cmap=plt.cm.Greys_r)
@@ -96,29 +97,46 @@ def _inner_rectangle(coordinates):
 
 
 # @todo(Stephan):
-# - Return dictionaries!
 # - the first and second frame of each chunk (except the first chunk) lack some information that can be computed
 #   afterwards when the other chunks have been analyzed
-def analyze_chunk(chunk):
+def analyze_chunk(chunk_tuple):
     """Analyzes a chunk of files.
 
+    :param chunk_tuple: A tuple consisting of the chunk index and the chunk itself
+
+    :note:
        First computes the image in lab space and the boundaries for the slide enhancement.
        Then we compute the image differences and the resulting histograms for the horizontal and
        vertical stripes.
 
-       Returns the computed information on each file of the chunk. The format is as follows:
+       Returns a dictionary containing all the information:
+         - histogram_boundaries
+         - dist_stripes
+         - vert_stripes
+         - energy_stripes
+         - peak_stripes
 
-       [
-       (t, bounds),
-       (t, bounds, energy, peak_energy),
-       (t, bounds, energy, peak_energy, dist_stripes, vert_stripes),
-       ...
-       ]
+       Additionally returns the last Lab image together with the corresponding hist_plane and hist_vertical_stripes
     """
+    chunk_index, chunk = chunk_tuple
+
+    # First pass
     labs = map(extract_lab_and_boundary, chunk)
 
+    # Stripe setup
+    N_stripes = 3
+    N_vertical_stripes = 10
+
+    # Loop variables
     previous_hist_plane = None
     previous_hist_vertical_stripes = None
+    lab0 = None
+
+    # If we are at a later chunk, we can re-read the corresponding frames and get the hist_planes from there
+    # We cannot do this at the first chunk, because there is no image difference for the very first frame
+    if chunk_index > 0:
+        previous_hist_plane, previous_hist_vertical_stripes, lab0 = \
+            get_hist_planes_from_image_file(chunk_index, labs[0][1], N_stripes, N_vertical_stripes)
 
     result_dict = {}
 
@@ -134,48 +152,15 @@ def analyze_chunk(chunk):
         dict_element['histogram_boundaries']['min'] = boundaries[0]
         dict_element['histogram_boundaries']['max'] = boundaries[1]
 
-        if i == 0:
-            # We have already filled in the histogram boundaries, there's no more information
-            # to compute since the first frame holds no difference computation.
-            continue
-
-        if i > 0:
-            # Get previous information
-            t0, lab0, boundaries0 = labs[i-1]
-
+        if lab0 is not None:
             # color diff
             im_diff = (lab - lab0) ** 2
             im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
 
-            # this is part of a pre-processing
-            # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
-            hist_plane = []
-            N_stripes = 3
-            for i in range(N_stripes):
-                location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
-                current_plane = im_diff_lab[location[0]:location[1], :]
+            hist_plane = horizontal_stripe_histograms(im_diff_lab, N_stripes)
 
-                #print current_plane.min(), current_plane.max()
-                hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
-
-            # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
-            hist_vertical_stripes = []
-            energy_vertical_stripes = []
-            N_vertical_stripes = 10
-            if 'speaker_bb_height_location' in extraction_args:
-                speaker_bb_height_location = extraction_args['speaker_bb_height_location']
-                for i in range(N_vertical_stripes):
-                    location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
-                    current_vertical_stripe = im_diff_lab[speaker_bb_height_location[0]:speaker_bb_height_location[1], location[0]:location[1]]
-                    hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
-                    energy_vertical_stripes.append(current_vertical_stripe.sum())
-                    pass
-                pass
-
-            dist_stripes = []
-            vert_stripes = []
-            energy_stripes = []
-            peak_stripes = []
+            hist_vertical_stripes, energy_vertical_stripes = \
+                vertical_stripe_histograms(im_diff_lab, N_vertical_stripes, do_energy_calculation=True)
 
             if previous_hist_plane is not None:
                 dict_element['dist_stripes'] = {}
@@ -199,7 +184,73 @@ def analyze_chunk(chunk):
             previous_hist_plane = hist_plane
             previous_hist_vertical_stripes = hist_vertical_stripes
 
+        lab0 = lab
+
     return result_dict
+
+
+def horizontal_stripe_histograms(im_diff_lab, N_stripes):
+    # this is part of a pre-processing
+    # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
+    hist_plane = []
+    for i in range(N_stripes):
+        location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
+        current_plane = im_diff_lab[location[0]:location[1], :]
+        hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
+
+    return hist_plane
+
+def vertical_stripe_histograms(im_diff_lab, N_vertical_stripes, do_energy_calculation):
+    # dividing the location of the speaker by N=10 vertical stripes. The purpose of this is to detect the x location of activity/motion
+    hist_vertical_stripes = []
+    energy_vertical_stripes = []
+    if 'speaker_bb_height_location' in extraction_args:
+        speaker_bb_height_location = extraction_args['speaker_bb_height_location']
+        for i in range(N_vertical_stripes):
+            location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
+            current_vertical_stripe = im_diff_lab[speaker_bb_height_location[0]:speaker_bb_height_location[1], location[0]:location[1]]
+            hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
+
+            if do_energy_calculation:
+                energy_vertical_stripes.append(current_vertical_stripe.sum())
+
+    if do_energy_calculation:
+        return hist_vertical_stripes, energy_vertical_stripes
+    else:
+        return hist_vertical_stripes
+
+
+def get_hist_planes_from_image_file(chunk_index, current_lab, N_stripes, N_vertical_stripes):
+    im0 = cv2.imread(files[chunk_index - 1])
+    im_lab0 = cv2.cvtColor(im0, cv2.COLOR_BGR2LAB)
+
+    im_diff = (current_lab - im_lab0) ** 2
+    im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
+
+    hist_plane = horizontal_stripe_histograms(im_diff_lab, N_stripes)
+    hist_vertical_stripes = vertical_stripe_histograms(im_diff_lab, N_vertical_stripes, do_energy_calculation=False)
+
+    return hist_plane, hist_vertical_stripes, im_lab0
+
+
+def chunk(l, chunk_size):
+    """Splits the given list into chunks of size chunk_size. The last chunk will eventually be smaller than chunk_size."""
+    result = []
+    for i in range(0, len(l), chunk_size):
+        result.append(l[i:i+chunk_size])
+
+    return result
+
+
+def chunk_indices(l, chunk_size):
+    """Returns the indices of the beginning of each chunk"""
+    return range(0, len(l), chunk_size)
+
+
+def combine_dicts(dicts):
+    result = {}
+    map(lambda d: result.update(d), dicts)
+    return result
 
 
 def get_time_from_filename(file_name):
@@ -208,11 +259,15 @@ def get_time_from_filename(file_name):
     splitted = re.split(pattern, file_name)
     return float(splitted[1])
 
+
 extraction_args = None
-def initialize_process(kwargs):
+files = None
+def initialize_process(kwargs, thumbnails):
     """Sets additional arguments that we need in order to extract information from the images"""
     global extraction_args
+    global files
     extraction_args = kwargs
+    files = thumbnails
 
 
 if __name__ == '__main__':
@@ -233,37 +288,23 @@ if __name__ == '__main__':
     files = glob.glob(directory + '*.png')
     files.sort(key=get_time_from_filename)
 
-    def chunk(l, chunk_size):
-        """Splits the given list into chunks of size chunk_size. The last chunk will evenutally be smaller than chunk_size."""
-        result = []
-        for i in range(0, len(l), chunk_size):
-            result.append(l[i:i+chunk_size])
-
-        return result
-
-    def flatten(l):
-        """Flatten a 2D list to a 1D list."""
-        return [item for sublist in l for item in sublist]
-
-    def combine_dicts(dicts):
-        result = {}
-        map(lambda d: result.update(d), dicts)
-        return result
 
     chunk_size = 20
+    # @todo(Stephan):
+    # Check if we at any point need chunks and chunk_indices seperated,
+    # otherwise we could combine them into one function
     chunks = chunk(files, chunk_size)
+    chunk_ids = chunk_indices(files, chunk_size)
 
-    # # Put everything that is constant for one video in these arguments
+    # Put everything that is constant for one video in these arguments
     args = {'slide_coordinates': video7_slide_coordinates,
             'speaker_bb_height_location': video7_speaker_bb_height_location}
-    pool = Pool(processes=8, initializer=initialize_process, initargs=(args,))
+    pool = Pool(processes=8, initializer=initialize_process, initargs=(args, files,))
 
-    result = pool.map(analyze_chunk, chunks)
+    result = pool.map(analyze_chunk, zip(chunk_ids, chunks))
 
     pool.close()
     pool.join()
-
-    # res = flatten(result)
 
     res = combine_dicts(result)
 
