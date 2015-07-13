@@ -39,10 +39,11 @@ def process_workflow(final_job_cls, **kwargs):
 
 class JobTests(unittest.TestCase):
     
-    
     def setUp(self):
         self.assertIsNone(Job1.parent_tasks)
         self.assertIsNone(Job2.parent_tasks)
+        self.assertFalse(Job1.attributes_to_serialize)
+        self.assertFalse(Job2.attributes_to_serialize)
         
         self.tmpdir = mkdtemp()
         pass
@@ -50,6 +51,8 @@ class JobTests(unittest.TestCase):
     def tearDown(self):
         Job1.parent_tasks = None
         Job2.parent_tasks = None
+        Job1.attributes_to_serialize = []
+        Job2.attributes_to_serialize = []
         
         shutil.rmtree(self.tmpdir)
     
@@ -83,6 +86,19 @@ class JobTests(unittest.TestCase):
         self.assertIn(Job1, Job2.get_parents())
         self.assertIsNone(Job1.get_parents())
         
+    def test_get_parent(self):
+
+        Job2.add_parent(Job1)        
+        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'toto_test_uptodate'))
+        job1_instance = job_final.get_parent_of_type(Job1)
+        self.assertIsNotNone(job1_instance)
+        
+        job2_non_existing = job_final.get_parent_of_type(Job2)
+        self.assertIsNone(job2_non_existing)
+        
+        job1_non_existing = job1_instance.get_parent_of_type(Job1)
+        self.assertIsNone(job1_non_existing)
+        
     def test_parent_json(self):
         
         Job2.add_parent(Job1)
@@ -91,3 +107,24 @@ class JobTests(unittest.TestCase):
         
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'toto_testp_job1.json')))
         self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'toto_testp_job2.json')))
+
+    def test_parent_up_to_date(self):
+        Job1.attributes_to_serialize.append('job1attr1')
+        Job1.attributes_to_serialize.append('job1attr2')
+        Job2.attributes_to_serialize.append('job2attr1')
+        
+        Job2.add_parent(Job1)
+        
+        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'toto_test_uptodate'))
+        
+        self.assertFalse(job_final.is_up_to_date())
+        
+        job_final.serialize_state()
+        self.assertTrue(job_final.is_up_to_date())
+        
+        job1_instance = job_final.get_parent_of_type(Job1)
+        self.assertTrue(hasattr(job1_instance, "job1attr1"))
+        job1_instance.job1attr1 = 10
+        self.assertFalse(job_final.is_up_to_date())
+        job_final.serialize_state()
+        self.assertTrue(job_final.is_up_to_date())

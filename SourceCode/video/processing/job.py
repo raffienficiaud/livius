@@ -60,7 +60,21 @@ class Job(object):
         if self.parent_tasks is not None:
             for par in self.parent_tasks:
                 self.parent_instances.append(par(**kwargs))
+                
+    def get_parent_of_type(self, t):
+        if len(self.parent_instances) == 0:
+            return None
+        
+        for par in self.parent_instances:
+            if isinstance(par, t):
+                return par
             
+        for par in self.parent_instances:
+            ret = par.get_parent_of_type(t)
+            if ret is not None:
+                return ret
+        
+        return None
         
     def is_up_to_date(self):
         """Contains the logic to indicate that this step should be processed again"""
@@ -75,6 +89,7 @@ class Job(object):
             return False
         
         if not os.path.exists(self.json_filename):
+            logger.debug("File does not exist %s", self.json_filename)
             return False
         
         dict_json = json.load(open(self.json_filename))
@@ -89,7 +104,7 @@ class Job(object):
             return False
         
         except Exception, e:
-            logger.debug("Exception caught in 'are_states_equal: %r", e)
+            logger.warning("Exception caught in 'are_states_equal: %r", e)
             return False
         
         return True
@@ -100,6 +115,9 @@ class Job(object):
         which the name of the current Job has been appended in the form 'json_prefix'_'name'.json
         Also flushes the state of the parents as well
         """
+        
+        for par in self.parent_instances:
+            par.serialize_state()
         
         # no need if there is no change in configuration
         if self.are_states_equal():
@@ -114,9 +132,7 @@ class Job(object):
         with open(self.json_filename, 'w') as f:
             json.dump(d, f)
         
-        for par in self.parent_instances:
-            par.serialize_state()
-    
+
     def run(self):
         """Runs the action and all parents actions"""
         pass
