@@ -4,7 +4,7 @@
 import os
 import subprocess
 import time
-from video.processing.job import Job
+from .job import Job
 
 
 def extract_thumbnails(video_file_name, output_width, output_folder):
@@ -19,7 +19,7 @@ def extract_thumbnails(video_file_name, output_width, output_folder):
             '-i', os.path.abspath(video_file_name),
             '-r', '1',
             '-vf', 'scale=%d:-1' % output_width,
-            '-f', 'image2', '%s/frame-%05d.png' % os.path.abspath(output_folder)]
+            '-f', 'image2', '%s/frame-%%05d.png' % os.path.abspath(output_folder)]
     proc = subprocess.Popen(args)
 
     return_code = proc.poll()
@@ -35,6 +35,12 @@ class FFMpegThumbnailsJob(Job):
     name = "thumbnails"
     attributes_to_serialize = ['video_filename', 'video_fps', 'video_width', 'output_location']
 
+    @staticmethod
+    def get_thumbnail_location(video_filename):
+        return os.path.join(os.path.dirname(video_filename),
+                            'thumbnails',
+                            os.path.splitext(os.path.basename(video_filename))[0])
+
     def __init__(self,
                  video_filename,
                  video_width = None,
@@ -46,7 +52,7 @@ class FFMpegThumbnailsJob(Job):
         :param output_location: absolute location of the generated thumbnails
         """
 
-        super(self, FFMpegThumbnailsJob).__init__(*args, **kwargs)
+        super(FFMpegThumbnailsJob, self).__init__(*args, **kwargs)
 
         if video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
@@ -58,7 +64,7 @@ class FFMpegThumbnailsJob(Job):
             video_fps = 1
 
         if output_location is None:
-            output_location = os.path.join(os.path.dirname(video_filename), 'thumbnails')
+            output_location = self.get_thumbnail_location(video_filename)
 
         self.video_filename = os.path.abspath(video_filename)
         self.video_fps = video_fps
@@ -73,9 +79,9 @@ class FFMpegThumbnailsJob(Job):
         if not os.path.exists(self.output_location):
             return False
 
-        return self.are_states_equal()
+        return super(FFMpegThumbnailsJob, self).is_up_to_date()
 
-    def run(self):
+    def run(self, *args, **kwargs):
 
         if self.is_up_to_date():
             return True
@@ -93,9 +99,9 @@ class FFMpegThumbnailsJob(Job):
         return True
 
     def get_outputs(self):
-        super(self, FFMpegThumbnailsJob).get_outputs()
+        super(FFMpegThumbnailsJob, self).get_outputs()
 
-        possible_output = [i for i in os.listdir(self.output_location) if i.find('frame-') != -1]
+        possible_output = [os.path.abspath(os.path.join(self.output_location, i)) for i in os.listdir(self.output_location) if i.find('frame-') != -1]
         possible_output.sort()
 
         return possible_output
