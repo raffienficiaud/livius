@@ -176,24 +176,3 @@ class Job(object):
             raise RuntimeError("Cannot query for the outputs before those are computed")
 
         return None
-
-
-def prepare(video_filename):
-
-
-    obj_extract = FFMpegThumbnailsJob(video_filename=video_filename,
-                                      video_width=640,
-                                      video_fps=1)
-
-    if not obj_extract.is_run_up_to_date():
-        obj_extract.run()
-
-
-
-if __name__ == '__main__':
-
-    storage = '/media/renficiaud/linux-data/'
-    filename = 'BlackmagicProductionCamera 4K_1_2015-01-16_1411_C0000.mov'
-
-    prepare(os.path.join(storage, filename))
-
