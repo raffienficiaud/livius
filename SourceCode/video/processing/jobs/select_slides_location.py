@@ -19,6 +19,8 @@ def get_points(im,
     params = type('params', (object,), {})()
     params.current_position = None
     params.click = None
+    params.click_position = None
+    params.points = []
 
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     cv2.moveWindow(window_name, 100, 100)
@@ -27,24 +29,29 @@ def get_points(im,
 
         param.current_position = (x, y)
 
-        if not (flags & cv2.EVENT_FLAG_LBUTTON):
+        if not (flags & cv2.EVENT_FLAG_LBUTTON) and params.click:
             params.click = False
+            params.points.append(params.click_position)
+            print params.points
+            params.click_position = None
 
-        if flags & cv2.EVENT_FLAG_LBUTTON:
+        if flags & cv2.EVENT_FLAG_LBUTTON and params.click_position is None:
             params.click = True
+            params.click_position = (x, y)
 
     cv2.setMouseCallback(window_name, onMouse, params)
     cv2.imshow(window_name, im)
 
-    points = []
-    index = 0
-    while index < 4:
+    points = params.points
+    while len(params.points) < 4:
 
         im_draw = np.copy(im)
-        if len(points) > 1 and params.current_position is not None:
+        if len(points) > 1:
             for index in range(1, len(points)):
-                cv2.line(points[index - 1], points[index], (255, 0, 0))
-            cv2.rectangle(im_draw, points[:-1], params.current_position, (255, 0, 0))
+                cv2.line(im_draw, points[index - 1], points[index], (255, 0, 0))
+
+        if len(points) > 0 and params.current_position is not None:
+            cv2.line(im_draw, points[-1], params.current_position, (255, 0, 0))
 
         cv2.imshow(window_name, im_draw)
         _ = cv2.waitKey(10)
@@ -68,6 +75,9 @@ class SelectSlideJob(Job):
         :param video_filename: the video file
         """
 
+        # the video_filename is for being able to pass this parameter
+        # to a potential parent class (in this case potentially consummed by
+        # the FFMpeg)
         super(SelectSlideJob, self).__init__(video_filename=video_filename,
                                              *args, **kwargs)
         # video_filename = kwargs.get('video_filename', None)
@@ -95,7 +105,7 @@ class SelectSlideJob(Job):
             d = json.load(f)
             if 'points' not in d:
                 return None
-            return d['point']
+            return d['points']
 
     def is_up_to_date(self):
         """Returns False if the selection has not been done already"""
@@ -109,13 +119,18 @@ class SelectSlideJob(Job):
         if self.is_up_to_date():
             return True
 
-        cap = cv2.VideoCapture(self.video_filename)
-        cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 500)  # drop the first 500 frames, just like that
+        if not args:
+            cap = cv2.VideoCapture(self.video_filename)
+            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 500)  # drop the first 500 frames, just like that
 
-        width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
-        height = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
+            width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
+            height = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 
-        _, im0_not_resized = cap.read()
+            _, im0_not_resized = cap.read()
+        else:
+            im0_not_resized = cv2.imread(args[0][randint(0, len(args[0]))])
+            width, height, _ = im0_not_resized.shape
+
         self.points = get_points(im0_not_resized)
         self.points = [(float(i) / width, float(j) / height) for (i, j) in self.points]
 
@@ -133,6 +148,13 @@ class SelectSlideJob(Job):
 
 if __name__ == '__main__':
 
+    import logging
+    FORMAT = '[%(asctime)-15s] %(message)s'
+    logging.basicConfig(format=FORMAT)
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
     root_folder = os.path.join(os.path.dirname(__file__),
                                os.pardir,
                                os.pardir,
@@ -148,10 +170,14 @@ if __name__ == '__main__':
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
     SelectSlideJob.add_parent(FFMpegThumbnailsJob)
 
-    job_instance = SelectSlideJob(video_filename=current_video,
-                                  json_prefix=os.path.join(proc_folder, 'processing_video_7_'))
+    # import ipdb
+    d = {'video_filename': current_video,
+         'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
+         'json_prefix': os.path.join(proc_folder, 'processing_video_7_')}
+
+    job_instance = SelectSlideJob(**d)
     job_instance.process()
 
-    # should not pop out a new window
-    job_instance2 = SelectSlideJob(video_filename=current_video)
+    # should not pop out a new window because same params
+    job_instance2 = SelectSlideJob(**d)
     job_instance2.process()
