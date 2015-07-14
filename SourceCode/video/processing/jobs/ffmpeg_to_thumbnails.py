@@ -1,10 +1,11 @@
 
-"""Defines the FFMpeg task"""
+"""Defines the FFMpeg job that transforms a video file into a sequence of thumbnail images.
+Those thumbnails are more suitable for analysis."""
 
 import os
 import subprocess
 import time
-from .job import Job
+from ..job import Job
 
 
 def extract_thumbnails(video_file_name, output_width, output_folder):
