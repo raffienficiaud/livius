@@ -20,7 +20,7 @@ class Job(object):
 
     name = "root"
     attributes_to_serialize = []
-    parent_tasks = None
+    parents = None
 
     @classmethod
     def add_parent(cls, obj):
@@ -32,14 +32,14 @@ class Job(object):
             logger.error("Adding a erroneous class definition to the graph: %r not a subclass of %r", obj, cls)
             raise RuntimeError("Adding a erroneous class definition to the graph")
 
-        if cls.parent_tasks is None:
-            cls.parent_tasks = []
-        cls.parent_tasks.append(obj)
+        if cls.parents is None:
+            cls.parents = []
+        cls.parents.append(obj)
 
     @classmethod
     def get_parents(cls):
-        """Returns all the parent jobs of this class"""
-        return cls.parent_tasks
+        """Returns all the parents jobs of this class"""
+        return cls.parents
 
     def __init__(self, **kwargs):
         """
@@ -58,8 +58,8 @@ class Job(object):
             setattr(self, name, value)
 
         self.parent_instances = []
-        if self.parent_tasks is not None:
-            for par in self.parent_tasks:
+        if self.parents is not None:
+            for par in self.parents:
                 self.parent_instances.append(par(**kwargs))
 
     def get_parent_by_type(self, t):

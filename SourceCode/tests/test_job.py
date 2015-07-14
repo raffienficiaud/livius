@@ -37,8 +37,8 @@ class Job2(Job):
 class JobTestsFixture(object):
 
     def setUp(self):
-        self.assertIsNone(Job1.parent_tasks)
-        self.assertIsNone(Job2.parent_tasks)
+        self.assertIsNone(Job1.parents)
+        self.assertIsNone(Job2.parents)
         self.assertFalse(Job1.attributes_to_serialize)
         self.assertFalse(Job2.attributes_to_serialize)
 
@@ -46,8 +46,8 @@ class JobTestsFixture(object):
         pass
 
     def tearDown(self):
-        Job1.parent_tasks = None
-        Job2.parent_tasks = None
+        Job1.parents = None
+        Job2.parents = None
         Job1.attributes_to_serialize = []
         Job2.attributes_to_serialize = []
 
@@ -200,3 +200,60 @@ class JobProcessTests(JobTestsFixture, unittest.TestCase):
         job_final.result = []
         job_final.process()
         self.assertEqual(job_final.get_outputs(), [])
+
+    def test_process_arg_flow_diamond(self):
+
+        class ResultJob(Job):
+            def is_up_to_date(self):
+                if hasattr(self, 'result'):
+                    return True
+                return False
+
+            def get_outputs(self):
+                return self.result
+
+        class Job2_left(ResultJob, Job):
+            name = 'Job2_left'
+            parents = [Job2]
+
+            def run(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+                self.result = [i ** 2 for i in args[0]]
+                pass
+
+        class Job2_right(ResultJob, Job):
+            name = 'Job2_right'
+            parents = [Job2]
+
+            def run(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+                self.result = [i for i in args[0]]
+                pass
+
+        class JobFinal(ResultJob, Job):
+            name = 'JobFinal'
+            parents = [Job2_left, Job2_right]
+
+            def run(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+                self.result = [a * b for (a, b) in zip(*args)]
+                pass
+
+        job_final = JobFinal(json_prefix=os.path.join(self.tmpdir, 'test_diamond'))
+        self.assertFalse(job_final.is_up_to_date())
+        # import ipdb
+        # ipdb.set_trace()
+        job_final.process()
+        self.assertTrue(job_final.is_up_to_date())
+
+        self.assertEqual(job_final.get_outputs(),
+                         [a * b for (a, b) in zip([1, 2, 3, 4, 5], [i ** 2 for i in [1, 2, 3, 4, 5]])])
+
+        # should not process it again
+        job_final.result = []
+        job_final.process()
+        self.assertEqual(job_final.get_outputs(), [])
+        self.assertNotEqual(job_final.args, [])
