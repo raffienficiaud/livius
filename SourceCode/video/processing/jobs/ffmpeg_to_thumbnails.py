@@ -33,7 +33,7 @@ def extract_thumbnails(video_file_name, output_width, output_folder):
 
 class FFMpegThumbnailsJob(Job):
 
-    name = "thumbnails"
+    name = "ffmpeg_thumbnails"
     attributes_to_serialize = ['video_filename',
                                'video_fps',
                                'video_width',
@@ -85,7 +85,7 @@ class FFMpegThumbnailsJob(Job):
         self.video_fps = video_fps
         self.video_width = video_width
         self.output_location = output_location
-        self.json_filename = os.path.splitext(video_filename)[0] + '_' + self.name + '.json'
+        # self.json_filename = os.path.splitext(video_filename)[0] + '_' + self.name + '.json'
 
         # read back the output files if any
         self.output_files = self._get_files()

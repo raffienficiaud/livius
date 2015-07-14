@@ -69,7 +69,7 @@ class Job(object):
         self._parent_instances = []
         if self.parents is not None:
             for par in self.parents:
-                par_instance = par(**kwargs)
+                par_instance = par(*args, **kwargs)
                 if par_instance.name in self._parent_names:
                     raise RuntimeError("name %s is already used for one parent of job %s" %
                                        (par_instance.name, self.name))

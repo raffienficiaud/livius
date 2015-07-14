@@ -68,7 +68,9 @@ class SelectSlideJob(Job):
         :param video_filename: the video file
         """
 
-        super(SelectSlideJob, self).__init__(*args, **kwargs)
+        super(SelectSlideJob, self).__init__(video_filename=video_filename,
+                                             *args, **kwargs)
+        # video_filename = kwargs.get('video_filename', None)
 
         if video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
@@ -139,8 +141,15 @@ if __name__ == '__main__':
 
     video_folder = os.path.join(root_folder, 'Videos')
     current_video = os.path.join(video_folder, 'Video_7.mp4')
+    proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
+    if not os.path.exists(proc_folder):
+        os.makedirs(proc_folder)
 
-    job_instance = SelectSlideJob(video_filename=current_video)
+    from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
+    SelectSlideJob.add_parent(FFMpegThumbnailsJob)
+
+    job_instance = SelectSlideJob(video_filename=current_video,
+                                  json_prefix=os.path.join(proc_folder, 'processing_video_7_'))
     job_instance.process()
 
     # should not pop out a new window
