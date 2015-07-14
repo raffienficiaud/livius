@@ -37,8 +37,8 @@ class FFMpegThumbnailsJob(Job):
     attributes_to_serialize = ['video_filename',
                                'video_fps',
                                'video_width',
-                               'output_location',
-                               'output_files']
+                               'thumbnails_location',
+                               'thumbnail_files']
 
     @staticmethod
     def get_thumbnail_root(video_filename):
@@ -55,17 +55,20 @@ class FFMpegThumbnailsJob(Job):
                  video_filename,
                  video_width=None,
                  video_fps=None,
-                 output_location=None,
+                 thumbnails_location=None,
                  *args,
                  **kwargs):
         """
-        :param output_location: absolute location of the generated thumbnails
+        :param thumbnails_location: absolute location of the generated thumbnails
+        :param video_filename: name of the video file to process
         """
 
         super(FFMpegThumbnailsJob, self).__init__(*args, **kwargs)
 
         if video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
+        if not os.path.exists(video_filename):
+            raise RuntimeError("The video file %s does not exist" % os.path.abspath(video_filename))
 
         # this is necessary because the json files are stored in unicode, and the
         # comparison of the list of files should work (unicode path operations
@@ -78,26 +81,25 @@ class FFMpegThumbnailsJob(Job):
         if video_fps is None:
             video_fps = 1
 
-        if output_location is None:
-            output_location = self.get_thumbnail_location(video_filename)
+        if thumbnails_location is None:
+            thumbnails_location = self.get_thumbnail_location(video_filename)
 
         self.video_filename = os.path.abspath(video_filename)
         self.video_fps = video_fps
         self.video_width = video_width
-        self.output_location = output_location
-        # self.json_filename = os.path.splitext(video_filename)[0] + '_' + self.name + '.json'
+        self.thumbnails_location = os.path.abspath(unicode(thumbnails_location))  # same issue as for the video filename
 
         # read back the output files if any
-        self.output_files = self._get_files()
+        self.thumbnail_files = self._get_files()
 
     def is_up_to_date(self):
         """Returns False if the state of the json dump is not the same as
         the current state of the instance. This value is indicated for all
         parents from this instance up to the root"""
-        if not os.path.exists(self.output_location):
+        if not os.path.exists(self.thumbnails_location):
             return False
 
-        if not self.output_files:
+        if not self.thumbnail_files:
             return False
 
         return super(FFMpegThumbnailsJob, self).is_up_to_date()
@@ -107,15 +109,15 @@ class FFMpegThumbnailsJob(Job):
         if self.is_up_to_date():
             return True
 
-        if not os.path.exists(self.output_location):
-            os.makedirs(self.output_location)
+        if not os.path.exists(self.thumbnails_location):
+            os.makedirs(self.thumbnails_location)
 
         extract_thumbnails(video_file_name=self.video_filename,
                            output_width=self.video_width,
-                           output_folder=self.output_location)
+                           output_folder=self.thumbnails_location)
 
         # save the output files
-        self.output_files = self._get_files()
+        self.thumbnail_files = self._get_files()
 
         # commit to the json dump
         self.serialize_state()
@@ -123,10 +125,10 @@ class FFMpegThumbnailsJob(Job):
         return True
 
     def _get_files(self):
-        if not os.path.exists(self.output_location):
+        if not os.path.exists(self.thumbnails_location):
             return []
 
-        possible_output = [os.path.abspath(os.path.join(self.output_location, i)) for i in os.listdir(self.output_location) if i.find('frame-') != -1]
+        possible_output = [os.path.abspath(os.path.join(self.thumbnails_location, i)) for i in os.listdir(self.thumbnails_location) if i.find('frame-') != -1]
         possible_output.sort()
 
         return possible_output
