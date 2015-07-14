@@ -1,3 +1,7 @@
+'''
+Defines one or several workflow using the standard/basic jobs
+'''
+
 
 import logging
 FORMAT = '[%(asctime)-15s] %(message)s'
@@ -7,7 +11,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
-from SourceCode.video.processing.jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
+from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
 
 
 def workflow_thumnails_only():
