@@ -35,6 +35,7 @@ class Job2(Job):
 
 
 class JobTestsFixture(object):
+    """Fixture for cleaning Job1/Job2 and the temporary directory"""
 
     def setUp(self):
         self.assertIsNone(Job1.parents)
@@ -98,7 +99,7 @@ class JobTests(JobTestsFixture, unittest.TestCase):
         self.assertIsNone(job1_instance.get_parent_by_type(Job1))
 
         job1_instance_bis = job_final.get_parent_by_name('job1')
-        self.assertEqual(id(job1_instance), id(job1_instance_bis))
+        self.assertIs(job1_instance, job1_instance_bis)
 
         self.assertIsNone(job_final.get_parent_by_name('jobx'))
         self.assertIsNone(job1_instance.get_parent_by_name('job1'))
@@ -135,6 +136,7 @@ class JobTests(JobTestsFixture, unittest.TestCase):
 
 
 class JobProcessTests(JobTestsFixture, unittest.TestCase):
+    """Tests the proper processing of a DAG of Jobs"""
 
     def setUp(self):
         # this is a local class
@@ -244,8 +246,6 @@ class JobProcessTests(JobTestsFixture, unittest.TestCase):
 
         job_final = JobFinal(json_prefix=os.path.join(self.tmpdir, 'test_diamond'))
         self.assertFalse(job_final.is_up_to_date())
-        # import ipdb
-        # ipdb.set_trace()
         job_final.process()
         self.assertTrue(job_final.is_up_to_date())
 
@@ -257,3 +257,36 @@ class JobProcessTests(JobTestsFixture, unittest.TestCase):
         job_final.process()
         self.assertEqual(job_final.get_outputs(), [])
         self.assertNotEqual(job_final.args, [])
+
+
+class JobParentAttributeTests(JobTestsFixture, unittest.TestCase):
+    """Tests the access to the parent Jobs through a simple API"""
+
+    def setUp(self):
+        super(JobParentAttributeTests, self).setUp()
+        Job1.attributes_to_serialize.append('job1attr1')
+        Job1.attributes_to_serialize.append('job1attr2')
+        Job2.attributes_to_serialize.append('job2attr1')
+        Job2.add_parent(Job1)
+
+    def test_metaclass_parent_access(self):
+        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'test_meta'))
+        self.assertTrue(hasattr(job_final, Job1.name))
+        self.assertIsNone(job_final.job1.job1attr1)
+        self.assertIs(job_final.job1, job_final.get_parent_by_name('job1'))
+
+    def test_cannot_assign_parent(self):
+        job_final = Job2(json_prefix=os.path.join(self.tmpdir, 'test_meta'))
+        import exceptions
+        with self.assertRaises(exceptions.AttributeError):
+            job_final.job1 = Job1()
+
+    def test_cannot_add_twice_same_name_parent(self):
+        class Job1bis(Job1):
+            attributes_to_serialize = Job1.attributes_to_serialize + ['test']
+            pass
+
+        Job2.add_parent(Job1bis)
+
+        with self.assertRaises(RuntimeError):
+            Job2(json_prefix=os.path.join(self.tmpdir, 'test_meta'))

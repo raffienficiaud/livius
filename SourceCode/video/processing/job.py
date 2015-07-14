@@ -10,7 +10,7 @@
 import os
 import json
 import logging
-
+from exceptions import AttributeError
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -22,9 +22,16 @@ class Job(object):
     attributes_to_serialize = []
     parents = None
 
+    # private API
+    _is_frozen = False
+
     @classmethod
     def add_parent(cls, obj):
-        """Add a specific job as a parent job."""
+        """Add a specific job as a parent job.
+
+        Parent Jobs are jobs which the current job is dependent on. They are
+        executed and updated before the current job.
+        """
         if obj is None:
             return
 
@@ -41,11 +48,12 @@ class Job(object):
         """Returns all the parents jobs of this class"""
         return cls.parents
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
-
         :param json_prefix: the prefix used for serializing the state of this runner
         """
+        super(Job, self).__init__()
+        self._is_frozen = False
 
         json_prefix = kwargs.get('json_prefix', '')
         self.json_filename = json_prefix + '_' + self.name + '.json'
@@ -57,21 +65,36 @@ class Job(object):
         for name, value in kwargs.items():
             setattr(self, name, value)
 
-        self.parent_instances = []
+        self._parent_names = []
+        self._parent_instances = []
         if self.parents is not None:
             for par in self.parents:
-                self.parent_instances.append(par(**kwargs))
+                par_instance = par(**kwargs)
+                if par_instance.name in self._parent_names:
+                    raise RuntimeError("name %s is already used for one parent of job %s" %
+                                       (par_instance.name, self.name))
+                self._parent_names.append(par_instance.name)
+                self._parent_instances.append(par_instance)
+                setattr(self, par.name, par_instance)
+
+        self._is_frozen = True
+
+    def __setattr__(self, key, value):
+        if self._is_frozen and key in self._parent_names:
+            raise AttributeError("Class {} parents are frozen: cannot set {} = {}".format(self.__name__, key, value))
+        else:
+            object.__setattr__(self, key, value)
 
     def get_parent_by_type(self, t):
         """Algorithm is breadth first"""
-        if len(self.parent_instances) == 0:
+        if len(self._parent_instances) == 0:
             return None
 
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             if isinstance(par, t):
                 return par
 
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             ret = par.get_parent_by_type(t)
             if ret is not None:
                 return ret
@@ -80,14 +103,14 @@ class Job(object):
 
     def get_parent_by_name(self, name):
         """Algorithm is breadth first"""
-        if len(self.parent_instances) == 0:
+        if len(self._parent_instances) == 0:
             return None
 
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             if par.name == name:
                 return par
 
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             ret = par.get_parent_by_name(name)
             if ret is not None:
                 return ret
@@ -96,7 +119,7 @@ class Job(object):
 
     def is_up_to_date(self):
         """Contains the logic to indicate that this step should be processed again"""
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             if not par.is_up_to_date():
                 return False
         return self.are_states_equal()
@@ -133,7 +156,7 @@ class Job(object):
         Also flushes the state of the parents as well
         """
 
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             par.serialize_state()
 
         # no need if there is no change in configuration
@@ -162,7 +185,7 @@ class Job(object):
 
         # if not up to date, we need all the parents
         parent_outputs = []
-        for par in self.parent_instances:
+        for par in self._parent_instances:
             par.process()
             parent_outputs.append(par.get_outputs())
 
