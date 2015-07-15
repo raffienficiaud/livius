@@ -196,7 +196,8 @@ if __name__ == '__main__':
             return list_polygons
 
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
-    HistogramsLABDiff.add_parent(GatherSelections, FFMpegThumbnailsJob)
+    HistogramsLABDiff.add_parent(GatherSelections)
+    HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
 
     # import ipdb
     d = {'video_filename': current_video,
