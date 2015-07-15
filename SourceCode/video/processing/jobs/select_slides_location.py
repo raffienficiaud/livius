@@ -10,8 +10,17 @@ import numpy as np
 from random import randint
 
 
-def get_points(im,
-               window_name=None):
+def get_polygon_from_user(im,
+                          nb_points_polygon,
+                          window_name=None):
+    """Shows a window with the given image, inviting the user to click on several points
+    in order to define a polygon
+    
+    :param im: image to show
+    :param nb_points_polygon: number of points of the polygon
+    :param windows_name: the title of the window shown to the user. If None, a random string will be shown
+    
+    """
 
     if window_name is None:
         window_name = ''.join([chr(ord('a') + randint(0, 26)) for _ in range(10)])
@@ -62,6 +71,8 @@ def get_points(im,
 
 
 class SelectSlideJob(Job):
+    """This Job shows one frame of the input video (or extracted thumbnail image) to the user and asks
+    for a polygon defining the location of the slides"""
 
     name = "slide_location"
     attributes_to_serialize = ['video_filename',
@@ -126,12 +137,12 @@ class SelectSlideJob(Job):
             width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
             height = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 
-            _, im0_not_resized = cap.read()
+            _, im_for_selection = cap.read()
         else:
-            im0_not_resized = cv2.imread(args[0][randint(0, len(args[0]))])
-            width, height, _ = im0_not_resized.shape
+            im_for_selection = cv2.imread(args[0][randint(0, len(args[0]))])
+            width, height, _ = im_for_selection.shape
 
-        self.points = get_points(im0_not_resized)
+        self.points = get_polygon_from_user(im_for_selection, 4, 'Select the location of the slides')
         self.points = [(float(i) / width, float(j) / height) for (i, j) in self.points]
 
         # commit to the json dump
