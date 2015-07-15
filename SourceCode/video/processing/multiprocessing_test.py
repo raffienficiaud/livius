@@ -9,6 +9,8 @@ import functools
 import numpy as np
 import matplotlib.pyplot as plt
 
+from ...util.histogram import get_histogram_min_max_with_percentile
+
 
 def extract_lab_and_boundary(file_name):
     """Computes the Lab space of the image and the histogram_boundaries for the slide enhancement."""
@@ -25,7 +27,7 @@ def extract_lab_and_boundary(file_name):
     max_y = slide_crop_coordinates[1] * resized_y
     min_x = slide_crop_coordinates[2] * resized_x
     max_x = slide_crop_coordinates[3] * resized_x
-    slide = im_gray[min_y : max_y, min_x : max_x]
+    slide = im_gray[min_y: max_y, min_x: max_x]
     slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
 
     # Plotting the slide in order to check the slide location once
@@ -38,34 +40,7 @@ def extract_lab_and_boundary(file_name):
 
     #     plt.show()
 
-    # @todo(Stephan): Move this somewhere else?
-    def get_histogram_min_max_boundaries_normalized(hist):
-        """Gets the 1- and 99-percentile as an approximation of the boundaries
-           of the histogram.
-
-           Note:
-                The Histogram is expected to be normalized
-
-           Returns both the min and the max value for the histogram
-        """
-        t_min = 0
-        t_max = 255
-
-        min_mass = 0
-        max_mass = 0
-
-        # Integrate until we reach 1% of the mass from each direction
-        while min_mass < 0.01:
-            min_mass += hist[t_min]
-            t_min += 1
-
-        while max_mass < 0.01:
-            max_mass += hist[t_max]
-            t_max -= 1
-
-        return t_min, t_max
-
-    histogram_boundaries = get_histogram_min_max_boundaries_normalized(cv2.normalize(slidehist))
+    histogram_boundaries = get_histogram_min_max_with_percentile(slidehist, False)
 
     # return t, histogram_boundaries
     return t, im_lab, histogram_boundaries
@@ -194,7 +169,7 @@ def horizontal_stripe_histograms(im_diff_lab, N_stripes):
     # dividing the plane vertically by N=3 and computing histograms on that. The purpose of this is to detect the environment changes
     hist_plane = []
     for i in range(N_stripes):
-        location = int(i*im_diff_lab.shape[0]/float(N_stripes)), min(im_diff_lab.shape[0], int((i+1)*im_diff_lab.shape[0]/float(N_stripes)))
+        location = int(i * im_diff_lab.shape[0] / float(N_stripes)), min(im_diff_lab.shape[0], int((i + 1) * im_diff_lab.shape[0] / float(N_stripes)))
         current_plane = im_diff_lab[location[0]:location[1], :]
         hist_plane.append(cv2.calcHist([current_plane.astype(np.uint8)], [0], None, [256], [0, 256]))
 
@@ -207,7 +182,7 @@ def vertical_stripe_histograms(im_diff_lab, N_vertical_stripes, do_energy_calcul
     if 'speaker_bb_height_location' in extraction_args:
         speaker_bb_height_location = extraction_args['speaker_bb_height_location']
         for i in range(N_vertical_stripes):
-            location = int(i*im_diff_lab.shape[1]/float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i+1)*im_diff_lab.shape[1]/float(N_vertical_stripes)))
+            location = int(i * im_diff_lab.shape[1] / float(N_vertical_stripes)), min(im_diff_lab.shape[1], int((i + 1) * im_diff_lab.shape[1] / float(N_vertical_stripes)))
             current_vertical_stripe = im_diff_lab[speaker_bb_height_location[0]:speaker_bb_height_location[1], location[0]:location[1]]
             hist_vertical_stripes.append(cv2.calcHist([current_vertical_stripe.astype(np.uint8)], [0], None, [256], [0, 256]))
 
@@ -237,7 +212,7 @@ def chunk(l, chunk_size):
     """Splits the given list into chunks of size chunk_size. The last chunk will eventually be smaller than chunk_size."""
     result = []
     for i in range(0, len(l), chunk_size):
-        result.append(l[i:i+chunk_size])
+        result.append(l[i:i + chunk_size])
 
     return result
 
@@ -276,10 +251,10 @@ if __name__ == '__main__':
 
     directory = '/home/livius/Code/livius/SourceCode/Example Data/thumbnails/'
 
-    video7_slide_coordinates = np.array([[0.36004776,  0.01330207],
-                                         [0.68053395,  0.03251761],
-                                         [0.67519468,  0.42169076],
-                                         [0.3592881,   0.41536275]])
+    video7_slide_coordinates = np.array([[0.36004776, 0.01330207],
+                                         [0.68053395, 0.03251761],
+                                         [0.67519468, 0.42169076],
+                                         [0.3592881, 0.41536275]])
     video7_slide_coordinates = _inner_rectangle(video7_slide_coordinates)
     # @todo(Stephan): This is from a different video, pass the correct height for the resized frame of video7
     video7_speaker_bb_height_location = (155, 260)
