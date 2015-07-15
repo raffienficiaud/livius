@@ -11,11 +11,11 @@ from ..job import Job
 from ....util.user_interaction import get_polygon_from_user
 
 
-class SelectSlideJob(Job):
+class SelectPolygonJob(Job):
     """This Job shows one frame of the input video (or extracted thumbnail image) to the user and asks
     for a polygon defining the location of the slides"""
 
-    name = "slide_location"
+    name = "select_polygon"
     attributes_to_serialize = ['video_filename',
                                'points']
 
@@ -30,8 +30,9 @@ class SelectSlideJob(Job):
         # the video_filename is for being able to pass this parameter
         # to a potential parent class (in this case potentially consummed by
         # the FFMpeg)
-        super(SelectSlideJob, self).__init__(video_filename=video_filename,
-                                             *args, **kwargs)
+        super(SelectPolygonJob, self).__init__(video_filename=video_filename,
+                                               *args,
+                                               **kwargs)
         # video_filename = kwargs.get('video_filename', None)
 
         if video_filename is None:
@@ -42,9 +43,7 @@ class SelectSlideJob(Job):
         # this is necessary because the json files are stored in unicode, and the
         # comparison of the list of files should work (unicode path operations
         # is unicode)
-        video_filename = unicode(video_filename)
-
-        self.video_filename = os.path.abspath(video_filename)
+        self.video_filename = os.path.abspath(unicode(video_filename))
 
         # read back the output files if any
         self.points = self._get_points()
@@ -64,7 +63,7 @@ class SelectSlideJob(Job):
         if self.points is None:
             return False
 
-        return super(SelectSlideJob, self).is_up_to_date()
+        return super(SelectPolygonJob, self).is_up_to_date()
 
     def run(self, *args, **kwargs):
 
@@ -92,7 +91,7 @@ class SelectSlideJob(Job):
         return
 
     def get_outputs(self):
-        super(SelectSlideJob, self).get_outputs()
+        super(SelectPolygonJob, self).get_outputs()
         if self.points is None:
             raise RuntimeError('The points have not been selected yet')
         return self.points
@@ -120,16 +119,16 @@ if __name__ == '__main__':
         os.makedirs(proc_folder)
 
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
-    SelectSlideJob.add_parent(FFMpegThumbnailsJob)
+    SelectPolygonJob.add_parent(FFMpegThumbnailsJob)
 
     # import ipdb
     d = {'video_filename': current_video,
          'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
          'json_prefix': os.path.join(proc_folder, 'processing_video_7_')}
 
-    job_instance = SelectSlideJob(**d)
+    job_instance = SelectPolygonJob(**d)
     job_instance.process()
 
     # should not pop out a new window because same params
-    job_instance2 = SelectSlideJob(**d)
+    job_instance2 = SelectPolygonJob(**d)
     job_instance2.process()

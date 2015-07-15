@@ -27,12 +27,25 @@ def get_polygon_outer_bounding_box(polygon):
     :return: (x,y,width,height)
     """
 
-    xs = [i[0] for i in polygon]
+    xs = [i[0] for i in polygon]  # may be improved if using numpy methods directly
     ys = [i[1] for i in polygon]
 
     mx = min(xs)
     my = min(ys)
     return mx, my, max(xs) - mx, max(ys) - my
+
+
+def crop_image_from_normalized_coordinates(im, rect):
+    """
+    Returns a cropped image from `rect` where the coordinates are normalized.
+    The form of `rect` is similar to :py:`get_polygon_outer_bounding_box`.
+    """
+    import math
+
+    x1, x2 = int(math.floor(rect[0] * im.shape[1])), int(math.ceil((rect[0] + rect[2]) * im.shape[1]))
+    y1, y2 = int(math.floor(rect[1] * im.shape[0])), int(math.ceil((rect[1] + rect[3]) * im.shape[0]))
+
+    return im[y1:y2, x1:x2, :]
 
 
 def prompt_yes_no_terminal(question, default="yes"):
