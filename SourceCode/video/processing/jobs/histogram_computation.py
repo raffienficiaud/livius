@@ -145,7 +145,7 @@ if __name__ == '__main__':
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
 
-    from .select_slides_location import SelectPolygonJob
+    from .select_polygon import SelectPolygonJob
 
     # overriding some default behaviour with specific names
 
