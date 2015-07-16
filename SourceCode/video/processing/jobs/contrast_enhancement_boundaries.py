@@ -7,10 +7,28 @@ from ..job import Job
 import os
 import cv2
 import json
+import itertools
 import numpy as np
+from multiprocessing import Pool
 
 from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates
 from ....util.histogram import get_histogram_min_max_with_percentile
+
+
+def get_min_max_boundary_from_file(args):
+    filename, slide_crop_rect = args
+    im = cv2.imread(filename)
+    im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+
+    resized_y, resized_x = im_gray.shape
+
+    slide = crop_image_from_normalized_coordinates(im_gray, slide_crop_rect)
+    slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
+
+    boundaries = get_histogram_min_max_with_percentile(slidehist, False)
+
+    return boundaries
+
 
 class ContrastEnhancementBoundaries(Job):
     """
@@ -53,26 +71,12 @@ class ContrastEnhancementBoundaries(Job):
         # Second parent is selected slide
         slide_crop_rect = get_polygon_outer_bounding_box(args[1])
 
-        # @todo(Stephan): SegmentCompuation needs to be a parent!
+        pool = Pool(processes=6)
 
-        self.min_bounds = []
-        self.max_bounds = []
+        boundaries = pool.map(get_min_max_boundary_from_file, itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
 
-        for index, filename in enumerate(image_list):
-
-            im = cv2.imread(filename)
-            im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-
-            resized_y, resized_x = im_gray.shape
-
-            slide = crop_image_from_normalized_coordinates(im_gray, slide_crop_rect)
-            slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
-
-            min_boundary, max_boundary = get_histogram_min_max_with_percentile(slidehist, False)
-
-            self.min_bounds.append(min_boundary)
-            self.max_bounds.append(max_boundary)
-
+        # Create two single lists
+        self.min_bounds, self.max_bounds = zip(*result)
 
         self.serialize_state()
 
