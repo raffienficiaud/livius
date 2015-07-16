@@ -42,10 +42,18 @@ def crop_image_from_normalized_coordinates(im, rect):
     """
     import math
 
-    x1, x2 = int(math.floor(rect[0] * im.shape[1])), int(math.ceil((rect[0] + rect[2]) * im.shape[1]))
-    y1, y2 = int(math.floor(rect[1] * im.shape[0])), int(math.ceil((rect[1] + rect[3]) * im.shape[0]))
+    minx, miny, rect_width, rect_height = rect
+    im_height, im_width = im.shape[:2]
 
-    return im[y1:y2, x1:x2, :]
+    x1, x2 = int(math.floor(minx * im_width)), int(math.ceil((minx + rect_width) * im_width))
+    y1, y2 = int(math.floor(miny * im_height)), int(math.ceil((miny + rect_height) * im_height))
+
+    if len(im.shape) == 2:
+        return im[y1:y2, x1:x2]
+    elif len(im.shape) == 3:
+        return im[y1:y2, x1:x2, :]
+    else:
+        raise RuntimeError('Image does not have grayscale or color format')
 
 
 def prompt_yes_no_terminal(question, default="yes"):

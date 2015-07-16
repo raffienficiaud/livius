@@ -19,21 +19,32 @@ class ContrastEnhancementBoundaries(Job):
     name = 'contrast_enhancement_boundaries'
 
     # @todo(Stephan): what needs to be serialized
-    attributes_to_serialize = ['boundaries']
+    attributes_to_serialize = ['min_bounds',
+                               'max_bounds']
 
     def __init__(self,
-                 *arg,
+                 *args,
                  **kwargs):
         super(ContrastEnhancementBoundaries, self).__init__(*args, **kwargs)
 
+        # @todo(Stephan): Read previous state
 
+
+
+    # @todo(Stephan): Multiprocess this
     def run(self, *args, **kwargs):
         """Computes the Lab space of the image and the histogram_boundaries for the slide enhancement."""
 
-        slide_crop_coordinates = get_polygon_outer_bounding_box(args[0])
-        image_list = args[1]
+        # First parent is ffmpeg
+        image_list = args[0]
 
-        self.boundaries = {}
+        # Second parent is selected slide
+        slide_crop_rect = get_polygon_outer_bounding_box(args[1])
+
+        # @todo(Stephan): SegmentCompuation needs to be a parent!
+
+        self.min_bounds = []
+        self.max_bounds = []
 
         for index, filename in enumerate(image_list):
 
@@ -42,29 +53,39 @@ class ContrastEnhancementBoundaries(Job):
 
             resized_y, resized_x = im_gray.shape
 
-            min_y = slide_crop_coordinates[0] * resized_y
-            max_y = slide_crop_coordinates[1] * resized_y
-            min_x = slide_crop_coordinates[2] * resized_x
-            max_x = slide_crop_coordinates[3] * resized_x
-
-            slide = im_gray[min_y: max_y, min_x: max_x]
+            slide = crop_image_from_normalized_coordinates(im_gray, slide_crop_rect)
             slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
 
             min_boundary, max_boundary = get_histogram_min_max_with_percentile(slidehist, False)
 
-            self.boundaries['min'][index] = min_boundary
-            self.boundaries['max'][index] = max_boundary
+            self.min_bounds.append(min_boundary)
+            self.max_bounds.append(max_boundary)
 
 
         self.serialize_state()
 
 
-
     def get_outputs(self):
         super(ContrastEnhancementBoundaries, self).get_outputs()
 
-        pass
+        if (self.min_bounds is None) or (self.max_bounds is None):
+            raise RuntimeError('The histogram boundaries for contrast enhancement have not been computed yet.')
 
+        class BoundsFromTime(object):
+
+            def __init__(self, boundaries):
+                self.bounds = boundaries
+                return
+
+            def __call__(self, t):
+
+                # @todo(Stephan):
+                # We need the segments here first because we need to determine if we interpolate or take the average
+                # of the bounds
+                return self.bounds[t]
+
+        # @todo(Stephan): Really return two functions here?
+        return BoundsFromTime(self.min_bounds), BoundsFromTime(self.max_bounds)
 
 
 if __name__ == '__main__':
@@ -82,7 +103,7 @@ if __name__ == '__main__':
                                os.pardir)
 
     video_folder = os.path.join(root_folder, 'Videos')
-    current_video = os.path.join(video_folder, 'Video_7.mp4')
+    current_video = os.path.join(video_folder, 'video_7.mp4')
     proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
 
     if not os.path.exists(proc_folder):
@@ -99,7 +120,6 @@ if __name__ == '__main__':
     d = {'video_filename': current_video,
          'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
          'json_prefix': os.path.join(proc_folder, 'processing_video_7_')}
-
 
     boundary_job = ContrastEnhancementBoundaries(**d)
     boundary_job.process()
