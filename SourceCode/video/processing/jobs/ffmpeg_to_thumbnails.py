@@ -1,0 +1,142 @@
+
+"""Defines the FFMpeg job that transforms a video file into a sequence of thumbnail images.
+Those thumbnails are more suitable for analysis."""
+
+import os
+import subprocess
+import time
+from ..job import Job
+
+
+def extract_thumbnails(video_file_name, output_width, output_folder):
+    """Extracts the thumbnails using FFMpeg.
+
+    :param video_file_name: name of the video file to process
+    :param output_width: width of the resized images
+    :param output_folder: folder where the thumbnails are stored
+
+    """
+    args = ['ffmpeg',
+            '-i', os.path.abspath(video_file_name),
+            '-r', '1',
+            '-vf', 'scale=%d:-1' % output_width,
+            '-f', 'image2', '%s/frame-%%05d.png' % os.path.abspath(output_folder)]
+    proc = subprocess.Popen(args)
+
+    return_code = proc.poll()
+    while return_code is None:
+        time.sleep(1)
+        return_code = proc.poll()
+
+    return
+
+
+class FFMpegThumbnailsJob(Job):
+
+    name = "ffmpeg_thumbnails"
+    attributes_to_serialize = ['video_filename',
+                               'video_fps',
+                               'video_width',
+                               'thumbnails_location',
+                               'thumbnail_files']
+
+    @staticmethod
+    def get_thumbnail_root(video_filename):
+        """Indicates the root where files are stored"""
+        return os.path.dirname(video_filename)
+
+    @staticmethod
+    def get_thumbnail_location(video_filename):
+        return os.path.join(FFMpegThumbnailsJob.get_thumbnail_root(video_filename),
+                            'thumbnails',
+                            os.path.splitext(os.path.basename(video_filename))[0])
+
+    def __init__(self,
+                 video_filename,
+                 video_width=None,
+                 video_fps=None,
+                 thumbnails_location=None,
+                 *args,
+                 **kwargs):
+        """
+        :param thumbnails_location: absolute location of the generated thumbnails
+        :param video_filename: name of the video file to process
+        """
+
+        super(FFMpegThumbnailsJob, self).__init__(*args, **kwargs)
+
+        if video_filename is None:
+            raise RuntimeError("The video file name cannot be empty")
+        if not os.path.exists(video_filename):
+            raise RuntimeError("The video file %s does not exist" % os.path.abspath(video_filename))
+
+        # this is necessary because the json files are stored in unicode, and the
+        # comparison of the list of files should work (unicode path operations
+        # is unicode)
+        video_filename = unicode(video_filename)
+
+        if video_width is None:
+            video_width = 640
+
+        if video_fps is None:
+            video_fps = 1
+
+        if thumbnails_location is None:
+            thumbnails_location = self.get_thumbnail_location(video_filename)
+
+        self.video_filename = os.path.abspath(video_filename)
+        self.video_fps = video_fps
+        self.video_width = video_width
+        self.thumbnails_location = os.path.abspath(unicode(thumbnails_location))  # same issue as for the video filename
+
+        # read back the output files if any
+        self.thumbnail_files = self._get_files()
+
+    def is_up_to_date(self):
+        """Returns False if the state of the json dump is not the same as
+        the current state of the instance. This value is indicated for all
+        parents from this instance up to the root"""
+        if not os.path.exists(self.thumbnails_location):
+            return False
+
+        if not self.thumbnail_files:
+            return False
+
+        return super(FFMpegThumbnailsJob, self).is_up_to_date()
+
+    def run(self, *args, **kwargs):
+
+        if self.is_up_to_date():
+            return True
+
+        if not os.path.exists(self.thumbnails_location):
+            os.makedirs(self.thumbnails_location)
+
+        extract_thumbnails(video_file_name=self.video_filename,
+                           output_width=self.video_width,
+                           output_folder=self.thumbnails_location)
+
+        # save the output files
+        self.thumbnail_files = self._get_files()
+
+        # commit to the json dump
+        self.serialize_state()
+
+        return True
+
+    def _get_files(self):
+        if not os.path.exists(self.thumbnails_location):
+            return []
+
+        possible_output = [os.path.abspath(os.path.join(self.thumbnails_location, i)) for i in os.listdir(self.thumbnails_location) if i.find('frame-') != -1]
+        possible_output.sort()
+
+        return possible_output
+
+    def get_outputs(self):
+        super(FFMpegThumbnailsJob, self).get_outputs()
+        return self._get_files()
+
+
+def factory():
+    return FFMpegThumbnailsJob
