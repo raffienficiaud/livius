@@ -71,8 +71,11 @@ class Job(object):
             for par in self.parents:
                 par_instance = par(*args, **kwargs)
                 if par_instance.name in self._parent_names:
-                    raise RuntimeError("name %s is already used for one parent of job %s" %
-                                       (par_instance.name, self.name))
+                    # not adding
+                    logger.warning("Direct parent %s already exists", par_instance.name)
+                    continue
+                    #raise RuntimeError("name %s is already used for one parent of job %s" %
+                    #                   (par_instance.name, self.name))
                 self._parent_names.append(par_instance.name)
                 self._parent_instances.append(par_instance)
                 setattr(self, par.name, par_instance)
