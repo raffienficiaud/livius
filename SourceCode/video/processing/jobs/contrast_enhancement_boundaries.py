@@ -6,10 +6,11 @@ from ..job import Job
 
 import os
 import cv2
+import json
 import numpy as np
 
 from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates
-
+from ....util.histogram import get_histogram_min_max_with_percentile
 
 class ContrastEnhancementBoundaries(Job):
     """
@@ -27,8 +28,19 @@ class ContrastEnhancementBoundaries(Job):
                  **kwargs):
         super(ContrastEnhancementBoundaries, self).__init__(*args, **kwargs)
 
-        # @todo(Stephan): Read previous state
+        self._get_previous_boundaries()
 
+    def _get_previous_boundaries(self):
+        if not os.path.exists(self.json_filename):
+            return None
+
+        with open(self.json_filename) as f:
+            d = json.load(f)
+
+            for key in self.attributes_to_serialize:
+
+                if key in d:
+                    setattr(self, key, d[key])
 
 
     # @todo(Stephan): Multiprocess this
@@ -48,7 +60,7 @@ class ContrastEnhancementBoundaries(Job):
 
         for index, filename in enumerate(image_list):
 
-            im = cv2.imread(file_name)
+            im = cv2.imread(filename)
             im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
             resized_y, resized_x = im_gray.shape
@@ -123,10 +135,4 @@ if __name__ == '__main__':
 
     boundary_job = ContrastEnhancementBoundaries(**d)
     boundary_job.process()
-
-
-
-
-
-
 

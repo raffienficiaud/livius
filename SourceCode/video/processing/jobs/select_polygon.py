@@ -83,7 +83,11 @@ class SelectPolygonJob(Job):
             width, height, _ = im_for_selection.shape
 
         self.points = get_polygon_from_user(im_for_selection, 4, 'Select the location of the slides')
-        self.points = [(float(i) / width, float(j) / height) for (i, j) in self.points]
+
+        # @note(Stephan):
+        # Since Json stores tuples as list, we go from tuples to lists here. Then we can compare the
+        # self.points attribute directly to the json file (as in are_states_equal)
+        self.points = [[float(i) / width, float(j) / height] for (i, j) in self.points]
 
         # commit to the json dump
         self.serialize_state()

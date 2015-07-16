@@ -20,6 +20,14 @@ class Job(object):
 
     name = "root"
     attributes_to_serialize = []
+
+    # @todo(Stephan):
+    # Have something like outputs_to_reload here?
+    # All jobs seem to do some reloading from the json files, but this is not concerning all of the Job's attributes.
+    # (e.g SelectPolygon reloads the points but not the video_file_name)
+    #
+    # get_previous_output could then just loop over outputs_to_reload and set the attributes.
+
     parents = None
 
     # private API
@@ -126,6 +134,7 @@ class Job(object):
 
     def are_states_equal(self):
         """Returns True is the state of the current object is the same as the one in the serialized json dump"""
+
         if self.json_filename is None:
             return False
 

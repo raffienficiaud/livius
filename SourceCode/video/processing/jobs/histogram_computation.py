@@ -140,7 +140,7 @@ if __name__ == '__main__':
                                os.pardir)
 
     video_folder = os.path.join(root_folder, 'Videos')
-    current_video = os.path.join(video_folder, 'Video_7.mp4')
+    current_video = os.path.join(video_folder, 'video_7.mp4')
     proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
