@@ -8,8 +8,11 @@ import os
 import json
 import cv2
 import numpy as np
+import functools
 
 from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates
+from ....util.functor import Functor
+from .select_polygon import SelectPolygonJob
 
 
 class HistogramsLABDiff(Job):
@@ -122,17 +125,79 @@ class HistogramsLABDiff(Job):
         if self.histograms_labdiff is None:
             raise RuntimeError('The points have not been selected yet')
 
-        class FeatureTime(object):
+        # class FeatureTime(object):
 
-            def __init__(self, histograms_per_frame_rect):
-                self.histograms_per_frame_rect = histograms_per_frame_rect
-                return
+        #     def __init__(self, histograms_per_frame_rect):
+        #         self.histograms_per_frame_rect = histograms_per_frame_rect
+        #         return
 
-            def __call__(self, frame_index, area_name):
-                return self.histograms_per_frame_rect[frame_index][area_name]
+        #     def __call__(self, frame_index, area_name):
+        #         return np.array(self.histograms_per_frame_rect[frame_index][area_name], dtype=np.float32)
 
-        return FeatureTime(self.histograms_labdiff)
+        # return Functor(self.histograms_labdiff), self.number_of_files
+        return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32)), self.number_of_files
 
+# overriding some default behaviour with specific names
+
+class SelectSlide(SelectPolygonJob):
+    name = 'select_slides'
+
+class SelectSpeaker(SelectPolygonJob):
+    name = 'select_speaker'
+
+class GatherSelections(Job):
+    """
+    This job combines the polygon selections, the user has to perform for the slides and the speaker location.
+
+    The output is:
+        A list of tuples. Each tuple contains the name of the area and a normalized rectangle [x,y,width,height] that specifies the area.
+    """
+    name = 'gather_selections'
+    parents = [SelectSlide, SelectSpeaker]
+    attributes_to_serialize = ['nb_vertical_stripes']
+
+    def __init__(self, *args, **kwargs):
+        super(GatherSelections, self).__init__(*args, **kwargs)
+
+        self.nb_vertical_stripes = 10
+
+    def run(self, *args, **kwargs):
+        pass
+
+    def get_outputs(self):
+
+        list_polygons = []
+
+        # slide location gives the position where to look for the illumination
+        # changes detection
+        slide_loc = self.select_slides.get_outputs()
+        slide_rec = get_polygon_outer_bounding_box(slide_loc)
+        x, y, width, height = slide_rec
+
+        first_light_change_area = [0, y, x, height]
+        second_light_change_area = [x + width, y, 1 - (x + width), height]
+        list_polygons += ('slides', first_light_change_area), \
+                         ('slides', second_light_change_area)
+
+        # speaker location is divided into vertical stripes on the full horizontal
+        # extent
+        speaker_loc = self.select_speaker.get_outputs()
+        speaker_rec = get_polygon_outer_bounding_box(speaker_loc)
+        _, y, _, height = speaker_rec
+
+        width_stripes = 1.0 / self.nb_vertical_stripes
+        for i in range(self.nb_vertical_stripes - 1):
+            x_start = width_stripes * i
+            rect_stripe = [x_start, y, width_stripes, height]
+            list_polygons += ('speaker_%.2d' % i,
+                              rect_stripe),
+
+        # final stripe adjusted a bit to avoid getting out the image plane
+        rect_stripe = [1 - width_stripes, y, width_stripes, height]
+        list_polygons += ('speaker_%.2d' % (self.nb_vertical_stripes - 1),
+                          rect_stripe),
+
+        return list_polygons
 
 if __name__ == '__main__':
 
@@ -155,69 +220,7 @@ if __name__ == '__main__':
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
 
-    from .select_polygon import SelectPolygonJob
 
-    # overriding some default behaviour with specific names
-
-    class SelectSlide(SelectPolygonJob):
-        name = 'select_slides'
-
-    class SelectSpeaker(SelectPolygonJob):
-        name = 'select_speaker'
-
-    class GatherSelections(Job):
-        """
-        This job combines the polygon selections, the user has to perform for the slides and the speaker location.
-
-        The output is:
-            A list of tuples. Each tuple contains the name of the area and a normalized rectangle [x,y,width,height] that specifies the area.
-        """
-        name = 'gather_selections'
-        parents = [SelectSlide, SelectSpeaker]
-        attributes_to_serialize = ['nb_vertical_stripes']
-
-        def __init__(self, *args, **kwargs):
-            super(GatherSelections, self).__init__(*args, **kwargs)
-
-            self.nb_vertical_stripes = 10
-
-        def run(self, *args, **kwargs):
-            pass
-
-        def get_outputs(self):
-
-            list_polygons = []
-
-            # slide location gives the position where to look for the illumination
-            # changes detection
-            slide_loc = self.select_slides.get_outputs()
-            slide_rec = get_polygon_outer_bounding_box(slide_loc)
-            x, y, width, height = slide_rec
-
-            first_light_change_area = [0, y, x, height]
-            second_light_change_area = [x + width, y, 1 - (x + width), height]
-            list_polygons += ('slides', first_light_change_area), \
-                             ('slides', second_light_change_area)
-
-            # speaker location is divided into vertical stripes on the full horizontal
-            # extent
-            speaker_loc = self.select_speaker.get_outputs()
-            speaker_rec = get_polygon_outer_bounding_box(speaker_loc)
-            _, y, _, height = speaker_rec
-
-            width_stripes = 1.0 / self.nb_vertical_stripes
-            for i in range(self.nb_vertical_stripes - 1):
-                x_start = width_stripes * i
-                rect_stripe = [x_start, y, width_stripes, height]
-                list_polygons += ('speaker_%.2d' % i,
-                                  rect_stripe),
-
-            # final stripe adjusted a bit to avoid getting out the image plane
-            rect_stripe = [1 - width_stripes, y, width_stripes, height]
-            list_polygons += ('speaker_%.2d' % self.nb_vertical_stripes,
-                              rect_stripe),
-
-            return list_polygons
 
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
     HistogramsLABDiff.add_parent(GatherSelections)
