@@ -18,9 +18,9 @@ class HistogramsLABDiff(Job):
 
     Expect parameters from parents, in this order:
 
-    - a list of `(name, polygon)` specifying the locations where the histogram should be computed, the `name` indicating the
-      name of the rectangle. The `polygon` is transformed into its bounding box using :py:`get_polygon_outer_bounding_box`.
-      If several polygons exist for the same name, those are merged (which may be useful if the area is defined by
+    - a list of `(name, rectangle)` specifying the locations where the histogram should be computed, the `name` indicating the
+      name of the rectangle. The `rectangle` is given as (x,y, width, height).
+      If several rectangles exist for the same name, those are merged (which may be useful if the area is defined by
       several disconnected polygons).
     - a list of images
 
@@ -83,6 +83,11 @@ class HistogramsLABDiff(Job):
 
         # init
         self.histograms_labdiff = {}
+        for name, _ in self.rectangle_locations:
+            element = self.histograms_labdiff.get(name, {})
+            self.histograms_labdiff[name] = element
+
+
 
         # perform the computation
         im_index_tm1 = cv2.imread(image_list[0])
@@ -96,11 +101,16 @@ class HistogramsLABDiff(Job):
             im_diff = (imlab_index_t - imlab_index_tm1) ** 2
             im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
 
-            for name, polygon in self.rectangle_location:
+            for name, rect in self.rectangle_locations:
 
-                rect = get_polygon_outer_bounding_box(polygon)
                 cropped_image = crop_image_from_normalized_coordinates(im_diff_lab, rect)
-                self.histograms_labdiff[name][index] = cv2.calcHist([cropped_image.astype(np.uint8)], [0], None, [256], [0, 256])
+                histogram =  cv2.calcHist([cropped_image.astype(np.uint8)], [0], None, [256], [0, 256])
+
+                # @todo(Stephan): Merge the histograms for the slides!
+
+
+                # @note(Stephan): The histograms are stored as a python list in order to serialize them via JSON.
+                self.histograms_labdiff[name][index] = histogram.tolist()
 
             pass
 
@@ -156,10 +166,20 @@ if __name__ == '__main__':
         name = 'select_speaker'
 
     class GatherSelections(Job):
+        """
+        This job combines the polygon selections, the user has to perform for the slides and the speaker location.
+
+        The output is:
+            A list of tuples. Each tuple contains the name of the area and a normalized rectangle [x,y,width,height] that specifies the area.
+        """
         name = 'gather_selections'
         parents = [SelectSlide, SelectSpeaker]
-        nb_vertical_stripes = 10
         attributes_to_serialize = ['nb_vertical_stripes']
+
+        def __init__(self, *args, **kwargs):
+            super(GatherSelections, self).__init__(*args, **kwargs)
+
+            self.nb_vertical_stripes = 10
 
         def run(self, *args, **kwargs):
             pass
@@ -171,27 +191,31 @@ if __name__ == '__main__':
             # slide location gives the position where to look for the illumination
             # changes detection
             slide_loc = self.select_slides.get_outputs()
-            first_light_change_area = [0, slide_loc[1], slide_loc[0], slide_loc[3]]
-            second_light_change_area = [slide_loc[0] + slide_loc[2], slide_loc[1],
-                                        1 - (slide_loc[0] + slide_loc[2]), slide_loc[3]]
+            slide_rec = get_polygon_outer_bounding_box(slide_loc)
+            x, y, width, height = slide_rec
+
+            first_light_change_area = [0, y, x, height]
+            second_light_change_area = [x + width, y, 1 - (x + width), height]
             list_polygons += ('slides', first_light_change_area), \
                              ('slides', second_light_change_area)
 
             # speaker location is divided into vertical stripes on the full horizontal
             # extent
             speaker_loc = self.select_speaker.get_outputs()
+            speaker_rec = get_polygon_outer_bounding_box(speaker_loc)
+            _, y, _, height = speaker_rec
 
             width_stripes = 1.0 / self.nb_vertical_stripes
             for i in range(self.nb_vertical_stripes - 1):
                 x_start = width_stripes * i
-                rect_stripe = [x_start, speaker_loc[1], width_stripes, speaker_loc[3]]
+                rect_stripe = [x_start, y, width_stripes, height]
                 list_polygons += ('speaker_%.2d' % i,
-                                  rect_stripe)
+                                  rect_stripe),
 
             # final stripe adjusted a bit to avoid getting out the image plane
-            rect_stripe = [1 - width_stripes, speaker_loc[1], width_stripes, speaker_loc[3]]
+            rect_stripe = [1 - width_stripes, y, width_stripes, height]
             list_polygons += ('speaker_%.2d' % self.nb_vertical_stripes,
-                              rect_stripe)
+                              rect_stripe),
 
             return list_polygons
 
