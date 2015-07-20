@@ -125,17 +125,8 @@ class HistogramsLABDiff(Job):
         if self.histograms_labdiff is None:
             raise RuntimeError('The points have not been selected yet')
 
-        # class FeatureTime(object):
-
-        #     def __init__(self, histograms_per_frame_rect):
-        #         self.histograms_per_frame_rect = histograms_per_frame_rect
-        #         return
-
-        #     def __call__(self, frame_index, area_name):
-        #         return np.array(self.histograms_per_frame_rect[frame_index][area_name], dtype=np.float32)
-
-        # return Functor(self.histograms_labdiff), self.number_of_files
-        return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32)), self.number_of_files
+        return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32)), \
+            self.number_of_files
 
 # overriding some default behaviour with specific names
 
@@ -176,8 +167,10 @@ class GatherSelections(Job):
 
         first_light_change_area = [0, y, x, height]
         second_light_change_area = [x + width, y, 1 - (x + width), height]
-        list_polygons += ('slides', first_light_change_area), \
-                         ('slides', second_light_change_area)
+
+        # @note(Stephan): Unicode names in order to compare to the json file
+        list_polygons += [u'slides', first_light_change_area], \
+                         [u'slides', second_light_change_area]
 
         # speaker location is divided into vertical stripes on the full horizontal
         # extent
@@ -189,13 +182,13 @@ class GatherSelections(Job):
         for i in range(self.nb_vertical_stripes - 1):
             x_start = width_stripes * i
             rect_stripe = [x_start, y, width_stripes, height]
-            list_polygons += ('speaker_%.2d' % i,
-                              rect_stripe),
+            list_polygons += [u'speaker_%.2d' % i,
+                              rect_stripe],
 
         # final stripe adjusted a bit to avoid getting out the image plane
         rect_stripe = [1 - width_stripes, y, width_stripes, height]
-        list_polygons += ('speaker_%.2d' % (self.nb_vertical_stripes - 1),
-                          rect_stripe),
+        list_polygons += [u'speaker_%.2d' % (self.nb_vertical_stripes - 1),
+                          rect_stripe],
 
         return list_polygons
 
