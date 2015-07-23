@@ -36,9 +36,11 @@ def get_transformation_points_from_normalized_rect(rect, image):
     image_height, image_width = image.shape[:2]
 
     minx = x * image_width
-    miny = y * image_height
     maxx = (x + width) * image_width
-    maxy = (y + height) * image_height
+
+    # @note(Stephan): y is top down
+    miny = (y + height) * image_height
+    maxy = y * image_height
 
     return np.array([[minx, maxy],
                      [maxx, maxy],
