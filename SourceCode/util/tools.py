@@ -19,6 +19,28 @@ import cv2
 from functools import wraps
 
 
+def get_transformation_points_from_normalized_rect(rect, image):
+    """
+    Returns a 4x2 Numpy Array containg the points in the order:
+    [TOP-LEFT, TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT ]
+
+    :param rect: A normalized rectangle specified by [x,y,width,height]
+    :param image: The image (specifies the scaling for the transformation points)
+    """
+    x,y,width,height = rect
+    image_height, image_width = image.shape[:2]
+
+    minx = x * image_width
+    miny = y * image_height
+    maxx = (x + width) * image_width
+    maxy = (y + height) * image_height
+
+    return np.array([[minx, maxy],
+                     [maxx, maxy],
+                     [maxx, miny],
+                     [minx, miny]])
+
+
 def get_polygon_outer_bounding_box(polygon):
     """Get the outer bounding box of a polygon defined as a sequence of
     points (2-uples) in the 2D plane.
