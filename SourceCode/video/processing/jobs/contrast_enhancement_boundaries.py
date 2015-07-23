@@ -82,18 +82,23 @@ class ContrastEnhancementBoundaries(Job):
 
 
     def run(self, *args, **kwargs):
+        assert(len(args) >= 3)
+
         # First parent is ffmpeg
         image_list = args[0]
 
         # Second parent is selected slide
         slide_crop_rect = get_polygon_outer_bounding_box(args[1])
 
+        # Third parent is the SegmentComputation
+        self.segments = args[2]
+
         pool = Pool(processes=6)
 
         boundaries = pool.map(get_min_max_boundary_from_file, itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
 
         # Create two single lists
-        self.min_bounds, self.max_bounds = zip(*result)
+        self.min_bounds, self.max_bounds = zip(*boundaries)
 
         self.serialize_state()
 
@@ -105,20 +110,62 @@ class ContrastEnhancementBoundaries(Job):
             raise RuntimeError('The histogram boundaries for contrast enhancement have not been computed yet.')
 
         class BoundsFromTime(object):
-
-            def __init__(self, boundaries):
-                self.bounds = boundaries
+            def __init__(self, boundaries, segments, default_boundary):
+                self.boundaries = boundaries
+                self.segments = segments
+                self.default_boundary = default_boundary
+                self.boundary_for_segment = map(self.get_histogram_boundary_for_segment, self.segments)
                 return
 
             def __call__(self, t):
+                segment_index = 0
+                for (start,end) in self.segments:
 
-                # @todo(Stephan):
-                # We need the segments here first because we need to determine if we interpolate or take the average
-                # of the bounds
-                return self.bounds[t]
+                    if (start <= t) and (t <= end):
+                        # We are inside a segment and thus know the boundaries
+                        return self.boundary_for_segment[segment_index]
 
-        # @todo(Stephan): Really return two functions here?
-        return BoundsFromTime(self.min_bounds), BoundsFromTime(self.max_bounds)
+                    elif (t < start):
+                        if segment_index == 0:
+                            # @note(Stephan):
+                            # In this case, we are before the first segment, return the default boundary.
+                            return self.default_boundary
+
+                        else:
+                            # We are between two segments and thus have to interpolate
+                            t0 = self.segments[segment_index - 1][1]   # End of last segment
+                            t1 = self.segments[segment_index][0]       # Start of new segment
+
+                            boundary0 = self.boundary_for_segment[segment_index - 1]
+                            boundary1 = self.boundary_for_segment[segment_index]
+
+                            lerped_boundary = self.linear_interpolation(t, t0, t1, boundary0, boundary1)
+
+                            return lerped_boundary
+
+                    segment_index += 1
+
+                # We are behind the last computed segment, since we have no end value to
+                # interpolate, we just return the bounds of the last computed segment
+                return self.boundary_for_segment[-1]
+
+            def linear_interpolation(t, t0, t1, y0, y1):
+                """Lerps x between the two points (t0, y0) and (t1, y1)"""
+                return y0 + float(y1 - y0) * (float(t - t0) / float(t1 - t0))
+
+            def get_histogram_boundary_for_segment(self, segment):
+                """Returns the histogram boundary for a whole segment by taking
+                   the average of each boundary contained in this segment."""
+                start, end = segment
+
+                bounds_in_segment = self.boundaries[int(start):int(end)]
+
+                boundary_sum = sum(bounds_in_segment)
+                n_boundaries = len(bounds_in_segment)
+
+                return boundary_sum / n_boundaries
+
+        return BoundsFromTime(self.min_bounds, self.segments, 0), BoundsFromTime(self.max_bounds, self.segments, 255)
 
 
 if __name__ == '__main__':
@@ -142,17 +189,28 @@ if __name__ == '__main__':
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
 
-    from .select_polygon import SelectPolygonJob
-    class SelectSlide(SelectPolygonJob):
-        name = 'select_slides'
-
+    from .histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
+    from .histogram_correlations import HistogramCorrelationJob
+    from .segment_computation import SegmentComputationJob
+
+    HistogramsLABDiff.add_parent(GatherSelections)
+    HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
+
+    HistogramCorrelationJob.add_parent(HistogramsLABDiff)
+
+    SegmentComputationJob.add_parent(HistogramCorrelationJob)
+
     ContrastEnhancementBoundaries.add_parent(FFMpegThumbnailsJob)
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
+    ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
 
+    # import ipdb
     d = {'video_filename': current_video,
          'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
-         'json_prefix': os.path.join(proc_folder, 'processing_video_7_')}
+         'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
+         'segment_computation_tolerance': 0.05,
+         'segment_computation_min_length_in_seconds': 2}
 
     boundary_job = ContrastEnhancementBoundaries(**d)
     boundary_job.process()

@@ -18,6 +18,7 @@ class SelectPolygonJob(Job):
     name = "select_polygon"
     attributes_to_serialize = ['video_filename',
                                'points']
+    window_title = ''
 
     def __init__(self,
                  video_filename,
@@ -82,7 +83,7 @@ class SelectPolygonJob(Job):
             im_for_selection = cv2.imread(args[0][randint(0, len(args[0]))])
             width, height, _ = im_for_selection.shape
 
-        self.points = get_polygon_from_user(im_for_selection, 4, 'Select the location of the slides')
+        self.points = get_polygon_from_user(im_for_selection, 4, self.window_title)
 
         # @note(Stephan):
         # Since Json stores tuples as list, we go from tuples to lists here. Then we can compare the

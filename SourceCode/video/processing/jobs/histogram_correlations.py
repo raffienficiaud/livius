@@ -18,9 +18,9 @@ class HistogramCorrelationJob(Job):
     Computation of the Histogram correlations.
 
     The inputs of this Job are (in this order):
-        - A Function :: (frame_index, area_name) -> Histogram
-          Number of Frames
-        -
+        - A tuple:
+            - Function :: (frame_index, area_name) -> Histogram
+            - Number of Frames
 
     The output of this Job is:
         A Function :: frame_index -> HistogramCorrelation

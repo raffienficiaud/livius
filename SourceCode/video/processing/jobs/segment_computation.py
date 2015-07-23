@@ -13,7 +13,14 @@ from ....util.user_interaction import get_polygon_from_user
 
 class SegmentComputationJob(Job):
     """
+    Splits the video into stable segments, where we assume to be able to apply a constant contrast enhancement for the slides.
 
+    Expected inputs of the parents:
+    - A tuple consisting of
+        - a function :: frame_index -> correlation
+        - The number of files
+
+    The output is a list of segments. A segment specified by a tuple (t_start, t_end).
     """
 
     name = "compute_segments"
@@ -83,7 +90,7 @@ class SegmentComputationJob(Job):
 
             # Append segment if it is big enough
             if (t - t_segment_start) >= self.segment_computation_min_length_in_seconds:
-                self.segments.append((t_segment_start, t))
+                self.segments.append([t_segment_start, t])
 
             # Skip the elements below the boundary
             while (i < end) and (get_histogram_correlation(i) < lower_bounds):

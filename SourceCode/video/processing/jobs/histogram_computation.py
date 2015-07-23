@@ -129,9 +129,11 @@ class HistogramsLABDiff(Job):
 
 class SelectSlide(SelectPolygonJob):
     name = 'select_slides'
+    window_title = 'Select the location of the Slides'
 
 class SelectSpeaker(SelectPolygonJob):
     name = 'select_speaker'
+    window_title = 'Select the location of the Speaker'
 
 class GatherSelections(Job):
     """
