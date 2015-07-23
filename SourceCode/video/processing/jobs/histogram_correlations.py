@@ -27,7 +27,8 @@ class HistogramCorrelationJob(Job):
     """
 
     name = 'histogram_correlation'
-    attributes_to_serialize = ['histogram_correlations']
+    attributes_to_serialize = ['histogram_correlations',
+                               'number_of_files']
 
     def __init__(self, *args, **kwargs):
         super(HistogramCorrelationJob, self).__init__(*args, **kwargs)
@@ -52,7 +53,7 @@ class HistogramCorrelationJob(Job):
         assert(len(args[0]) == 2)
         histogram_function = args[0][0]
         get_histogram = lambda area_name, frame_integer: histogram_function(area_name, str(frame_integer))
-        number_of_files = args[0][1]
+        self.number_of_files = args[0][1]
 
         # init
         self.histogram_correlations = {}
@@ -68,7 +69,7 @@ class HistogramCorrelationJob(Job):
         previous_speaker_histogram_plane = get_speaker_histogram_plane(1)
 
         # @todo(Stephan): Get the number of thumbnails
-        for frame_index in range(2, number_of_files):
+        for frame_index in range(2, self.number_of_files):
 
             slide_histogram = get_histogram('slides', frame_index)
             speaker_histogram_plane = get_speaker_histogram_plane(frame_index)
@@ -93,7 +94,7 @@ class HistogramCorrelationJob(Job):
         if self.histogram_correlations is None:
             raise RuntimeError('The Correlations between the histograms have not been computed yet.')
 
-        return Functor(self.histogram_correlations)
+        return Functor(self.histogram_correlations), self.number_of_files
 
 
 

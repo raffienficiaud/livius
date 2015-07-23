@@ -44,9 +44,6 @@ class HistogramsLABDiff(Job):
     def __init__(self,
                  *args,
                  **kwargs):
-        """
-        :param :
-        """
         super(HistogramsLABDiff, self).__init__(*args, **kwargs)
 
         self._get_previous_state()

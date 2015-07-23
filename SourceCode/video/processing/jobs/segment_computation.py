@@ -17,7 +17,8 @@ class SegmentComputationJob(Job):
     """
 
     name = "compute_segments"
-    attributes_to_serialize = ['tolerance',
+    attributes_to_serialize = ['segment_computation_tolerance',
+                               'segment_computation_min_length_in_seconds',
                                'segments']
 
     def __init__(self,
@@ -26,6 +27,10 @@ class SegmentComputationJob(Job):
 
         super(SegmentComputationJob, self).__init__(*args,
                                                     **kwargs)
+
+        assert('segment_computation_tolerance' in kwargs)
+        assert('segment_computation_min_length_in_seconds' in kwargs)
+
         self._get_previously_computed_segments()
 
     def _get_previously_computed_segments(self):
@@ -39,16 +44,61 @@ class SegmentComputationJob(Job):
                 setattr(self, 'segments', d['segments'])
 
     def run(self, *args, **kwargs):
+        """Segments the video using the histogram correlations
+
+           If there is a spike with a correlation of less than (1 - tolerance), then
+           we assume that we need to adapt the histogram bounds and thus start a
+           new segment.
+
+           If there is a region with many small spikes we assume that we cannot apply
+           any contrast enhancement / color correction (or apply a conservative default one).
+        """
+        # First parent is HistogramCorrelationJob.
+        assert(len(args[0]) == 2)
+        correlation_function = args[0][0]
+        get_histogram_correlation = lambda frame_integer: correlation_function(str(frame_integer))
+        number_of_files = args[0][1]
 
         self.segments = []
 
-        # @todo(Stephan): implement!
+        t_segment_start = 0.0
+        lower_bounds = 1.0 - self.segment_computation_tolerance
 
-        pass
+        # @todo(Stephan):
+        # This information should probably be passed together with the histogram differences
+        seconds_per_correlation_entry = 1
+
+        # @note(Stephan): The first correlation can be computed at frame 2, so we start from there.
+        i = 2
+        end = number_of_files
+
+        t = i * seconds_per_correlation_entry
+
+        while i < end:
+
+            # As long as we stay over the boundary, we count it towards the same segment
+            while (i < end) and (get_histogram_correlation(i) >= lower_bounds):
+                i += 1
+                t += seconds_per_correlation_entry
+
+            # Append segment if it is big enough
+            if (t - t_segment_start) >= self.segment_computation_min_length_in_seconds:
+                self.segments.append((t_segment_start, t))
+
+            # Skip the elements below the boundary
+            while (i < end) and (get_histogram_correlation(i) < lower_bounds):
+                i += 1
+                t += seconds_per_correlation_entry
+
+            # The new segment starts as soon as we are over the boundary again
+            t_segment_start = t
+
+
+        self.serialize_state()
 
     def get_outputs(self):
         super(SegmentComputationJob, self).get_outputs()
-        if self.segments is None:
+        if self.segments is None or len(self.segments) == 0:
             raise RuntimeError('The segments have not been computed yet')
         return self.segments
 
@@ -69,18 +119,28 @@ if __name__ == '__main__':
                                os.pardir)
 
     video_folder = os.path.join(root_folder, 'Videos')
-    current_video = os.path.join(video_folder, 'Video_7.mp4')
+    current_video = os.path.join(video_folder, 'video_7.mp4')
     proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
 
-    from .histogram_computation import HistogramLABDiff
-    SegmentComputationJob.add_parent(HistogramLABDiff)
+    from .histogram_computation import HistogramsLABDiff, GatherSelections
+    from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
+    from .histogram_correlations import HistogramCorrelationJob
+
+    HistogramsLABDiff.add_parent(GatherSelections)
+    HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
+
+    HistogramCorrelationJob.add_parent(HistogramsLABDiff)
+
+    SegmentComputationJob.add_parent(HistogramCorrelationJob)
 
     # import ipdb
     d = {'video_filename': current_video,
          'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
-         'json_prefix': os.path.join(proc_folder, 'processing_video_7_')}
+         'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
+         'segment_computation_tolerance': 0.05,
+         'segment_computation_min_length_in_seconds': 2}
 
     job_instance = SegmentComputationJob(**d)
     job_instance.process()

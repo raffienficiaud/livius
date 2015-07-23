@@ -16,6 +16,17 @@ from ....util.histogram import get_histogram_min_max_with_percentile
 
 
 def get_min_max_boundary_from_file(args):
+    """
+    Loads a frame from disk and computes the boundaries for the histogram stretching.
+
+    :param args:
+        A tuple (filename, rect) where
+            filename: The filename to be read
+            rect: The location of the slides
+
+    The image is cropped as specified by rect, then it is converted to grayscale and
+    we extract the histogram boundaries from that.
+    """
     filename, slide_crop_rect = args
     im = cv2.imread(filename)
     im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -33,6 +44,15 @@ def get_min_max_boundary_from_file(args):
 class ContrastEnhancementBoundaries(Job):
     """
     Extracts the min and max boundaries we use for contrast enhancing the slides.
+
+
+    The inputs of the parents are expected to be the following:
+    - A list of images (specified by filename) to operate on
+    - The location of the slides given as a rectangle: (x, y, widht, height)
+
+    The output of this Job are two functions with signature :: time -> boundary.
+    The first function specifies the min boundary at time t.
+    The second function specifies the max boundary at time t.
     """
 
     name = 'contrast_enhancement_boundaries'
@@ -61,10 +81,7 @@ class ContrastEnhancementBoundaries(Job):
                     setattr(self, key, d[key])
 
 
-    # @todo(Stephan): Multiprocess this
     def run(self, *args, **kwargs):
-        """Computes the Lab space of the image and the histogram_boundaries for the slide enhancement."""
-
         # First parent is ffmpeg
         image_list = args[0]
 
