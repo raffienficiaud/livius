@@ -11,7 +11,8 @@ import itertools
 import numpy as np
 from multiprocessing import Pool
 
-from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates
+from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates,\
+                           linear_interpolation
 from ....util.histogram import get_histogram_min_max_with_percentile
 
 
@@ -91,7 +92,6 @@ class ContrastEnhancementBoundaries(Job):
         slide_crop_rect = get_polygon_outer_bounding_box(args[1])
 
         # Third parent is the SegmentComputation
-        self.segments = args[2]
 
         pool = Pool(processes=6)
 
@@ -105,6 +105,8 @@ class ContrastEnhancementBoundaries(Job):
 
     def get_outputs(self):
         super(ContrastEnhancementBoundaries, self).get_outputs()
+
+        segments = self.compute_segments.get_outputs()
 
         if (self.min_bounds is None) or (self.max_bounds is None):
             raise RuntimeError('The histogram boundaries for contrast enhancement have not been computed yet.')
@@ -139,7 +141,7 @@ class ContrastEnhancementBoundaries(Job):
                             boundary0 = self.boundary_for_segment[segment_index - 1]
                             boundary1 = self.boundary_for_segment[segment_index]
 
-                            lerped_boundary = self.linear_interpolation(t, t0, t1, boundary0, boundary1)
+                            lerped_boundary = linear_interpolation(t, t0, t1, boundary0, boundary1)
 
                             return lerped_boundary
 
@@ -148,10 +150,6 @@ class ContrastEnhancementBoundaries(Job):
                 # We are behind the last computed segment, since we have no end value to
                 # interpolate, we just return the bounds of the last computed segment
                 return self.boundary_for_segment[-1]
-
-            def linear_interpolation(t, t0, t1, y0, y1):
-                """Lerps x between the two points (t0, y0) and (t1, y1)"""
-                return y0 + float(y1 - y0) * (float(t - t0) / float(t1 - t0))
 
             def get_histogram_boundary_for_segment(self, segment):
                 """Returns the histogram boundary for a whole segment by taking
@@ -165,7 +163,7 @@ class ContrastEnhancementBoundaries(Job):
 
                 return boundary_sum / n_boundaries
 
-        return BoundsFromTime(self.min_bounds, self.segments, 0), BoundsFromTime(self.max_bounds, self.segments, 255)
+        return BoundsFromTime(self.min_bounds, segments, 0), BoundsFromTime(self.max_bounds, segments, 255)
 
 
 if __name__ == '__main__':

@@ -205,6 +205,6 @@ class Job(object):
     def get_outputs(self):
         """Returns all the possible outputs of this step"""
         if not self.is_up_to_date():
-            raise RuntimeError("Cannot query for the outputs before those are computed")
+            raise RuntimeError("Cannot query for the outputs of Job {} before those are computed".format(self.name))
 
         return None

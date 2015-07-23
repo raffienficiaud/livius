@@ -8,24 +8,32 @@ import cv2
 import numpy as np
 import os
 
-from .histogram_computation import SelectSlide
-from ....util.tools import get_transformation_points_from_normalized_rect, get_polygon_outer_bounding_box
+from moviepy.editor import *
+from moviepy.Clip import *
 
-class SlideWarpJob(Job):
+from .histogram_computation import SelectSlide
+from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
+
+from ....util.tools import get_transformation_points_from_normalized_rect,\
+                           get_polygon_outer_bounding_box
+
+class WarpSlideJob(Job):
     name = 'warp_slides'
-    attributes_to_serialize = []
+    attributes_to_serialize = ['slide_clip_desired_format']
     parents = [SelectSlide]
 
     def __init__(self, *args, **kwargs):
-        super(SlideWarpJob, self).__init__(*args, **kwargs)
+        super(WarpSlideJob, self).__init__(*args, **kwargs)
 
         assert('slide_clip_desired_format' in kwargs)
 
     def run(self, *args, **kwargs):
         pass
 
+        self.serialize_state()
+
     def get_outputs(self):
-        super(SlideWarpJob, self).get_outputs()
+        super(WarpSlideJob, self).get_outputs()
 
         slide_location = self.select_slides.get_outputs()
         slide_rect = get_polygon_outer_bounding_box(slide_location)
@@ -34,7 +42,9 @@ class SlideWarpJob(Job):
             """Callable object for warping the frame into perspective and cropping out the slides"""
             def __init__(self, slide_rect, desiredScreenLayout):
                 self.slide_rect = slide_rect
-                self.desiredScreenLayout = desiredScreenLayout
+
+                # @note(Stephan): Convert to tuple (List is for JSON storage)
+                self.desiredScreenLayout = (desiredScreenLayout[0], desiredScreenLayout[1])
 
             def __call__(self, image):
                 """Cuts out the slides from the video and warps them into perspective.
@@ -56,6 +66,79 @@ class SlideWarpJob(Job):
         return Warper(slide_rect, self.slide_clip_desired_format)
 
 
+class EnhanceContrastJob(Job):
+    name = 'enhance_contrast'
+    attributes_to_serialize = []
+    parents = [ContrastEnhancementBoundaries]
+
+    def __init__(self, *args, **kwargs):
+        super(EnhanceContrastJob, self).__init__(*args, **kwargs)
+
+    def run(self, *args, **kwargs):
+        pass
+        self.serialize_state()
+
+    def get_outputs(self):
+        super(EnhanceContrastJob, self).get_outputs()
+
+        get_min_bounds, get_max_bounds = self.contrast_enhancement_boundaries.get_outputs()
+
+        class ContrastEnhancer:
+            """Callable object for enhancing the contrast of the slides."""
+            def __init__(self, get_min_bounds, get_max_bounds):
+                self.get_min_bounds = get_min_bounds
+                self.get_max_bounds = get_max_bounds
+
+            def __call__(self, image, t):
+                """Performs contrast enhancement by putting the colors into their full range."""
+
+                # Retrieve histogram boundaries for this frame
+                min_val = self.get_min_bounds(t)
+                max_val = self.get_max_bounds(t)
+
+                # Perform the contrast enhancement
+                contrast_enhanced = 255.0 * (np.maximum(image.astype(np.float32) - min_val, 0)) / (max_val - min_val)
+                contrast_enhanced = np.minimum(contrast_enhanced, 255.0)
+                contrast_enhanced = contrast_enhanced.astype(np.uint8)
+
+                return contrast_enhanced
+
+        return ContrastEnhancer(get_min_bounds, get_max_bounds)
+
+
+class ExtractSlideClipJob(Job):
+    name = 'extract_slide_clip'
+    attributes_to_serialize = []
+    parents = [WarpSlideJob, EnhanceContrastJob]
+
+    def __init__(self, *args, **kwargs):
+        super(ExtractSlideClipJob, self).__init__(*args, **kwargs)
+
+    def run(self, *args, **kwargs):
+        pass
+        self.serialize_state()
+
+    def get_outputs(self):
+        super(ExtractSlideClipJob, self).get_outputs()
+
+        warp_slide = self.warp_slides.get_outputs()
+        enhance_contrast = self.enhance_contrast.get_outputs()
+
+        clip = VideoFileClip(self.video_filename)
+
+        # @todo(Stephan): Does this work?
+        def apply_effects(get_frame, t):
+            """Function that chains together all the post processing effects."""
+            frame = get_frame(t)
+
+            warped = warp_slide(frame)
+            contrast_enhanced = enhance_contrast(warped, t)
+
+            return contrast_enhanced
+
+        return clip.fl(apply_effects)
+
+
 if __name__ == '__main__':
     import logging
     FORMAT = '[%(asctime)-15s] %(message)s'
@@ -73,9 +156,13 @@ if __name__ == '__main__':
     video_folder = os.path.join(root_folder, 'Videos')
     current_video = os.path.join(video_folder, 'video_7.mp4')
     proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
+    slide_clip_folder = os.path.abspath(os.path.join(proc_folder, 'Slide Clip'))
 
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
+
+    if not os.path.exists(slide_clip_folder):
+        os.makedirs(slide_clip_folder)
 
     from .histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
@@ -94,8 +181,6 @@ if __name__ == '__main__':
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
     ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
 
-    SlideWarpJob.add_parent(SelectSlide)
-
     # import ipdb
     d = {'video_filename': current_video,
          'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
@@ -104,7 +189,18 @@ if __name__ == '__main__':
          'segment_computation_min_length_in_seconds': 2,
          'slide_clip_desired_format': [1280, 960]}
 
-    boundary_job = SlideWarpJob(**d)
-    boundary_job.process()
+    job = ExtractSlideClipJob(**d)
+    job.process()
 
+    slideClip = job.get_outputs()
 
+    # Just write individual frames for testing
+    slideClip.save_frame(os.path.join(slide_clip_folder, '0.png'), t=0)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '1.png'), t=0.5)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '2.png'), t=1)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '3.png'), t=1.5)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '4.png'), t=2)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '5.png'), t=2.5)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '6.png'), t=3)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '7.png'), t=3.5)
+    slideClip.save_frame(os.path.join(slide_clip_folder, '8.png'), t=4)

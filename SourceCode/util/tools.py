@@ -19,6 +19,11 @@ import cv2
 from functools import wraps
 
 
+def linear_interpolation(x, x0, x1, y0, y1):
+    """Linearly interpolates x between the two points (x0, y0) and (x1, y1)"""
+    return y0 + float(y1 - y0) * (float(x - x0) / float(x1 - x0))
+
+
 def get_transformation_points_from_normalized_rect(rect, image):
     """
     Returns a 4x2 Numpy Array containg the points in the order:
@@ -38,7 +43,8 @@ def get_transformation_points_from_normalized_rect(rect, image):
     return np.array([[minx, maxy],
                      [maxx, maxy],
                      [maxx, miny],
-                     [minx, miny]])
+                     [minx, miny]],
+                    dtype=np.float32)
 
 
 def get_polygon_outer_bounding_box(polygon):
