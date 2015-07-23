@@ -17,7 +17,20 @@ from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
 from ....util.tools import get_transformation_points_from_normalized_rect,\
                            get_polygon_outer_bounding_box
 
+
 class WarpSlideJob(Job):
+    """
+    Warps the slides into perspective and crops them.
+
+    The only parent is the Slide selection.
+
+    Returns a Callable object that provides a function
+
+            f :: img -> img
+
+    which applies the wanted slide transformation.
+    """
+
     name = 'warp_slides'
     attributes_to_serialize = ['slide_clip_desired_format']
     parents = [SelectSlide]
@@ -30,6 +43,7 @@ class WarpSlideJob(Job):
     def run(self, *args, **kwargs):
         pass
 
+        # @todo(Stephan): Without this 'is_up_to_date()' always fails.
         self.serialize_state()
 
     def get_outputs(self):
@@ -47,7 +61,8 @@ class WarpSlideJob(Job):
                 self.desiredScreenLayout = (desiredScreenLayout[0], desiredScreenLayout[1])
 
             def __call__(self, image):
-                """Cuts out the slides from the video and warps them into perspective.
+                """
+                Cuts out the slides from the video and warps them into perspective.
                 """
                 # Extract Slides
                 slideShow = np.array([[0,0],
@@ -67,6 +82,19 @@ class WarpSlideJob(Job):
 
 
 class EnhanceContrastJob(Job):
+    """
+    Enhances the contrast in the slide images.
+
+    The only parent is the ContrastEnhancementBoundaries Job that provides the two
+    boundary functions over time.
+
+    Returns a callable object that provides a function:
+
+            f :: img, t -> img
+
+    which enhances the contrast of the given image.
+    """
+
     name = 'enhance_contrast'
     attributes_to_serialize = []
     parents = [ContrastEnhancementBoundaries]
@@ -107,6 +135,19 @@ class EnhanceContrastJob(Job):
 
 
 class ExtractSlideClipJob(Job):
+    """
+    Extracts the Slide Clip from the Video.
+
+    The two parents provide the two effects for this:
+        - Warping the Slides into perspective
+        - Enhancing the contrast of the warped Slides
+
+    The output is the transformed video clip.
+
+    :note:
+        The transformations are only applied at write-time.
+    """
+
     name = 'extract_slide_clip'
     attributes_to_serialize = []
     parents = [WarpSlideJob, EnhanceContrastJob]
@@ -126,7 +167,6 @@ class ExtractSlideClipJob(Job):
 
         clip = VideoFileClip(self.video_filename)
 
-        # @todo(Stephan): Does this work?
         def apply_effects(get_frame, t):
             """Function that chains together all the post processing effects."""
             frame = get_frame(t)
@@ -193,6 +233,9 @@ if __name__ == '__main__':
     job.process()
 
     slideClip = job.get_outputs()
+
+    # Writes the complete slide clip to disk
+    # slideClip.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
 
     # Just write individual frames for testing
     slideClip.save_frame(os.path.join(slide_clip_folder, '0.png'), t=0)
