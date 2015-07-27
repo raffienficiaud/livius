@@ -21,13 +21,6 @@ class Job(object):
     name = "root"
     attributes_to_serialize = []
 
-    # @todo(Stephan):
-    # Have something like outputs_to_reload here?
-    # All jobs seem to do some reloading from the json files, but this is not concerning all of the Job's attributes.
-    # (e.g SelectPolygon reloads the points but not the video_file_name)
-    #
-    # get_previous_output could then just loop over outputs_to_reload and set the attributes.
-
     parents = None
 
     # private API
@@ -89,7 +82,7 @@ class Job(object):
 
     def __setattr__(self, key, value):
         if self._is_frozen and key in self._parent_names:
-            raise AttributeError("Class {} parents are frozen: cannot set {} = {}".format(self.__name__, key, value))
+            raise AttributeError("Class {} parents are frozen: cannot set {} = {}".format(self.name, key, value))
         else:
             object.__setattr__(self, key, value)
 
@@ -127,25 +120,24 @@ class Job(object):
 
     def is_up_to_date(self):
         """Contains the logic to indicate that this step should be processed again"""
+
         for par in self._parent_instances:
             if not par.is_up_to_date():
                 return False
+
         return self.are_states_equal()
 
     def are_states_equal(self):
         """Returns True is the state of the current object is the same as the one in the serialized json dump"""
 
-        if self.json_filename is None:
-            return False
+        dict_json = self.load_state()
 
-        if not os.path.exists(self.json_filename):
-            logger.debug("File does not exist %s", self.json_filename)
+        if dict_json is None:
             return False
-
-        dict_json = json.load(open(self.json_filename))
 
         try:
             for k in self.attributes_to_serialize:
+
                 if str(dict_json[k]) != str(getattr(self, k)):
                     logger.debug("Key %s mismatch: left=%s / right=%s", k, str(dict_json[k]), str(getattr(self, k)))
                     return False
@@ -180,6 +172,21 @@ class Job(object):
 
         with open(self.json_filename, 'w') as f:
             json.dump(d, f)
+
+    def load_state(self):
+        """
+        Loads the json file.
+        """
+        if self.json_filename is None:
+            return None
+
+        if not os.path.exists(self.json_filename):
+            logger.debug("Loading the state failed: File does not exist %s.", self.json_filename)
+            return None
+
+        dict_json = json.load(open(self.json_filename))
+
+        return dict_json
 
     def run(self, *args, **kwargs):
         """Runs this specific action: should be overridden by an implementation class."""

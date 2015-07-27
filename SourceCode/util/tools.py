@@ -18,6 +18,16 @@ from pylab import *
 import cv2
 from functools import wraps
 
+def sort_dictionary_by_integer_key(d):
+    """
+    Sorts a dictionary by keys. The keys of the dictionary are assumed to be
+    transformable into an integer (e.g. after loading from a JSON file).
+    """
+    d = sorted(d.items(), key=lambda x: int(x[0]))
+    d = dict((int(name), val) for name, val in d)
+
+    return d
+
 
 def linear_interpolation(x, x0, x1, y0, y1):
     """Linearly interpolates x between the two points (x0, y0) and (x1, y1)"""

@@ -60,8 +60,7 @@ class SegmentComputationJob(Job):
            any contrast enhancement / color correction (or apply a conservative default one).
         """
         # First parent is HistogramCorrelationJob.
-        correlation_function = args[0]
-        get_histogram_correlation = lambda frame_integer: correlation_function(str(frame_integer))
+        get_histogram_correlation = args[0]
 
         # Second Parent is the Number of Files
         number_of_files = args[1]

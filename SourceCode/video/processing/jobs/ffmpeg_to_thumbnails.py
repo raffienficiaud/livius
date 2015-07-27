@@ -147,8 +147,8 @@ class NumberOfFilesJob(Job):
     def __init__(self, *args, **kwargs):
         super(NumberOfFilesJob, self).__init__(*args, **kwargs)
 
-    def run(*args, **kwargs):
-        pass
+    def run(self, *args, **kwargs):
+        self.serialize_state()
 
     def get_outputs(self):
         super(NumberOfFilesJob, self).get_outputs()

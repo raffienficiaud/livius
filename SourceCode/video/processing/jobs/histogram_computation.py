@@ -10,7 +10,8 @@ import cv2
 import numpy as np
 import functools
 
-from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates
+from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates, \
+                           sort_dictionary_by_integer_key
 from ....util.functor import Functor
 from .select_polygon import SelectPolygonJob
 
@@ -46,22 +47,20 @@ class HistogramsLABDiff(Job):
                  **kwargs):
         super(HistogramsLABDiff, self).__init__(*args, **kwargs)
 
-        self._get_previous_state()
+    def load_state(self):
+        state = super(HistogramsLABDiff, self).load_state()
 
-        # read back the output files if any
-        pass
+        if state is None:
+            return None
 
-    def _get_previous_state(self):
-        if not os.path.exists(self.json_filename):
-            return
+        histograms_labdiff = state['histograms_labdiff']
 
-        with open(self.json_filename) as f:
-            d = json.load(f)
+        for area in histograms_labdiff.keys():
+            histograms_labdiff[area] = sort_dictionary_by_integer_key(histograms_labdiff[area])
 
-            # maybe take a subset of attributes
-            for k in self.attributes_to_serialize:
-                if k in d:
-                    setattr(self, k, d[k])
+
+        state['histograms_labdiff'] = histograms_labdiff
+        return state
 
     def is_up_to_date(self):
         """Returns False if no correlation has been computed (or can be restored from
@@ -116,6 +115,8 @@ class HistogramsLABDiff(Job):
 
         # save the state (commit to json)
         self.serialize_state()
+
+
 
     def get_outputs(self):
         super(HistogramsLABDiff, self).get_outputs()
