@@ -67,14 +67,28 @@ class Job(object):
 
         self._parent_names = []
         self._parent_instances = []
+        self._predecessor_names = []
+
         if self.parents is not None:
             for par in self.parents:
-                par_instance = par(*args, **kwargs)
+
+                print par.name
+                par_instance = self.get_parent_by_name(par.name)
+
+                logger.debug('Searching for parent %s from job %s', par.name, self.name)
+
+                if par_instance is None:
+                    logger.debug('Not found %s', par.name)
+                    par_instance = par(*args, **kwargs)
+
+                # import ipdb
+                # ipdb.set_trace()
+
                 if par_instance.name in self._parent_names:
                     # not adding
                     logger.warning("Direct parent %s already exists", par_instance.name)
                     continue
-                    #raise RuntimeError("name %s is already used for one parent of job %s" %
+                    # raise RuntimeError("name %s is already used for one parent of job %s" %
                     #                   (par_instance.name, self.name))
                 self._parent_names.append(par_instance.name)
                 self._parent_instances.append(par_instance)

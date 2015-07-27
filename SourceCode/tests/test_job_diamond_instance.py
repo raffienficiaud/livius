@@ -21,13 +21,13 @@ class J1(Job):
     name = 'j1'
     def run(self, *args, **kwargs):
         pass
-    
+
 class J2(Job):
     name = 'j2'
     parents = [J1]
     def run(self, *args, **kwargs):
         pass
-    
+
 class J3(Job):
     name = 'j3'
     parents = [J1]
@@ -48,7 +48,10 @@ class J5(Job):
 
 
 class JobDiamondTest(JobTestsFixture, unittest.TestCase):
-    
+
     def test_parents_same_instance_on_graph(self):
         job_final = J5(json_prefix=os.path.join(self.tmpdir, 'test_meta'))
+
+        print job_final._parent_names
+
         self.assertIs(job_final.j1, job_final.j4.j3.j1)
