@@ -1,5 +1,3 @@
-# %debug
-
 """
 This module is a collection of small Python functions and classes which make common patterns shorter and easier.
 It is by no means a complete collection but you can keep extending it.
@@ -7,16 +5,11 @@ If you need any other convenient utilities, you would add them inside this modul
 """
 
 import numpy as np
-import os
 import sys
 import json
-from moviepy.editor import *
-from moviepy.Clip import *
-from moviepy.video.VideoClip import *
 import matplotlib.pyplot as plt
-from pylab import *
 import cv2
-from functools import wraps
+
 
 def sort_dictionary_by_integer_key(d):
     """
@@ -365,6 +358,7 @@ def max_all_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
         plt.show()
 
     return finalMaxNorm
+
 
 def read_histogram_correlations_and_boundaries_from_json_file(filepath, slide_stripe=0):
     """Reads a json file containing the information about the histogram correlations and the

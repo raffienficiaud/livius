@@ -1,6 +1,4 @@
-'''
-Defines a job for extracting the segments from the histogram correlations
-'''
+"""Defines a job for extracting the segments from the histogram correlations."""
 
 import os
 import json

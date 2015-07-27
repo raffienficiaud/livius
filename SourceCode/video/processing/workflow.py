@@ -1,15 +1,4 @@
-'''
-Defines one or several workflow using the standard/basic jobs
-'''
-
-
-import logging
-FORMAT = '[%(asctime)-15s] %(message)s'
-logging.basicConfig(format=FORMAT)
-
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-
+"""Defines one or several workflow using the standard/basic jobs."""
 
 from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
 from .jobs.histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
@@ -21,11 +10,16 @@ from .jobs.extract_slide_clip import ExtractSlideClipJob
 
 import os
 
+import logging
+FORMAT = '[%(asctime)-15s] %(message)s'
+logging.basicConfig(format=FORMAT)
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 def workflow_thumnails_only():
-    """Returns a workflow made by only one node that extracts the thumnails from
-    a video"""
-
+    """Return a workflow made by only one node that extracts the thumnails from a video."""
     ffmpeg = ffmpeg_factory()
 
     return ffmpeg
@@ -33,7 +27,7 @@ def workflow_thumnails_only():
 
 def workflow_extract_slide_clip():
     """
-    Returns a workflow that extracs the slide clip from a video.
+    Return a workflow that extracs the slide clip from a video.
 
     Consists of many tasks such as
     - ffmpg thumbnail generation
@@ -95,9 +89,9 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     root_folder = os.path.join(os.path.dirname(__file__),
-                           os.pardir,
-                           os.pardir,
-                           os.pardir)
+                               os.pardir,
+                               os.pardir,
+                               os.pardir)
 
     video_folder = os.path.join(root_folder, 'Videos')
     current_video = os.path.join(video_folder, 'video_7.mp4')
@@ -109,7 +103,6 @@ if __name__ == '__main__':
 
     if not os.path.exists(slide_clip_folder):
         os.makedirs(slide_clip_folder)
-
 
     workflow = workflow_extract_slide_clip()
     params = {'video_filename': current_video,
@@ -123,4 +116,3 @@ if __name__ == '__main__':
     outputs = process(workflow, **params)
 
     outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
-
