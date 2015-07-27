@@ -5,7 +5,6 @@ order to detect different changes in the scene (lightning, speaker motion, etc).
 
 from ..job import Job
 import os
-import json
 import cv2
 import numpy as np
 import functools
@@ -17,15 +16,18 @@ from .select_polygon import SelectPolygonJob
 
 
 class HistogramsLABDiff(Job):
+
     """
-    Computes histogram on polygons between two consecutive frames in specific areas of the plane (normalized coordinates).
+    Computes histogram on polygons between two consecutive frames in specific areas of the plane.
+    (normalized coordinates)
 
     Expect parameters from parents, in this order:
 
-    - a list of `(name, rectangle)` specifying the locations where the histogram should be computed, the `name` indicating the
-      name of the rectangle. The `rectangle` is given as (x,y, width, height).
-      If several rectangles exist for the same name, those are merged (which may be useful if the area is defined by
-      several disconnected polygons).
+    - a list of `(name, rectangle)` specifying the locations where the histogram should be computed,
+      The `name` indicating the name of the rectangle.
+      The `rectangle` is given as (x,y, width, height).
+      If several rectangles exist for the same name, those are merged
+      (which may be useful if the area is defined by several disconnected polygons).
     - a list of images
 
     The output is:
@@ -48,6 +50,7 @@ class HistogramsLABDiff(Job):
         super(HistogramsLABDiff, self).__init__(*args, **kwargs)
 
     def load_state(self):
+        """Sort the histograms by frame_index in order to be able to compare states."""
         state = super(HistogramsLABDiff, self).load_state()
 
         if state is None:
@@ -58,13 +61,14 @@ class HistogramsLABDiff(Job):
         for area in histograms_labdiff.keys():
             histograms_labdiff[area] = sort_dictionary_by_integer_key(histograms_labdiff[area])
 
-
         state['histograms_labdiff'] = histograms_labdiff
         return state
 
     def is_up_to_date(self):
-        """Returns False if no correlation has been computed (or can be restored from
-        the json dump), default behaviour otherwise"""
+        """
+        Return False if no correlation has been computed (or can be restored from the json dump),
+        default behaviour otherwise.
+        """
         if not self.histograms_labdiff \
            or not self.number_of_files:
             return False
@@ -86,8 +90,6 @@ class HistogramsLABDiff(Job):
             element = self.histograms_labdiff.get(name, {})
             self.histograms_labdiff[name] = element
 
-
-
         # perform the computation
         im_index_tm1 = cv2.imread(image_list[0])
         imlab_index_tm1 = cv2.cvtColor(im_index_tm1, cv2.COLOR_BGR2LAB)
@@ -102,21 +104,19 @@ class HistogramsLABDiff(Job):
 
             for name, rect in self.rectangle_locations:
 
-                cropped_image = crop_image_from_normalized_coordinates(im_diff_lab, rect)
-                histogram =  cv2.calcHist([cropped_image.astype(np.uint8)], [0], None, [256], [0, 256])
+                cropped = crop_image_from_normalized_coordinates(im_diff_lab, rect)
+                histogram = cv2.calcHist([cropped.astype(np.uint8)], [0], None, [256], [0, 256])
 
                 # @todo(Stephan): Merge the histograms for the slides!
 
-
-                # @note(Stephan): The histograms are stored as a python list in order to serialize them via JSON.
+                # @note(Stephan):
+                # The histograms are stored as a python list in order to serialize them via JSON.
                 self.histograms_labdiff[name][index] = histogram.tolist()
 
             pass
 
         # save the state (commit to json)
         self.serialize_state()
-
-
 
     def get_outputs(self):
         super(HistogramsLABDiff, self).get_outputs()
@@ -125,23 +125,29 @@ class HistogramsLABDiff(Job):
 
         return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32))
 
-# overriding some default behaviour with specific names
 
+# overriding some default behaviour with specific names
 class SelectSlide(SelectPolygonJob):
     name = 'select_slides'
     window_title = 'Select the location of the Slides'
+
 
 class SelectSpeaker(SelectPolygonJob):
     name = 'select_speaker'
     window_title = 'Select the location of the Speaker'
 
+
 class GatherSelections(Job):
+
     """
-    This job combines the polygon selections, the user has to perform for the slides and the speaker location.
+    This job combines the polygon selections for the slides & speaker location.
 
     The output is:
-        A list of tuples. Each tuple contains the name of the area and a normalized rectangle [x,y,width,height] that specifies the area.
+        A list of tuples where each tuples contains
+        - The name of the area
+        - and a normalized rectangle [x,y,width,height] that specifies the area.
     """
+
     name = 'gather_selections'
     parents = [SelectSlide, SelectSpeaker]
     attributes_to_serialize = ['nb_vertical_stripes']
@@ -211,8 +217,6 @@ if __name__ == '__main__':
     proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
     if not os.path.exists(proc_folder):
         os.makedirs(proc_folder)
-
-
 
     from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
     HistogramsLABDiff.add_parent(GatherSelections)

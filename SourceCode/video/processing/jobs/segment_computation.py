@@ -4,16 +4,16 @@ Defines a job for extracting the segments from the histogram correlations
 
 import os
 import json
-import cv2
-from random import randint
 
 from ..job import Job
-from ....util.user_interaction import get_polygon_from_user
 
 
 class SegmentComputationJob(Job):
+
     """
-    Splits the video into stable segments, where we assume to be able to apply a constant contrast enhancement for the slides.
+    Splits the video into stable segments.
+
+    We assume that we can apply a constant contrast enhancement for the slides in those Segments.
 
     Expected inputs of the parents:
         - a function :: frame_index -> correlation
@@ -50,14 +50,15 @@ class SegmentComputationJob(Job):
                 setattr(self, 'segments', d['segments'])
 
     def run(self, *args, **kwargs):
-        """Segments the video using the histogram correlations
+        """
+        Segment the video using the histogram correlations.
 
-           If there is a spike with a correlation of less than (1 - tolerance), then
-           we assume that we need to adapt the histogram bounds and thus start a
-           new segment.
+        If there is a spike with a correlation of less than (1 - tolerance), then
+        we assume that we need to adapt the histogram bounds and thus start a
+        new segment.
 
-           If there is a region with many small spikes we assume that we cannot apply
-           any contrast enhancement / color correction (or apply a conservative default one).
+        If there is a region with many small spikes we assume that we cannot apply
+        any contrast enhancement / color correction (or apply a conservative default one).
         """
         # First parent is HistogramCorrelationJob.
         get_histogram_correlation = args[0]
@@ -98,7 +99,6 @@ class SegmentComputationJob(Job):
 
             # The new segment starts as soon as we are over the boundary again
             t_segment_start = t
-
 
         self.serialize_state()
 
@@ -150,4 +150,3 @@ if __name__ == '__main__':
 
     job_instance = SegmentComputationJob(**d)
     job_instance.process()
-

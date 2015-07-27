@@ -1,20 +1,19 @@
 """
-This file describes the computation of the Histogram correlations that are used to determine the segments of the video.
+This file describes the computation of the Histogram correlations that are used to determine the
+segments of the video.
 """
 
 from ..job import Job
 
-
-import numpy as np
 import cv2
 import os
-import json
 
 from ....util.functor import Functor
 from ....util.tools import sort_dictionary_by_integer_key
 
 
 class HistogramCorrelationJob(Job):
+
     """
     Computation of the Histogram correlations.
 
@@ -66,7 +65,6 @@ class HistogramCorrelationJob(Job):
         previous_slide_histogram = get_histogram('slides', 1)
         previous_speaker_histogram_plane = get_speaker_histogram_plane(1)
 
-        # @todo(Stephan): Get the number of thumbnails
         for frame_index in range(2, number_of_files):
 
             slide_histogram = get_histogram('slides', frame_index)
@@ -77,9 +75,9 @@ class HistogramCorrelationJob(Job):
                     cv2.compareHist(slide_histogram, previous_slide_histogram, cv2.cv.CV_COMP_CORREL)
 
             if previous_speaker_histogram_plane is not None:
-                # @todo(Stephan): Compute the energy here? Maybe create a new Job and a common subclass (cf. GatherSelections)
+                # @todo(Stephan): Compute the energy here?
+                # Maybe create a new Job and a common subclass (cf. GatherSelections)
                 pass
-
 
             previous_slide_histogram = slide_histogram
             previous_speaker_histogram_plane = speaker_histogram_plane
@@ -129,5 +127,3 @@ if __name__ == '__main__':
 
     job_instance = HistogramCorrelationJob(**d)
     job_instance.process()
-
-

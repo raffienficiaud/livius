@@ -1,6 +1,4 @@
-"""
-This file provides the Job for extracting the slide clip from the videofile
-"""
+"""This file provides the Job for extracting the slide clip from the videofile."""
 
 from ..job import Job
 
@@ -8,8 +6,9 @@ import cv2
 import numpy as np
 import os
 
-from moviepy.editor import *
-from moviepy.Clip import *
+# from moviepy.editor import *
+# from moviepy.Clip import *
+from moviepy.editor import VideoFileClip
 
 from .histogram_computation import SelectSlide
 from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
@@ -19,6 +18,7 @@ from ....util.tools import get_transformation_points_from_normalized_rect,\
 
 
 class WarpSlideJob(Job):
+
     """
     Warps the slides into perspective and crops them.
 
@@ -53,27 +53,27 @@ class WarpSlideJob(Job):
         slide_rect = get_polygon_outer_bounding_box(slide_location)
 
         class Warper:
-            """Callable object for warping the frame into perspective and cropping out the slides"""
-            def __init__(self, slide_rect, desiredScreenLayout):
+
+            """Callable object for warping the frame into perspective and cropping the slides."""
+
+            def __init__(self, slide_rect, desiredLayout):
                 self.slide_rect = slide_rect
 
                 # @note(Stephan): Convert to tuple (List is for JSON storage)
-                self.desiredScreenLayout = (desiredScreenLayout[0], desiredScreenLayout[1])
+                self.desiredLayout = (desiredLayout[0], desiredLayout[1])
 
             def __call__(self, image):
-                """
-                Cuts out the slides from the video and warps them into perspective.
-                """
+                """Cut out the slides from the video and warps them into perspective."""
                 # Extract Slides
-                slideShow = np.array([[0,0],
-                                      [self.desiredScreenLayout[0]-1, 0],
-                                      [self.desiredScreenLayout[0]-1, self.desiredScreenLayout[1]-1],
-                                      [0,self.desiredScreenLayout[1]-1]],
+                slideShow = np.array([[0, 0],
+                                      [self.desiredLayout[0]-1, 0],
+                                      [self.desiredLayout[0]-1, self.desiredLayout[1]-1],
+                                      [0, self.desiredLayout[1]-1]],
                                      np.float32)
 
                 slide_coordinates = get_transformation_points_from_normalized_rect(slide_rect, image)
                 retval = cv2.getPerspectiveTransform(slide_coordinates, slideShow)
-                warp = cv2.warpPerspective(image, retval, self.desiredScreenLayout)
+                warp = cv2.warpPerspective(image, retval, self.desiredLayout)
 
                 # Return slide image
                 return warp
@@ -82,6 +82,7 @@ class WarpSlideJob(Job):
 
 
 class EnhanceContrastJob(Job):
+
     """
     Enhances the contrast in the slide images.
 
@@ -112,14 +113,15 @@ class EnhanceContrastJob(Job):
         get_min_bounds, get_max_bounds = self.contrast_enhancement_boundaries.get_outputs()
 
         class ContrastEnhancer:
+
             """Callable object for enhancing the contrast of the slides."""
+
             def __init__(self, get_min_bounds, get_max_bounds):
                 self.get_min_bounds = get_min_bounds
                 self.get_max_bounds = get_max_bounds
 
             def __call__(self, image, t):
-                """Performs contrast enhancement by putting the colors into their full range."""
-
+                """Perform contrast enhancement by putting the colors into their full range."""
                 # Retrieve histogram boundaries for this frame
                 min_val = self.get_min_bounds(t)
                 max_val = self.get_max_bounds(t)
@@ -135,6 +137,7 @@ class EnhanceContrastJob(Job):
 
 
 class ExtractSlideClipJob(Job):
+
     """
     Extracts the Slide Clip from the Video.
 

@@ -1,5 +1,6 @@
 """
-This file provides the Job that will extract the information we need in order to contrast enhance the slide images.
+This file provides the Job that will extract the information we need in order to contrast enhance
+the slide images.
 """
 
 from ..job import Job
@@ -8,7 +9,6 @@ import os
 import cv2
 import json
 import itertools
-import numpy as np
 from multiprocessing import Pool
 
 from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates,\
@@ -18,7 +18,7 @@ from ....util.histogram import get_histogram_min_max_with_percentile
 
 def get_min_max_boundary_from_file(args):
     """
-    Loads a frame from disk and computes the boundaries for the histogram stretching.
+    Load a frame from disk and computes the boundaries for the histogram stretching.
 
     :param args:
         A tuple (filename, rect) where
@@ -42,9 +42,9 @@ def get_min_max_boundary_from_file(args):
 
 
 class ContrastEnhancementBoundaries(Job):
+
     """
     Extracts the min and max boundaries we use for contrast enhancing the slides.
-
 
     The inputs of the parents are expected to be the following:
     - A list of images (specified by filename) to operate on
@@ -57,7 +57,6 @@ class ContrastEnhancementBoundaries(Job):
 
     name = 'contrast_enhancement_boundaries'
 
-    # @todo(Stephan): what needs to be serialized
     attributes_to_serialize = ['min_bounds',
                                'max_bounds']
 
@@ -80,7 +79,6 @@ class ContrastEnhancementBoundaries(Job):
                 if key in d:
                     setattr(self, key, d[key])
 
-
     def run(self, *args, **kwargs):
         assert(len(args) >= 3)
 
@@ -94,13 +92,13 @@ class ContrastEnhancementBoundaries(Job):
 
         pool = Pool(processes=6)
 
-        boundaries = pool.map(get_min_max_boundary_from_file, itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
+        boundaries = pool.map(get_min_max_boundary_from_file,
+                              itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
 
         # Create two single lists
         self.min_bounds, self.max_bounds = map(list, zip(*boundaries))
 
         self.serialize_state()
-
 
     def get_outputs(self):
         super(ContrastEnhancementBoundaries, self).get_outputs()
@@ -115,12 +113,13 @@ class ContrastEnhancementBoundaries(Job):
                 self.boundaries = boundaries
                 self.segments = segments
                 self.default_boundary = default_boundary
-                self.boundary_for_segment = map(self.get_histogram_boundary_for_segment, self.segments)
+                self.boundary_for_segment = map(self.get_histogram_boundary_for_segment,
+                                                self.segments)
                 return
 
             def __call__(self, t):
                 segment_index = 0
-                for (start,end) in self.segments:
+                for (start, end) in self.segments:
 
                     if (start <= t) and (t <= end):
                         # We are inside a segment and thus know the boundaries
@@ -128,7 +127,8 @@ class ContrastEnhancementBoundaries(Job):
 
                     elif (t < start):
                         if segment_index == 0:
-                            # In this case, we are before the first segment, return the default boundary.
+                            # In this case, we are before the first segment
+                            # Return the default boundary.
                             return self.default_boundary
 
                         else:
@@ -150,8 +150,10 @@ class ContrastEnhancementBoundaries(Job):
                 return self.boundary_for_segment[-1]
 
             def get_histogram_boundary_for_segment(self, segment):
-                """Returns the histogram boundary for a whole segment by taking
-                   the average of each boundary contained in this segment."""
+                """
+                Return the histogram boundary for a whole segment by taking
+                the average of each boundary contained in this segment.
+                """
                 start, end = segment
 
                 bounds_in_segment = self.boundaries[int(start):int(end)]
@@ -161,7 +163,8 @@ class ContrastEnhancementBoundaries(Job):
 
                 return boundary_sum / n_boundaries
 
-        return BoundsFromTime(self.min_bounds, segments, 0), BoundsFromTime(self.max_bounds, segments, 255)
+        return BoundsFromTime(self.min_bounds, segments, 0), \
+            BoundsFromTime(self.max_bounds, segments, 255)
 
 
 if __name__ == '__main__':
