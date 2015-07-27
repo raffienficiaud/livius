@@ -32,6 +32,17 @@ def workflow_thumnails_only():
 
 
 def workflow_extract_slide_clip():
+    """
+    Returns a workflow that extracs the slide clip from a video.
+
+    Consists of many tasks such as
+    - ffmpg thumbnail generation
+    - Polygon Selection for the Slides and Speaker
+    - Histogram Computations
+    - Histogram Correlations
+    - Segment Computation
+    - Perspective Transformations and Contrast Enhancement.
+    """
     HistogramsLABDiff.add_parent(GatherSelections)
     HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
 

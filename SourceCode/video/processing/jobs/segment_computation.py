@@ -20,7 +20,7 @@ class SegmentComputationJob(Job):
         - a function :: frame_index -> correlation
         - The number of files
 
-    The output is a list of segments. A segment specified by a tuple (t_start, t_end).
+    The output is a list of segments. A segment specified by a list [t_start, t_end].
     """
 
     name = "compute_segments"

@@ -52,19 +52,20 @@ class FFMpegThumbnailsJob(Job):
                             os.path.splitext(os.path.basename(video_filename))[0])
 
     def __init__(self,
-                 video_filename,
-                 video_width=None,
-                 video_fps=None,
-                 thumbnails_location=None,
                  *args,
                  **kwargs):
         """
-        :param thumbnails_location: absolute location of the generated thumbnails
-        :param video_filename: name of the video file to process
-        """
+        Expects the following named arguments in kwargs:
+        :param video_filename: The name of the video file to process
 
+        Optional parameters:
+        :param thumbnails_location: absolute location of the generated thumbnails
+        :param video_width: The width of the generated thumbnails
+        :param video_fps: How many frames per second to extract
+        """
         super(FFMpegThumbnailsJob, self).__init__(*args, **kwargs)
 
+        video_filename = kwargs.get('video_filename', None)
         if video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
         if not os.path.exists(video_filename):
@@ -75,14 +76,10 @@ class FFMpegThumbnailsJob(Job):
         # is unicode)
         video_filename = unicode(video_filename)
 
-        if video_width is None:
-            video_width = 640
-
-        if video_fps is None:
-            video_fps = 1
-
-        if thumbnails_location is None:
-            thumbnails_location = self.get_thumbnail_location(video_filename)
+        # Put in default values if they are not passed in the kwargs
+        video_width = kwargs.get('video_width', 640)
+        video_fps = kwargs.get('video_fps', 1)
+        thumbnails_location = kwargs.get('thumbnails_location', self.get_thumbnail_location(video_filename))
 
         self.video_filename = os.path.abspath(video_filename)
         self.video_fps = video_fps

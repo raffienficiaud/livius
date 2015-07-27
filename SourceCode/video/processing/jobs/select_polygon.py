@@ -21,21 +21,15 @@ class SelectPolygonJob(Job):
     window_title = ''
 
     def __init__(self,
-                 video_filename,
                  *args,
                  **kwargs):
         """
-        :param video_filename: the video file
+        Expected parameters in kwargs:
+        :param video_filename: The name of the video file to process
         """
+        super(SelectPolygonJob, self).__init__(*args, **kwargs)
 
-        # the video_filename is for being able to pass this parameter
-        # to a potential parent class (in this case potentially consummed by
-        # the FFMpeg)
-        super(SelectPolygonJob, self).__init__(video_filename=video_filename,
-                                               *args,
-                                               **kwargs)
-        # video_filename = kwargs.get('video_filename', None)
-
+        video_filename = kwargs.get('video_filename', None)
         if video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
         if not os.path.exists(video_filename):
