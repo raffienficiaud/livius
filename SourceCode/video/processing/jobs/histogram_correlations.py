@@ -18,9 +18,8 @@ class HistogramCorrelationJob(Job):
     Computation of the Histogram correlations.
 
     The inputs of this Job are (in this order):
-        - A tuple:
-            - Function :: (frame_index, area_name) -> Histogram
-            - Number of Frames
+        - Function :: (frame_index, area_name) -> Histogram
+        - Number of Files
 
     The output of this Job is:
         A Function :: frame_index -> HistogramCorrelation
@@ -49,11 +48,12 @@ class HistogramCorrelationJob(Job):
 
     def run(self, *args, **kwargs):
 
-        # @note(Stephan): The first parent is the HistogramComputation which returns two things
-        assert(len(args[0]) == 2)
-        histogram_function = args[0][0]
+        # The first parent is the HistogramComputation
+        histogram_function = args[0]
         get_histogram = lambda area_name, frame_integer: histogram_function(area_name, str(frame_integer))
-        self.number_of_files = args[0][1]
+
+        # Second parent is the NumberOfFiles
+        self.number_of_files = args[1]
 
         # init
         self.histogram_correlations = {}

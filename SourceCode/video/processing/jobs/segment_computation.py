@@ -16,7 +16,6 @@ class SegmentComputationJob(Job):
     Splits the video into stable segments, where we assume to be able to apply a constant contrast enhancement for the slides.
 
     Expected inputs of the parents:
-    - A tuple consisting of
         - a function :: frame_index -> correlation
         - The number of files
 
@@ -61,10 +60,11 @@ class SegmentComputationJob(Job):
            any contrast enhancement / color correction (or apply a conservative default one).
         """
         # First parent is HistogramCorrelationJob.
-        assert(len(args[0]) == 2)
-        correlation_function = args[0][0]
+        correlation_function = args[0]
         get_histogram_correlation = lambda frame_integer: correlation_function(str(frame_integer))
-        number_of_files = args[0][1]
+
+        # Second Parent is the Number of Files
+        number_of_files = args[1]
 
         self.segments = []
 

@@ -122,8 +122,7 @@ class HistogramsLABDiff(Job):
         if self.histograms_labdiff is None:
             raise RuntimeError('The points have not been selected yet')
 
-        return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32)), \
-            self.number_of_files
+        return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32))
 
 # overriding some default behaviour with specific names
 
@@ -149,7 +148,7 @@ class GatherSelections(Job):
     def __init__(self, *args, **kwargs):
         super(GatherSelections, self).__init__(*args, **kwargs)
 
-        self.nb_vertical_stripes = 10
+        assert('nb_vertical_stripes' in kwargs)
 
     def run(self, *args, **kwargs):
         pass

@@ -13,7 +13,7 @@ logger.setLevel(logging.DEBUG)
 
 from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
 from .jobs.histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
-from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob
+from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob, NumberOfFilesJob
 from .jobs.histogram_correlations import HistogramCorrelationJob
 from .jobs.segment_computation import SegmentComputationJob
 from .jobs.contrast_enhancement_boundaries import ContrastEnhancementBoundaries
@@ -47,8 +47,10 @@ def workflow_extract_slide_clip():
     HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
 
     HistogramCorrelationJob.add_parent(HistogramsLABDiff)
+    HistogramCorrelationJob.add_parent(NumberOfFilesJob)
 
     SegmentComputationJob.add_parent(HistogramCorrelationJob)
+    SegmentComputationJob.add_parent(NumberOfFilesJob)
 
     ContrastEnhancementBoundaries.add_parent(FFMpegThumbnailsJob)
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
@@ -115,7 +117,8 @@ if __name__ == '__main__':
               'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
               'segment_computation_tolerance': 0.05,
               'segment_computation_min_length_in_seconds': 2,
-              'slide_clip_desired_format': [1280, 960]}
+              'slide_clip_desired_format': [1280, 960],
+              'nb_vertical_stripes': 10}
 
     outputs = process(workflow, **params)
 

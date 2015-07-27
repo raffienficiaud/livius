@@ -23,10 +23,9 @@ def get_min_max_boundary_from_file(args):
     :param args:
         A tuple (filename, rect) where
             filename: The filename to be read
-            rect: The location of the slides
+            rect: The location of the slides specified by normalized coordinates [x,y,width,height]
 
-    The image is cropped as specified by rect, then it is converted to grayscale and
-    we extract the histogram boundaries from that.
+    The histogram is computed on the cropped grayscale image.
     """
     filename, slide_crop_rect = args
     im = cv2.imread(filename)
@@ -91,7 +90,7 @@ class ContrastEnhancementBoundaries(Job):
         # Second parent is selected slide
         slide_crop_rect = get_polygon_outer_bounding_box(args[1])
 
-        # Third parent is the SegmentComputation
+        # Third parent is the SegmentComputation, we only access it in get_outputs().
 
         pool = Pool(processes=6)
 
@@ -129,7 +128,6 @@ class ContrastEnhancementBoundaries(Job):
 
                     elif (t < start):
                         if segment_index == 0:
-                            # @note(Stephan):
                             # In this case, we are before the first segment, return the default boundary.
                             return self.default_boundary
 
