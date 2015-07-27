@@ -98,7 +98,7 @@ class ContrastEnhancementBoundaries(Job):
         boundaries = pool.map(get_min_max_boundary_from_file, itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
 
         # Create two single lists
-        self.min_bounds, self.max_bounds = zip(*boundaries)
+        self.min_bounds, self.max_bounds = map(list, zip(*boundaries))
 
         self.serialize_state()
 

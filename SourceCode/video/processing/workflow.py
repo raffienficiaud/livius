@@ -12,6 +12,14 @@ logger.setLevel(logging.DEBUG)
 
 
 from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
+from .jobs.histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
+from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob
+from .jobs.histogram_correlations import HistogramCorrelationJob
+from .jobs.segment_computation import SegmentComputationJob
+from .jobs.contrast_enhancement_boundaries import ContrastEnhancementBoundaries
+from .jobs.extract_slide_clip import ExtractSlideClipJob
+
+import os
 
 
 def workflow_thumnails_only():
@@ -21,6 +29,21 @@ def workflow_thumnails_only():
     ffmpeg = ffmpeg_factory()
 
     return ffmpeg
+
+
+def workflow_extract_slide_clip():
+    HistogramsLABDiff.add_parent(GatherSelections)
+    HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
+
+    HistogramCorrelationJob.add_parent(HistogramsLABDiff)
+
+    SegmentComputationJob.add_parent(HistogramCorrelationJob)
+
+    ContrastEnhancementBoundaries.add_parent(FFMpegThumbnailsJob)
+    ContrastEnhancementBoundaries.add_parent(SelectSlide)
+    ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
+
+    return ExtractSlideClipJob
 
 
 def process(workflow_instance, **kwargs):
@@ -36,17 +59,54 @@ def process(workflow_instance, **kwargs):
 
 if __name__ == '__main__':
 
-    import os
-    from tempfile import mkdtemp
-    tmpdir = mkdtemp()
+    # import os
+    # from tempfile import mkdtemp
+    # tmpdir = mkdtemp()
 
-    d = dict([('video_filename',
-              os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "Videos", "video_7.mp4")
-              )])
+    # d = dict([('video_filename',
+    #           os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "Videos", "video_7.mp4")
+    #           )])
 
-    current_workflow = workflow_thumnails_only()
-    outputs = process(current_workflow,
-                      json_prefix=os.path.join(tmpdir, 'test_video7'),
-                      **d)
+    # current_workflow = workflow_thumnails_only()
+    # outputs = process(current_workflow,
+    #                   json_prefix=os.path.join(tmpdir, 'test_video7'),
+    #                   **d)
 
-    print outputs
+    # print outputs
+
+    import logging
+    FORMAT = '[%(asctime)-15s] %(message)s'
+    logging.basicConfig(format=FORMAT)
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    root_folder = os.path.join(os.path.dirname(__file__),
+                           os.pardir,
+                           os.pardir,
+                           os.pardir)
+
+    video_folder = os.path.join(root_folder, 'Videos')
+    current_video = os.path.join(video_folder, 'video_7.mp4')
+    proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
+    slide_clip_folder = os.path.abspath(os.path.join(proc_folder, 'Slide Clip'))
+
+    if not os.path.exists(proc_folder):
+        os.makedirs(proc_folder)
+
+    if not os.path.exists(slide_clip_folder):
+        os.makedirs(slide_clip_folder)
+
+
+    workflow = workflow_extract_slide_clip()
+    params = {'video_filename': current_video,
+              'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
+              'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
+              'segment_computation_tolerance': 0.05,
+              'segment_computation_min_length_in_seconds': 2,
+              'slide_clip_desired_format': [1280, 960]}
+
+    outputs = process(workflow, **params)
+
+    outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
+
