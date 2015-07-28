@@ -84,8 +84,6 @@ class ContrastEnhancementBoundaries(Job):
         # Create two single lists
         self.min_bounds, self.max_bounds = map(list, zip(*boundaries))
 
-        self.serialize_state()
-
     def get_outputs(self):
         super(ContrastEnhancementBoundaries, self).get_outputs()
 

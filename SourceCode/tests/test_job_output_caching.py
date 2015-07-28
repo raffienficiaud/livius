@@ -15,7 +15,7 @@ class J1(Job):
     outputs_to_cache = ['j1_out']
 
     def run(self, *args, **kwargs):
-        self.serialize_state()
+        pass
 
     def get_outputs(self):
         return getattr(self, 'j1_out')
@@ -28,7 +28,7 @@ class J2(Job):
     parents = [J1]
 
     def run(self, *args, **kwargs):
-        self.serialize_state()
+        pass
 
     def get_outputs(self):
         return getattr(self, 'j2_out')

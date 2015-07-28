@@ -103,11 +103,6 @@ class FFMpegThumbnailsJob(Job):
         # save the output files
         self.thumbnail_files = self._get_files()
 
-        # commit to the json dump
-        self.serialize_state()
-
-        return True
-
     def _get_files(self):
         if not os.path.exists(self.thumbnails_location):
             return []
@@ -139,10 +134,7 @@ class NumberOfFilesJob(Job):
 
     def run(self, *args, **kwargs):
         filelist = args[0]
-
         self.nb_files = len(filelist)
-
-        self.serialize_state()
 
     def get_outputs(self):
         super(NumberOfFilesJob, self).get_outputs()

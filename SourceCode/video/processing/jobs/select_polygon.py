@@ -64,11 +64,6 @@ class SelectPolygonJob(Job):
         # self.points attribute directly to the json file (as in are_states_equal)
         self.points = [[float(i) / width, float(j) / height] for (i, j) in self.points]
 
-        # commit to the json dump
-        self.serialize_state()
-
-        return
-
     def get_outputs(self):
         super(SelectPolygonJob, self).get_outputs()
         if self.points is None:

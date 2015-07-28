@@ -98,9 +98,6 @@ class HistogramsLABDiff(Job):
 
             pass
 
-        # save the state (commit to json)
-        self.serialize_state()
-
     def get_outputs(self):
         super(HistogramsLABDiff, self).get_outputs()
         if self.histograms_labdiff is None:
@@ -174,8 +171,6 @@ class GatherSelections(Job):
         rect_stripe = [1 - width_stripes, y, width_stripes, height]
         self.rectangle_locations += [u'speaker_%.2d' % (self.nb_vertical_stripes - 1),
                                      rect_stripe],
-
-        self.serialize_state()
 
     def get_outputs(self):
         super(GatherSelections, self).get_outputs()

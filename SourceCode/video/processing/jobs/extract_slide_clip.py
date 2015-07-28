@@ -43,9 +43,6 @@ class WarpSlideJob(Job):
     def run(self, *args, **kwargs):
         pass
 
-        # @todo(Stephan): Without this 'is_up_to_date()' always fails.
-        self.serialize_state()
-
     def get_outputs(self):
         super(WarpSlideJob, self).get_outputs()
 
@@ -105,7 +102,6 @@ class EnhanceContrastJob(Job):
 
     def run(self, *args, **kwargs):
         pass
-        self.serialize_state()
 
     def get_outputs(self):
         super(EnhanceContrastJob, self).get_outputs()
@@ -160,7 +156,6 @@ class ExtractSlideClipJob(Job):
 
     def run(self, *args, **kwargs):
         pass
-        self.serialize_state()
 
     def get_outputs(self):
         super(ExtractSlideClipJob, self).get_outputs()

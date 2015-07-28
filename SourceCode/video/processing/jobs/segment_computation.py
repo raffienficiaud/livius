@@ -86,8 +86,6 @@ class SegmentComputationJob(Job):
             # The new segment starts as soon as we are over the boundary again
             t_segment_start = t
 
-        self.serialize_state()
-
     def get_outputs(self):
         super(SegmentComputationJob, self).get_outputs()
         if self.segments is None or len(self.segments) == 0:

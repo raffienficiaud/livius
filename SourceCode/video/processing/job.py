@@ -13,7 +13,6 @@ from exceptions import AttributeError
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-logger.debug('')
 
 
 class Job(object):
@@ -22,7 +21,9 @@ class Job(object):
     Job class that implements the basic functionality for each Job.
 
     All subclasses must override the run() function. It should compute all attributes
-    mentioned in self.outputs_to_cache. After that self.serialize_state() must be called!
+    mentioned in self.outputs_to_cache.
+
+    After the Job is run, the state is serialized to a JSON file.
 
     Subclasses can optionally override the load_state() function which provides a way to
     deal with the difference between JSON storage and the Python objects
@@ -265,7 +266,7 @@ class Job(object):
             parent_outputs.append(par.get_outputs())
 
         self.run(*parent_outputs)
-
+        self.serialize_state()
         # after this call, the current instance should be up to date
 
     def is_output_cached(self):

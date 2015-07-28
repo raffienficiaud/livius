@@ -82,8 +82,6 @@ class HistogramCorrelationJob(Job):
             previous_slide_histogram = slide_histogram
             previous_speaker_histogram_plane = speaker_histogram_plane
 
-        self.serialize_state()
-
     def get_outputs(self):
         super(HistogramCorrelationJob, self).get_outputs()
 
