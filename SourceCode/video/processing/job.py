@@ -14,7 +14,7 @@ from exceptions import AttributeError
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-
+logger.debug('')
 
 class Job(object):
 
@@ -53,6 +53,7 @@ class Job(object):
         :param json_prefix: the prefix used for serializing the state of this runner
         """
         super(Job, self).__init__()
+
         self._is_frozen = False
 
         json_prefix = kwargs.get('json_prefix', '')
@@ -65,34 +66,42 @@ class Job(object):
         for name, value in kwargs.items():
             setattr(self, name, value)
 
+        # Creation of all parents
         self._parent_names = []
         self._parent_instances = []
-        self._predecessor_names = []
+
+        self._predecessor_instances = {}
 
         if self.parents is not None:
             for par in self.parents:
 
-                print par.name
-                par_instance = self.get_parent_by_name(par.name)
+                # Look for all predecessors that have already been constructed
+                predecessors_in_kwargs = kwargs.get('predecessors', {})
 
-                logger.debug('Searching for parent %s from job %s', par.name, self.name)
-
-                if par_instance is None:
-                    logger.debug('Not found %s', par.name)
+                if par.name in predecessors_in_kwargs:
+                    # Parent name has already been constructed. Use this instance
+                    par_instance = predecessors_in_kwargs[par.name]
+                else:
+                    # We need to construct a new instance of this parent
                     par_instance = par(*args, **kwargs)
 
-                # import ipdb
-                # ipdb.set_trace()
+                # Update the predecessors with the predecessors of this parent
+                predecessors = par_instance._predecessor_instances
+                predecessors_in_kwargs.update(predecessors)
+                kwargs['predecessors'] = predecessors_in_kwargs
+                self._predecessor_instances.update(predecessors)
 
                 if par_instance.name in self._parent_names:
                     # not adding
-                    logger.warning("Direct parent %s already exists", par_instance.name)
-                    continue
-                    # raise RuntimeError("name %s is already used for one parent of job %s" %
-                    #                   (par_instance.name, self.name))
+                    raise RuntimeError("name %s is already used for one parent of job %s" %
+                                      (par_instance.name, self.name))
+
                 self._parent_names.append(par_instance.name)
                 self._parent_instances.append(par_instance)
                 setattr(self, par.name, par_instance)
+
+        # This Job is now completely initialized.
+        self._predecessor_instances.update(dict(zip(self._parent_names, self._parent_instances)))
 
         self._is_frozen = True
 
@@ -101,6 +110,7 @@ class Job(object):
             raise AttributeError("Class {} parents are frozen: cannot set {} = {}".format(self.__name__, key, value))
         else:
             object.__setattr__(self, key, value)
+
 
     def get_parent_by_type(self, t):
         """Algorithm is breadth first"""
