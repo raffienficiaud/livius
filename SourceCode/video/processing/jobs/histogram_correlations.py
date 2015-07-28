@@ -26,7 +26,7 @@ class HistogramCorrelationJob(Job):
     """
 
     name = 'histogram_correlation'
-    attributes_to_serialize = ['histogram_correlations']
+    outputs_to_cache = ['histogram_correlations']
 
     def __init__(self, *args, **kwargs):
         super(HistogramCorrelationJob, self).__init__(*args, **kwargs)

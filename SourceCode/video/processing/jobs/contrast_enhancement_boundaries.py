@@ -57,27 +57,13 @@ class ContrastEnhancementBoundaries(Job):
 
     name = 'contrast_enhancement_boundaries'
 
-    attributes_to_serialize = ['min_bounds',
-                               'max_bounds']
+    outputs_to_cache = ['min_bounds',
+                        'max_bounds']
 
     def __init__(self,
                  *args,
                  **kwargs):
         super(ContrastEnhancementBoundaries, self).__init__(*args, **kwargs)
-
-        self._get_previous_boundaries()
-
-    def _get_previous_boundaries(self):
-        if not os.path.exists(self.json_filename):
-            return None
-
-        with open(self.json_filename) as f:
-            d = json.load(f)
-
-            for key in self.attributes_to_serialize:
-
-                if key in d:
-                    setattr(self, key, d[key])
 
     def run(self, *args, **kwargs):
         assert(len(args) >= 3)

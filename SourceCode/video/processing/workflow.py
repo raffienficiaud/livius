@@ -105,6 +105,7 @@ if __name__ == '__main__':
         os.makedirs(slide_clip_folder)
 
     workflow = workflow_extract_slide_clip()
+
     params = {'video_filename': current_video,
               'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
               'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
@@ -115,4 +116,4 @@ if __name__ == '__main__':
 
     outputs = process(workflow, **params)
 
-    outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
+    # outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))

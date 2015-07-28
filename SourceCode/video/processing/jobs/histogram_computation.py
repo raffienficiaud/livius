@@ -35,14 +35,10 @@ class HistogramsLABDiff(Job):
       in the difference image in this particular rectangle
 
     The state of this function is saved on the json file.
-
     """
 
     name = 'histogram_imlabdiff'
-    attributes_to_serialize = ['rectangle_locations',
-                               'number_of_files',
-                               'histograms_labdiff'
-                               ]
+    outputs_to_cache = ['histograms_labdiff']
 
     def __init__(self,
                  *args,
@@ -64,25 +60,12 @@ class HistogramsLABDiff(Job):
         state['histograms_labdiff'] = histograms_labdiff
         return state
 
-    def is_up_to_date(self):
-        """
-        Return False if no correlation has been computed (or can be restored from the json dump),
-        default behaviour otherwise.
-        """
-        if not self.histograms_labdiff \
-           or not self.number_of_files:
-            return False
-
-        return super(HistogramsLABDiff, self).is_up_to_date()
-
     def run(self, *args, **kwargs):
         assert(len(args) >= 2)
 
         self.rectangle_locations = args[0]
 
         image_list = args[1]
-        assert(len(image_list) == self.number_of_files or self.number_of_files is None)
-        self.number_of_files = len(image_list)
 
         # init
         self.histograms_labdiff = {}
@@ -151,6 +134,7 @@ class GatherSelections(Job):
     name = 'gather_selections'
     parents = [SelectSlide, SelectSpeaker]
     attributes_to_serialize = ['nb_vertical_stripes']
+    outputs_to_cache = ['rectangle_locations']
 
     def __init__(self, *args, **kwargs):
         super(GatherSelections, self).__init__(*args, **kwargs)
@@ -158,15 +142,11 @@ class GatherSelections(Job):
         assert('nb_vertical_stripes' in kwargs)
 
     def run(self, *args, **kwargs):
-        pass
-
-    def get_outputs(self):
-
-        list_polygons = []
+        self.rectangle_locations = []
 
         # slide location gives the position where to look for the illumination
         # changes detection
-        slide_loc = self.select_slides.get_outputs()
+        slide_loc = args[0]
         slide_rec = get_polygon_outer_bounding_box(slide_loc)
         x, y, width, height = slide_rec
 
@@ -174,12 +154,12 @@ class GatherSelections(Job):
         second_light_change_area = [x + width, y, 1 - (x + width), height]
 
         # @note(Stephan): Unicode names in order to compare to the json file
-        list_polygons += [u'slides', first_light_change_area], \
-                         [u'slides', second_light_change_area]
+        self.rectangle_locations += [u'slides', first_light_change_area], \
+                                    [u'slides', second_light_change_area]
 
         # speaker location is divided into vertical stripes on the full horizontal
         # extent
-        speaker_loc = self.select_speaker.get_outputs()
+        speaker_loc = args[1]
         speaker_rec = get_polygon_outer_bounding_box(speaker_loc)
         _, y, _, height = speaker_rec
 
@@ -187,15 +167,23 @@ class GatherSelections(Job):
         for i in range(self.nb_vertical_stripes - 1):
             x_start = width_stripes * i
             rect_stripe = [x_start, y, width_stripes, height]
-            list_polygons += [u'speaker_%.2d' % i,
-                              rect_stripe],
+            self.rectangle_locations += [u'speaker_%.2d' % i,
+                                         rect_stripe],
 
         # final stripe adjusted a bit to avoid getting out the image plane
         rect_stripe = [1 - width_stripes, y, width_stripes, height]
-        list_polygons += [u'speaker_%.2d' % (self.nb_vertical_stripes - 1),
-                          rect_stripe],
+        self.rectangle_locations += [u'speaker_%.2d' % (self.nb_vertical_stripes - 1),
+                                     rect_stripe],
 
-        return list_polygons
+        self.serialize_state()
+
+    def get_outputs(self):
+        super(GatherSelections, self).get_outputs()
+
+        if self.rectangle_locations is None:
+            raise RuntimeError('The Areas we want to compute the histograms on have not been computed yet.')
+
+        return self.rectangle_locations
 
 if __name__ == '__main__':
 

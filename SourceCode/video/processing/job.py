@@ -1,10 +1,9 @@
+"""
+This file provides a Job class that all Actions should subclass.
 
-
-"""This file contains the "preparation" functions from the video, such as the
-
-  - creation of the thumnail images
-  - computation of the min/max/histograms of the appropriate regions in frames
-
+This class takes care of the dependencies between Jobs and only runs
+computations if needed. This can happen if some parameters of a
+predecessing action change.
 """
 
 import os
@@ -16,10 +15,35 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 logger.debug('')
 
+
 class Job(object):
+
+    """
+    Job class that implements the basic functionality for each Job.
+
+    All subclasses must override the run() function. It should compute all attributes
+    mentioned in self.outputs_to_cache. After that self.serialize_state() must be called!
+
+    Subclasses can optionally override the load_state() function which provides a way to
+    deal with the difference between JSON storage and the Python objects
+    (e.g the fact that keys are always stored as unicode strings).
+
+    Attributes:
+        name                       Name of the Job.
+
+        attributes_to_serialize    Attributes and Parameters that define the Job's state.
+                                   (Stored in a JSON file.)
+
+        outputs_to_cache           Outputs of the Job.
+                                   (Stored in a JSON file.)
+
+        parents                    Parent Jobs. This defines the order in which the run
+                                   method receives arguments.
+    """
 
     name = "root"
     attributes_to_serialize = []
+    outputs_to_cache = []
 
     parents = None
 
@@ -46,13 +70,11 @@ class Job(object):
 
     @classmethod
     def get_parents(cls):
-        """Returns all the parents jobs of this class"""
+        """Return all the parents jobs of this class."""
         return cls.parents
 
     def __init__(self, *args, **kwargs):
-        """
-        :param json_prefix: the prefix used for serializing the state of this runner
-        """
+        """:param json_prefix: the prefix used for serializing the state of this runner."""
         super(Job, self).__init__()
 
         self._is_frozen = False
@@ -62,6 +84,9 @@ class Job(object):
 
         # creation of the serialized attributes
         for k in self.attributes_to_serialize:
+            setattr(self, k, None)
+
+        for k in self.outputs_to_cache:
             setattr(self, k, None)
 
         for name, value in kwargs.items():
@@ -95,7 +120,7 @@ class Job(object):
                 if par_instance.name in self._parent_names:
                     # not adding
                     raise RuntimeError("name %s is already used for one parent of job %s" %
-                                      (par_instance.name, self.name))
+                                       (par_instance.name, self.name))
 
                 self._parent_names.append(par_instance.name)
                 self._parent_instances.append(par_instance)
@@ -112,9 +137,8 @@ class Job(object):
         else:
             object.__setattr__(self, key, value)
 
-
     def get_parent_by_type(self, t):
-        """Algorithm is breadth first"""
+        """Algorithm is breadth first."""
         if len(self._parent_instances) == 0:
             return None
 
@@ -130,7 +154,7 @@ class Job(object):
         return None
 
     def get_parent_by_name(self, name):
-        """Algorithm is breadth first"""
+        """Algorithm is breadth first."""
         if len(self._parent_instances) == 0:
             return None
 
@@ -146,8 +170,7 @@ class Job(object):
         return None
 
     def is_up_to_date(self):
-        """Contains the logic to indicate that this step should be processed again"""
-
+        """Indicate wether this step should be processed again."""
         for par in self._parent_instances:
             if not par.is_up_to_date():
                 return False
@@ -155,8 +178,7 @@ class Job(object):
         return self.are_states_equal()
 
     def are_states_equal(self):
-        """Returns True is the state of the current object is the same as the one in the serialized json dump"""
-
+        """Return True is the state of the current object is the same as the one in the serialized json dump."""
         dict_json = self.load_state()
 
         if dict_json is None:
@@ -179,11 +201,11 @@ class Job(object):
         return True
 
     def serialize_state(self):
-        """Flushes the state of the runner into the json file mentioned by 'json_prefix' (init) to
-        which the name of the current Job has been appended in the form 'json_prefix'_'name'.json
-        Also flushes the state of the parents as well
         """
-
+        Flush the state of the runner into the json file mentioned by 'json_prefix' (init) to
+        which the name of the current Job has been appended in the form 'json_prefix'_'name'.json
+        Also flushes the state of the parents as well.
+        """
         for par in self._parent_instances:
             par.serialize_state()
 
@@ -194,16 +216,20 @@ class Job(object):
         assert(self.json_filename is not None)
 
         d = {}
+
+        # Paramters of the Job
         for k in self.attributes_to_serialize:
+            d[k] = getattr(self, k)
+
+        # Outputs of the Job
+        for k in self.outputs_to_cache:
             d[k] = getattr(self, k)
 
         with open(self.json_filename, 'w') as f:
             json.dump(d, f)
 
     def load_state(self):
-        """
-        Loads the json file.
-        """
+        """Load the json file."""
         if self.json_filename is None:
             return None
 
@@ -216,13 +242,19 @@ class Job(object):
         return dict_json
 
     def run(self, *args, **kwargs):
-        """Runs this specific action: should be overridden by an implementation class."""
+        """
+        Run this Job's computation/action. Should be overridden by an implementation class.
+
+        :param *args: Outputs of the parent Jobs. The order of the args is determined by the
+                      the order of self.parents.
+        """
         raise RuntimeError("Should be overridden")
 
     def process(self):
-        """Process the current node and all the parent nodes, and provides the outputs
-        of the parents to this node."""
-
+        """
+        Process the current node and all the parent nodes, and provide the outputs
+        of the parents to this node.
+        """
         if self.is_up_to_date():
             return
 
@@ -236,9 +268,30 @@ class Job(object):
 
         # after this call, the current instance should be up to date
 
+    def is_output_cached(self):
+        """Check if all output attributes are present."""
+        for attr in self.outputs_to_cache:
+            if getattr(self, attr, None) is None:
+                return False
+
+        return True
+
+    def cache_output(self):
+        """Set all output attributes as loaded from the JSON file."""
+        json_state = self.load_state()
+
+        if json_state is None:
+            raise RuntimeError('Trying to cache output from non-existing JSON file.')
+
+        for attribute in self.outputs_to_cache:
+            setattr(self, attribute, json_state[attribute])
+
     def get_outputs(self):
-        """Returns all the possible outputs of this step"""
+        """Return all the possible outputs of this step."""
         if not self.is_up_to_date():
-            raise RuntimeError("Cannot query for the outputs of Job {} before those are computed".format(self.name))
+            raise RuntimeError("Cannot query for the outputs of Job {} before those are computed with the new parameters".format(self.name))
+
+        if not self.is_output_cached():
+            self.cache_output()
 
         return None
