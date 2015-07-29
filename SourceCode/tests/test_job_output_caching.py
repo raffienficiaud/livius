@@ -34,6 +34,22 @@ class J2(Job):
         return getattr(self, 'j2_out')
 
 
+class J3(Job):
+    name = 'j3'
+    attributes_to_serialize = ['j3_attr1']
+    outputs_to_cache = []
+
+    def __init__(self, *args, **kwargs):
+        super(J3, self).__init__(*args, **kwargs)
+        self.has_run = False
+
+    def run(self, *args, **kwargs):
+        self.has_run = True
+
+    def get_outputs(self):
+        return None
+
+
 class TestOutputCaching(JobTestsFixture, unittest.TestCase):
     def setUp(self):
         super(TestOutputCaching, self).setUp()
@@ -68,3 +84,18 @@ class TestOutputCaching(JobTestsFixture, unittest.TestCase):
         self.j2.cache_output()
         self.assertTrue(self.j2.is_output_cached())
         self.assertEquals(self.j2.get_outputs(), 0.2)
+
+    def test_has_run(self):
+        args = {'json_prefix': os.path.join(self.tmpdir, 'test_has_run'),
+                'j3_attr1': 31}
+        j3 = J3(**args)
+        self.assertFalse(j3.has_run)
+
+        j3.process()
+        self.assertTrue(j3.has_run)
+
+        j3.has_run = False
+
+        # Should not be run again.
+        j3.process()
+        self.assertFalse(j3.has_run)
