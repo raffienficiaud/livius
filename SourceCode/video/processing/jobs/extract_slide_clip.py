@@ -1,4 +1,10 @@
-"""This file provides the Job for extracting the slide clip from the videofile."""
+"""
+==================
+Extract Slide Clip
+==================
+
+This module provides the Job for extracting the slide clip from the videofile.
+"""
 
 from ..job import Job
 
@@ -20,15 +26,22 @@ from ....util.tools import get_transformation_points_from_normalized_rect,\
 class WarpSlideJob(Job):
 
     """
-    Warps the slides into perspective and crops them.
+    Job for warping the slides into perspective and cropping them.
+
+    **Job parameters**
 
     Parameters of the Job (expected to be passed when constructing a workflow instance):
         slide_clip_desired_format  The output size of the slide images for the composite video.
 
 
-    Inputs of the parents:
-        The location of the slides given as a list of points.
-        (The slide location is then assumed to be the outer bounding box of this polygon)
+    **Parent inputs**
+
+    The inputs of the parents are
+        * The location of the slides given as a list of points.
+        * (The slide location is then assumed to be the outer bounding box of this polygon)
+
+
+    **Job outputs**
 
     Returns a Callable object that provides a function
 

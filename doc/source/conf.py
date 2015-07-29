@@ -21,6 +21,14 @@ import shlex
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
+
+# Adding the SourceCode folder to the path
+root_source_folder = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                     os.pardir,
+                                     os.pardir))
+sys.path.append(root_source_folder)
+
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

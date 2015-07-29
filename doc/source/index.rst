@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   Job Interface<job>
 
 
 Indices and tables

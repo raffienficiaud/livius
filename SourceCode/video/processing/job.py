@@ -1,9 +1,9 @@
 """
-This file provides a Job class that all Actions should subclass.
+This module provides a Job class that all Actions should subclass.
+==================================================================
 
-This class takes care of the dependencies between Jobs and only runs
-computations if needed. This can happen if some parameters of a
-predecessing action change.
+The :class:`Job` class takes care of the dependencies between Jobs and only runs
+computations if needed. This can happen if some parameters of a predecessing action change.
 """
 
 import os
@@ -18,7 +18,8 @@ logger.setLevel(logging.DEBUG)
 class Job(object):
 
     """
-    Job class that implements the basic functionality for each Job.
+    This class implements the basic functionality for each Job.
+
 
     All subclasses must override the run() function. It should compute all attributes
     mentioned in self.outputs_to_cache.
@@ -28,24 +29,24 @@ class Job(object):
     Subclasses can optionally override the load_state() function which provides a way to
     deal with the difference between JSON storage and the Python objects
     (e.g the fact that keys are always stored as unicode strings).
-
-    Attributes:
-        name                       Name of the Job.
-
-        attributes_to_serialize    Attributes and Parameters that define the Job's state.
-                                   (Stored in a JSON file.)
-
-        outputs_to_cache           Outputs of the Job.
-                                   (Stored in a JSON file.)
-
-        parents                    Parent Jobs. This defines the order in which the run
-                                   method receives arguments.
     """
 
+    #: Name of the Job (used for identification).
     name = "root"
+
+    #: List of attributes that represent the Job's state
     attributes_to_serialize = []
+
+    #: Outputs of the Job.
     outputs_to_cache = []
 
+    #: List of parents.
+    #:
+    #: .. important::
+    #:      The order of the parents is important as it
+    #:      determines the order in which the outputs of
+    #:      outputs of the parent Jobs are passed to this
+    #:      Job's :func:`run` method.
     parents = None
 
     # private API
@@ -53,7 +54,8 @@ class Job(object):
 
     @classmethod
     def add_parent(cls, obj):
-        """Add a specific job as a parent job.
+        """
+        Add a specific job as a parent job.
 
         Parent Jobs are jobs which the current job is dependent on. They are
         executed and updated before the current job.
