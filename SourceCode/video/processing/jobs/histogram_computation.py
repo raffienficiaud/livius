@@ -21,14 +21,14 @@ class HistogramsLABDiff(Job):
     Computes histogram on polygons between two consecutive frames in specific areas of the plane.
     (normalized coordinates)
 
-    Expect parameters from parents, in this order:
-
+    Inputs of the parents:
     - a list of `(name, rectangle)` specifying the locations where the histogram should be computed,
       The `name` indicating the name of the rectangle.
       The `rectangle` is given as (x,y, width, height).
       If several rectangles exist for the same name, those are merged
       (which may be useful if the area is defined by several disconnected polygons).
     - a list of images
+
 
     The output is:
     - a function of frame index and rectangle name (two arguments) that provides the histogram

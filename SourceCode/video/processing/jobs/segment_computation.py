@@ -13,11 +13,22 @@ class SegmentComputationJob(Job):
 
     We assume that we can apply a constant contrast enhancement for the slides in those Segments.
 
-    Expected inputs of the parents:
+    Parameters of the Job (expected to be passed when constructing a workflow instance):
+        - segment_computation_tolerance:
+            How much deviation from correlation 1.0 do we allow
+
+        - segment_computation_min_length_in_seconds:
+            The minimum length of a stable segment. If segments are shorter, we count it as not
+            being stable.
+
+
+    Inputs of the parents:
         - a function :: frame_index -> correlation
         - The number of files
 
-    The output is a list of segments. A segment specified by a list [t_start, t_end].
+
+    The output is:
+        A list of segments, each specified by [t_start, t_end].
     """
 
     name = "compute_segments"
@@ -73,7 +84,7 @@ class SegmentComputationJob(Job):
         # This information should probably be passed together with the histogram differences
         seconds_per_correlation_entry = 1
 
-        # @note(Stephan): The first correlation can be computed at frame 2, so we start from there.
+        # @note(Stephan): The first correlation can be computed at frame_index 2, so we start from there.
         i = 2
         end = number_of_files
 

@@ -22,7 +22,13 @@ class WarpSlideJob(Job):
     """
     Warps the slides into perspective and crops them.
 
-    The only parent is the Slide selection.
+    Parameters of the Job (expected to be passed when constructing a workflow instance):
+        slide_clip_desired_format  The output size of the slide images for the composite video.
+
+
+    Inputs of the parents:
+        The location of the slides given as a list of points.
+        (The slide location is then assumed to be the outer bounding box of this polygon)
 
     Returns a Callable object that provides a function
 
@@ -86,8 +92,10 @@ class EnhanceContrastJob(Job):
     """
     Enhances the contrast in the slide images.
 
-    The only parent is the ContrastEnhancementBoundaries Job that provides the two
-    boundary functions over time.
+    Inputs of the parents:
+        A tuple of functions that provide the min and max boundary used for
+        contrast enhancing
+
 
     Returns a callable object that provides a function:
 
@@ -141,9 +149,10 @@ class ExtractSlideClipJob(Job):
     """
     Extracts the Slide Clip from the Video.
 
-    The two parents provide the two effects for this:
-        - Warping the Slides into perspective
-        - Enhancing the contrast of the warped Slides
+    Inputs of the parents:
+        - A function for warping the Slides into perspective
+        - A function for enhancing the contrast of the warped Slides
+
 
     The output is the transformed video clip.
 
