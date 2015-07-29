@@ -91,39 +91,3 @@ class HistogramCorrelationJob(Job):
             raise RuntimeError('The Correlations between the histograms have not been computed yet.')
 
         return Functor(self.histogram_correlations)
-
-
-if __name__ == '__main__':
-
-    import logging
-    FORMAT = '[%(asctime)-15s] %(message)s'
-    logging.basicConfig(format=FORMAT)
-
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-
-    root_folder = os.path.join(os.path.dirname(__file__),
-                               os.pardir,
-                               os.pardir,
-                               os.pardir,
-                               os.pardir)
-
-    video_folder = os.path.join(root_folder, 'Videos')
-    current_video = os.path.join(video_folder, 'video_7.mp4')
-    proc_folder = os.path.abspath(os.path.join(root_folder, 'tmp'))
-    if not os.path.exists(proc_folder):
-        os.makedirs(proc_folder)
-
-    from .histogram_computation import HistogramsLABDiff, GatherSelections
-    from .ffmpeg_to_thumbnails import FFMpegThumbnailsJob
-    HistogramsLABDiff.add_parent(GatherSelections)
-    HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
-
-    HistogramCorrelationJob.add_parent(HistogramsLABDiff)
-
-    d = {'video_filename': current_video,
-         'thumbnails_location': os.path.join(proc_folder, 'processing_video_7_thumbnails'),
-         'json_prefix': os.path.join(proc_folder, 'processing_video_7_')}
-
-    job_instance = HistogramCorrelationJob(**d)
-    job_instance.process()
