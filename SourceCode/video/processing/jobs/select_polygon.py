@@ -16,8 +16,8 @@ class SelectPolygonJob(Job):
     for a polygon defining the location of the slides"""
 
     name = "select_polygon"
-    attributes_to_serialize = ['video_filename',
-                               'points']
+    attributes_to_serialize = ['video_filename']
+    outputs_to_cache = ['points']
     window_title = ''
 
     def __init__(self,
@@ -39,26 +39,6 @@ class SelectPolygonJob(Job):
         # comparison of the list of files should work (unicode path operations
         # is unicode)
         self.video_filename = os.path.abspath(unicode(video_filename))
-
-        # read back the output files if any
-        self.points = self._get_points()
-
-    def _get_points(self):
-        if not os.path.exists(self.json_filename):
-            return None
-
-        with open(self.json_filename) as f:
-            d = json.load(f)
-            if 'points' not in d:
-                return None
-            return d['points']
-
-    def is_up_to_date(self):
-        """Returns False if the selection has not been done already"""
-        if self.points is None:
-            return False
-
-        return super(SelectPolygonJob, self).is_up_to_date()
 
     def run(self, *args, **kwargs):
 
@@ -83,11 +63,6 @@ class SelectPolygonJob(Job):
         # Since Json stores tuples as list, we go from tuples to lists here. Then we can compare the
         # self.points attribute directly to the json file (as in are_states_equal)
         self.points = [[float(i) / width, float(j) / height] for (i, j) in self.points]
-
-        # commit to the json dump
-        self.serialize_state()
-
-        return
 
     def get_outputs(self):
         super(SelectPolygonJob, self).get_outputs()

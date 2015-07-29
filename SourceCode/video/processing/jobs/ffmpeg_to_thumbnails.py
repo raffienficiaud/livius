@@ -39,8 +39,8 @@ class FFMpegThumbnailsJob(Job):
     attributes_to_serialize = ['video_filename',
                                'video_fps',
                                'video_width',
-                               'thumbnails_location',
-                               'thumbnail_files']
+                               'thumbnails_location']
+    outputs_to_cache = ['thumbnail_files']
 
     @staticmethod
     def get_thumbnail_root(video_filename):
@@ -88,21 +88,6 @@ class FFMpegThumbnailsJob(Job):
         self.video_width = video_width
         self.thumbnails_location = os.path.abspath(unicode(thumbnails_location))  # same issue as for the video filename
 
-        # read back the output files if any
-        self.thumbnail_files = self._get_files()
-
-    def is_up_to_date(self):
-        """Returns False if the state of the json dump is not the same as
-        the current state of the instance. This value is indicated for all
-        parents from this instance up to the root"""
-        if not os.path.exists(self.thumbnails_location):
-            return False
-
-        if not self.thumbnail_files:
-            return False
-
-        return super(FFMpegThumbnailsJob, self).is_up_to_date()
-
     def run(self, *args, **kwargs):
 
         if self.is_up_to_date():
@@ -117,11 +102,6 @@ class FFMpegThumbnailsJob(Job):
 
         # save the output files
         self.thumbnail_files = self._get_files()
-
-        # commit to the json dump
-        self.serialize_state()
-
-        return True
 
     def _get_files(self):
         if not os.path.exists(self.thumbnails_location):
@@ -147,15 +127,16 @@ class NumberOfFilesJob(Job):
 
     name = 'number_of_files'
     parents = [FFMpegThumbnailsJob]
+    outputs_to_cache = ['nb_files']
 
     def __init__(self, *args, **kwargs):
         super(NumberOfFilesJob, self).__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
-        self.serialize_state()
+        filelist = args[0]
+        self.nb_files = len(filelist)
 
     def get_outputs(self):
         super(NumberOfFilesJob, self).get_outputs()
 
-        files = self.ffmpeg_thumbnails.get_outputs()
-        return len(files)
+        return self.nb_files

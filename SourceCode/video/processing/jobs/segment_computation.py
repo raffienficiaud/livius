@@ -33,8 +33,8 @@ class SegmentComputationJob(Job):
 
     name = "compute_segments"
     attributes_to_serialize = ['segment_computation_tolerance',
-                               'segment_computation_min_length_in_seconds',
-                               'segments']
+                               'segment_computation_min_length_in_seconds']
+    outputs_to_cache = ['segments']
 
     def __init__(self,
                  *args,
@@ -45,18 +45,6 @@ class SegmentComputationJob(Job):
 
         assert('segment_computation_tolerance' in kwargs)
         assert('segment_computation_min_length_in_seconds' in kwargs)
-
-        self._get_previously_computed_segments()
-
-    def _get_previously_computed_segments(self):
-        if not os.path.exists(self.json_filename):
-            return None
-
-        with open(self.json_filename) as f:
-            d = json.load(f)
-
-            if 'segments' in d:
-                setattr(self, 'segments', d['segments'])
 
     def run(self, *args, **kwargs):
         """
@@ -108,8 +96,6 @@ class SegmentComputationJob(Job):
 
             # The new segment starts as soon as we are over the boundary again
             t_segment_start = t
-
-        self.serialize_state()
 
     def get_outputs(self):
         super(SegmentComputationJob, self).get_outputs()

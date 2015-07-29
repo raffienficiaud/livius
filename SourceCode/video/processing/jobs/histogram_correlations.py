@@ -27,7 +27,7 @@ class HistogramCorrelationJob(Job):
     """
 
     name = 'histogram_correlation'
-    attributes_to_serialize = ['histogram_correlations']
+    outputs_to_cache = ['histogram_correlations']
 
     def __init__(self, *args, **kwargs):
         super(HistogramCorrelationJob, self).__init__(*args, **kwargs)
@@ -82,8 +82,6 @@ class HistogramCorrelationJob(Job):
 
             previous_slide_histogram = slide_histogram
             previous_speaker_histogram_plane = speaker_histogram_plane
-
-        self.serialize_state()
 
     def get_outputs(self):
         super(HistogramCorrelationJob, self).get_outputs()
