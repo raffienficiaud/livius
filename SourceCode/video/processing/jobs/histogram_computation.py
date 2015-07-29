@@ -86,7 +86,11 @@ class HistogramsLABDiff(Job):
 
         # init
         self.histograms_labdiff = {}
-        for name, _ in self.rectangle_locations:
+
+        rectangle_names = zip(*self.rectangle_locations)[0]
+        unique_rectangle_names = list(set(rectangle_names))
+
+        for name in unique_rectangle_names:
             element = self.histograms_labdiff.get(name, {})
             self.histograms_labdiff[name] = element
 
@@ -102,18 +106,23 @@ class HistogramsLABDiff(Job):
             im_diff = (imlab_index_t - imlab_index_tm1) ** 2
             im_diff_lab = np.sqrt(np.sum(im_diff, axis=2))
 
+            # Compute histogram for every area
             for name, rect in self.rectangle_locations:
-
                 cropped = crop_image_from_normalized_coordinates(im_diff_lab, rect)
                 histogram = cv2.calcHist([cropped.astype(np.uint8)], [0], None, [256], [0, 256])
 
-                # @todo(Stephan): Merge the histograms for the slides!
+                # Merge histograms if necessary
+                histogram_to_merge = self.histograms_labdiff[name].get(index, None)
+                if histogram_to_merge is not None:
+                    histogram += histogram_to_merge
 
-                # @note(Stephan):
-                # The histograms are stored as a python list in order to serialize them via JSON.
-                self.histograms_labdiff[name][index] = histogram.tolist()
+                self.histograms_labdiff[name][index] = histogram
 
-            pass
+            # @note(Stephan):
+            # The histograms are stored as a python list in order to serialize them via JSON.
+            for name in unique_rectangle_names:
+                histogram_np_array = self.histograms_labdiff[name][index]
+                self.histograms_labdiff[name][index] = histogram_np_array.tolist()
 
         # save the state (commit to json)
         self.serialize_state()
