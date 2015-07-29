@@ -7,7 +7,6 @@ from ..job import Job
 
 import os
 import cv2
-import json
 import itertools
 from multiprocessing import Pool
 
@@ -197,4 +196,3 @@ if __name__ == '__main__':
 
     boundary_job = ContrastEnhancementBoundaries(**d)
     boundary_job.process()
-

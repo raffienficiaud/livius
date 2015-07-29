@@ -21,6 +21,7 @@ class HistogramCorrelationJob(Job):
     Inputs of the parents:
         - Function :: (frame_index, area_name) -> Histogram
         - Number of Files
+        - Number of vertical stripes
 
     The output of this Job is:
         A Function :: frame_index -> HistogramCorrelation

@@ -115,6 +115,24 @@ class HistogramsLABDiff(Job):
         return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32))
 
 
+class NumberOfVerticalStripes(Job):
+
+    name = 'number_of_vertical_stripes'
+    outputs_to_cache = ['nb_vertical_stripes']
+
+    def __init__(self, *args, **kwargs):
+        super(NumberOfVerticalStripes, self).__init__(*args, **kwargs)
+        assert('nb_vertical_stripes' in kwargs)
+
+    def run(self, *args, **kwargs):
+        pass
+
+    def get_outputs(self):
+        super(NumberOfVerticalStripes, self).get_outputs()
+
+        return self.nb_vertical_stripes
+
+
 # overriding some default behaviour with specific names
 class SelectSlide(SelectPolygonJob):
     name = 'select_slides'
@@ -138,14 +156,8 @@ class GatherSelections(Job):
     """
 
     name = 'gather_selections'
-    parents = [SelectSlide, SelectSpeaker]
-    attributes_to_serialize = ['nb_vertical_stripes']
+    parents = [SelectSlide, SelectSpeaker, NumberOfVerticalStripes]
     outputs_to_cache = ['rectangle_locations']
-
-    def __init__(self, *args, **kwargs):
-        super(GatherSelections, self).__init__(*args, **kwargs)
-
-        assert('nb_vertical_stripes' in kwargs)
 
     def run(self, *args, **kwargs):
         self.rectangle_locations = []
@@ -168,9 +180,10 @@ class GatherSelections(Job):
         speaker_loc = args[1]
         speaker_rec = get_polygon_outer_bounding_box(speaker_loc)
         _, y, _, height = speaker_rec
+        nb_vertical_stripes = args[2]
 
-        width_stripes = 1.0 / self.nb_vertical_stripes
-        for i in range(self.nb_vertical_stripes - 1):
+        width_stripes = 1.0 / nb_vertical_stripes
+        for i in range(nb_vertical_stripes - 1):
             x_start = width_stripes * i
             rect_stripe = [x_start, y, width_stripes, height]
             self.rectangle_locations += [u'speaker_%.2d' % i,
@@ -178,7 +191,7 @@ class GatherSelections(Job):
 
         # final stripe adjusted a bit to avoid getting out the image plane
         rect_stripe = [1 - width_stripes, y, width_stripes, height]
-        self.rectangle_locations += [u'speaker_%.2d' % (self.nb_vertical_stripes - 1),
+        self.rectangle_locations += [u'speaker_%.2d' % (nb_vertical_stripes - 1),
                                      rect_stripe],
 
     def get_outputs(self):

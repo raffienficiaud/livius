@@ -37,7 +37,7 @@ class J2(Job):
 class J3(Job):
     name = 'j3'
     attributes_to_serialize = ['j3_attr1']
-    outputs_to_cache = []
+    outputs_to_cache = ['has_run']
 
     def __init__(self, *args, **kwargs):
         super(J3, self).__init__(*args, **kwargs)
@@ -47,7 +47,8 @@ class J3(Job):
         self.has_run = True
 
     def get_outputs(self):
-        return None
+        super(J3, self).get_outputs()
+        pass
 
 
 class TestOutputCaching(JobTestsFixture, unittest.TestCase):
@@ -96,6 +97,6 @@ class TestOutputCaching(JobTestsFixture, unittest.TestCase):
 
         j3.has_run = False
 
-        # Should not be run again.
+        # Should not be run again, because has_run is not a parameter, but a cached output.
         j3.process()
         self.assertFalse(j3.has_run)
