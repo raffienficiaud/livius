@@ -11,7 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Job Interface<job>
+   job_interface
+   example_workflow
+   Implemented Jobs<jobs>
+   sphinx_how_to
 
 
 Indices and tables
@@ -20,4 +23,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

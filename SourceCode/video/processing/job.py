@@ -1,6 +1,8 @@
 """
+The Job module
+==============
+
 This module provides a Job class that all Actions should subclass.
-==================================================================
 
 The :class:`Job` class takes care of the dependencies between Jobs and only runs
 computations if needed. This can happen if some parameters of a predecessing action change.
@@ -20,13 +22,13 @@ class Job(object):
     """
     This class implements the basic functionality for each Job.
 
-
-    All subclasses must override the run() function. It should compute all attributes
-    mentioned in self.outputs_to_cache.
+    .. important::
+        All subclasses must override the run() function. It should compute all attributes
+        mentioned in self.outputs_to_cache.
 
     After the Job is run, the state is serialized to a JSON file.
 
-    Subclasses can optionally override the load_state() function which provides a way to
+    Subclasses can optionally override the :func:`load_state` function which provides a way to
     deal with the difference between JSON storage and the Python objects
     (e.g the fact that keys are always stored as unicode strings).
     """
@@ -248,8 +250,8 @@ class Job(object):
         """
         Run this Job's computation/action. Should be overridden by an implementation class.
 
-        :param *args: Outputs of the parent Jobs. The order of the args is determined by the
-                      the order of self.parents.
+        :param args: Outputs of the parent Jobs. The order of the args is determined by the
+                     the order of self.parents.
         """
         raise RuntimeError("Should be overridden")
 

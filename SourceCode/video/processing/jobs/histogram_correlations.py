@@ -1,12 +1,14 @@
 """
-This file describes the computation of the Histogram correlations that are used to determine the
-segments of the video.
+Histogram Correlations
+======================
+
+This module provides the Job for computation of the Histogram correlations that are used to
+determine the stable segments of the video.
 """
 
 from ..job import Job
 
 import cv2
-import os
 
 from ....util.functor import Functor
 from ....util.tools import sort_dictionary_by_integer_key
@@ -15,19 +17,34 @@ from ....util.tools import sort_dictionary_by_integer_key
 class HistogramCorrelationJob(Job):
 
     """
-    Computation of the Histogram correlations.
+    Job for the computation of the Histogram correlations.
 
 
-    Inputs of the parents:
-        - Function :: (frame_index, area_name) -> Histogram
-        - Number of Files
-        - Number of vertical stripes
+    **Parent inputs**
+
+    The inputs of the parents are:
+        * A function::
+
+            (frame_index, area_name) -> Histogram
+
+          (:py:class:`.histogram_computation.HistogramsLABDiff`)
+
+        * The number of thumbnails
+        * The number of vertical stripes
+
+    **Job outputs**
 
     The output of this Job is:
-        A Function :: frame_index -> HistogramCorrelation
+        * A function::
+
+            frame_index -> HistogramCorrelation
+
     """
 
     name = 'histogram_correlation'
+    #:
+    attributes_to_serialize = []
+    #:
     outputs_to_cache = ['histogram_correlations']
 
     def __init__(self, *args, **kwargs):

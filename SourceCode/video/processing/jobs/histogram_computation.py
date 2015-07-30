@@ -1,10 +1,14 @@
 """
-This file provides the Job interface for the computation of the several histograms in
+Histogram Computation
+=====================
+
+This module provides a Job for the computation of the several histograms in
 order to detect different changes in the scene (lightning, speaker motion, etc).
+
+It also provides a Job for gathering all user input (slide location, speaker location).
 """
 
 from ..job import Job
-import os
 import cv2
 import numpy as np
 import functools
@@ -18,26 +22,39 @@ from .select_polygon import SelectPolygonJob
 class HistogramsLABDiff(Job):
 
     """
-    Computes histogram on polygons between two consecutive frames in specific areas of the plane.
-    (normalized coordinates)
+    Job for computing histograms on polygons between two consecutive frames in specific areas of
+    the plane.
 
-    Inputs of the parents:
-    - a list of `(name, rectangle)` specifying the locations where the histogram should be computed,
-      The `name` indicating the name of the rectangle.
-      The `rectangle` is given as (x,y, width, height).
-      If several rectangles exist for the same name, those are merged
-      (which may be useful if the area is defined by several disconnected polygons).
-    - a list of images
+    .. note:: The areas are specified by normalized coordinates
 
 
-    The output is:
-    - a function of frame index and rectangle name (two arguments) that provides the histogram
-      in the difference image in this particular rectangle
+    **Parent inputs**
 
-    The state of this function is saved on the json file.
+    The inputs of the parents are
+        * A list of tuples `(name, rectangle)` specifying the locations where the histogram should
+          be computed.
+
+            * `name` is indicating the name of the rectangle.
+            * `rectangle` is given as `(x,y, width, height)`.
+
+          .. note::
+              If several rectangles exist for the same name, those are merged
+              (which may be useful if the area is defined by several disconnected polygons).
+        * A list of images specified by filename
+
+
+    **Job outputs**
+
+    The output of this Job is
+        * A function::
+
+            frame_index, rectangle_name -> histogram
+
+          that provides the histogram in the difference image in this particular rectangle.
     """
 
     name = 'histogram_imlabdiff'
+    #:
     outputs_to_cache = ['histograms_labdiff']
 
     def __init__(self,
@@ -46,7 +63,12 @@ class HistogramsLABDiff(Job):
         super(HistogramsLABDiff, self).__init__(*args, **kwargs)
 
     def load_state(self):
-        """Sort the histograms by frame_index in order to be able to compare states."""
+        """
+        Sort the histograms by frame_index in order to be able to compare states.
+
+        This is necessary because the json module can load and store dictionaries
+        out of order.
+        """
         state = super(HistogramsLABDiff, self).load_state()
 
         if state is None:
@@ -117,7 +139,10 @@ class HistogramsLABDiff(Job):
 
 class NumberOfVerticalStripes(Job):
 
+    """Small Job that stores the number of vertical stripes used for speaker tracking."""
+
     name = 'number_of_vertical_stripes'
+    #:
     outputs_to_cache = ['nb_vertical_stripes']
 
     def __init__(self, *args, **kwargs):
@@ -147,12 +172,15 @@ class SelectSpeaker(SelectPolygonJob):
 class GatherSelections(Job):
 
     """
-    This job combines the polygon selections for the slides & speaker location.
+    Job for combining the polygon selections for the slides & speaker location.
 
-    The output is:
-        A list of tuples where each tuples contains
-        - The name of the area
-        - and a normalized rectangle [x,y,width,height] that specifies the area.
+
+    **Job outputs**
+
+    The output of this Job is:
+        * A list of tuples `(name, rect)` where each tuples contains
+            * The name of the area
+            * A normalized rectangle `[x,y,width,height]` that specifies the area.
     """
 
     name = 'gather_selections'

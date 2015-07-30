@@ -1,7 +1,7 @@
 """
-=============================
+===============================
 Contrast Enhancement Boundaries
-=============================
+===============================
 
 This module provides the Job for computing the boundaries for the histogram stretching
 we apply in order to enhance the contrast of the slides.
@@ -53,13 +53,22 @@ class ContrastEnhancementBoundaries(Job):
     The inputs of the parents are expected to be the following:
         * A list of images (specified by filename) to operate on
         * The location of the slides given as a rectangle: [x, y, widht, height]
+        * A list of stable segments `[t_segment_start, t_segment_end]`
 
     **Job outputs**
 
-    The output of this Job are two functions with signature
+    The output of this Job are two functions with signature::
+
         time -> boundary.
-    *   The first function specifies the min boundary at time t.
-    *   The second function specifies the max boundary at time t.
+
+    * The first function specifies the min boundary at time t.
+    * The second function specifies the max boundary at time t.
+
+    .. note::
+        These functions check if the specified time lies in a stable segment.
+        If it does, it returns the average boundaries for this segment.
+        If t does not belong to a stable segment we interpolate linearly
+        between the boundaries of the two segments it lies between.
     """
 
     name = 'contrast_enhancement_boundaries'
