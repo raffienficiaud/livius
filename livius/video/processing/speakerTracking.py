@@ -41,6 +41,7 @@ import json
 import glob
 import time
 import logging
+import traceback, sys, code
 
 from numpy import empty, nan
 import sys
@@ -57,7 +58,7 @@ from pylab import *
 
 
 
-from ...util.histogram import get_histogram_min_max_with_percentile
+from util.histogram import get_histogram_min_max_with_percentile
 
 
 # logging facility
@@ -68,7 +69,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # temporary path
-_tmp_path = os.path.join('/home/livius/Code/livius/livius/Example Data/tmp')
+_tmp_path = os.path.join('temp_path')
 if not os.path.exists(_tmp_path):
     os.makedirs(_tmp_path)
 
@@ -1246,7 +1247,8 @@ class DummyTracker(object):
 
             self.tracker.set_size(self.width, self.height)
 
-            logger.info("[VIDEO] #frames %d, frames size (%d x %d)", self.numFrames, self.width, self.height)
+            logger.info("[VIDEO] %d frames @ %d fps, frames size (%d x %d)",
+                    self.numFrames, self.fps, self.width, self.height)
 
             pathBase = os.path.basename(self.inputPath)
             pathDirectory = os.path.dirname(self.inputPath)
@@ -1659,26 +1661,234 @@ def plot_histogram_distances():
     plt.savefig(os.path.join(_tmp_path, 'histogram_vert_energy.png'), dpi=(200))
 
 
+class SimpleTracker(object):
+    """An even simpler implementation by Edgar, based on Raffi's code and ideas"""
 
+    def __init__(self,
+                 inputPath,
+                 slide_coordinates,
+                 resize_max=None,
+                 fps=None,
+                 skip=None,
+                 speaker_bb_height_location=None):
+        """
+        :param inputPath: input video file or path containing images
+        :param slide_coordinates: the coordinates where the slides are located (in 0-1 space)
+        :param resize_max: max size
+        :param fps: frame per second in use if the video is a sequence of image files
+        :param speaker_bb_height_location: if given, this will be used as the possible heights at which the speaker should be tracked.
+        """
+
+        if inputPath is None:
+            raise exceptions.RuntimeError("no input specified")
+
+        self.inputPath = inputPath  # 'The input path.'
+        self.skip = skip  # 'Skip the first n frames.'
+        self.fps = fps
+        self.source = None
+
+        self.min_y_detect = 240
+        self.max_y_detect = 300
+        self.difference_threshold = 15.0
+
+        self.y_location = 260
+
+        self.slide_crop_coordinates = self._inner_rectangle(slide_coordinates)
+        logging.info('[SLIDES] Slide coordinates: %s', self.slide_crop_coordinates)
+        self.resize_max = resize_max
+        #self.tracker = BBoxTracker()
+        #self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        #self.fgbg = cv2.BackgroundSubtractorMOG()
+
+        # TODO this location should be in the full frame, or indicated in the range [0,1]
+        #self.speaker_bb_height_location = speaker_bb_height_location
+
+
+    def _inner_rectangle(self, coordinates):
+        """Get the inner rectangle of the slide coordinates for cropping the image.
+
+           Returns a 4x1 numpy array in the order:
+           [min_y, max_y, min_x, max_x]
+        """
+
+        # This is specified by the rectify_coordinates() function in slideDetection.py
+        top_left = 0
+        top_right = 1
+        bottom_right = 2
+        bottom_left = 3
+
+        x = 0
+        y = 1
+
+        min_x = max(coordinates[top_left, x], coordinates[bottom_left, x])
+        max_x = min(coordinates[top_right, x], coordinates[bottom_right, x])
+
+        # y is flipped, so top and bottom are as well
+        min_y = max(coordinates[top_left, y], coordinates[top_right, y])
+        max_y = min(coordinates[bottom_left, y], coordinates[bottom_right, y])
+
+        return np.array([min_y, max_y, min_x, max_x])
+
+    def _resize(self, im):
+        """Resizes the input image according to the initial parameters"""
+        if self.resize_max is None:
+            return im
+
+        # assuming landscape orientation
+        dest_size = self.resize_max, int(im.shape[0] * (float(self.resize_max) / im.shape[1]))
+        return cv2.resize(im, dest_size)
+
+
+    def speakerTracker(self):
+
+        # Clean up
+        cv2.destroyAllWindows()
+
+        # TODO move this in a function
+        # If a path to a file was given, assume it is a single video file
+        if os.path.isfile(self.inputPath):
+            cap = cv2.VideoCapture(self.inputPath)
+            #clip = VideoFileClip(self.inputPath, audio=False)
+            self.fps = cap.get(cv2.cv.CV_CAP_PROP_FPS)
+            self.numFrames = cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+
+            self.width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
+            self.height = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
+
+            logger.info("[VIDEO] %d frames @ %d fps, frames size (%d x %d)",
+                    self.numFrames, self.fps, self.width, self.height)
+            self.source = 'video'
+
+            # Skip first frames if required
+            if self.skip is not None:
+                cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, self.skip)
+
+        # Otherwise assume it is a format string for reading images
+        else:
+            cap = cmtutil.FileVideoCapture(self.inputPath)
+            self.numFrames = cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+
+            logger.info("[VIDEO] %d frames in path %s", self.numFrames, self.inputPath)
+            self.source = 'path'
+
+            # Skip first frames if required
+            if self.skip is not None:
+                cap.frame = 1 + self.skip
+
+
+        # Read first frame
+        status, im0_not_resized = cap.read()
+
+        # initialize the old images
+        im0 = self._resize(im0_not_resized)
+        im0_lab = cv2.cvtColor(im0, cv2.COLOR_BGR2LAB)
+        im0_gray = cv2.cvtColor(im0_not_resized, cv2.COLOR_BGR2GRAY)
+
+        frame_count = 0
+
+        while frame_count < self.numFrames - 1:
+
+            status = cap.grab()
+            if not status:
+                break
+
+            frame_count += 1
+            if self.source=='video':
+                time = float(frame_count) / float(self.fps)
+            else:
+                time = float(frame_count)
+            current_time_stamp = datetime.timedelta(seconds=int(time))
+
+            if self.source=='video' and (self.fps is not None) and (frame_count % self.fps) != 0:
+                continue
+
+            logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s - %3.3f %%',
+                         frame_count,
+                         self.numFrames,
+                         current_time_stamp,
+                         datetime.timedelta(seconds=self.numFrames / self.fps),
+                         100 * float(frame_count) / self.numFrames)
+            status, im = cap.retrieve()
+
+            if not status:
+                logger.error('[VIDEO] error reading frame %d', frame_count)
+
+            # resize and color conversion
+            im = self._resize(im)
+            im_lab = cv2.cvtColor(im, cv2.COLOR_BGR2LAB)
+            im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+
+            # color diff
+            im_diff = (im_lab - im0_lab) ** 2
+            im_diff_lab = np.sum(im_diff, axis=2)/3
+
+            # debug
+            if debug:
+                cv2.imwrite(os.path.join(_tmp_path, 'diff_%.6d.png' % frame_count), im_diff)
+                cv2.imwrite(os.path.join(_tmp_path, 'diff_lab_%.6d.png' % frame_count), im_diff_lab)
+
+            ''' simple centroid "measurement" '''
+
+            im_diff_lab_u8 = cv2.convertScaleAbs(im_diff_lab) # convert to 8 bit image
+            im_diff_lab_u8[im_diff_lab_u8 < self.difference_threshold] = 0 # threshold to remove artifacts
+            im_diff_lab_u8[:self.min_y_detect, : ] = 0 # zero out the top
+            im_diff_lab_u8[self.max_y_detect:, : ] = 0 # zero out the bottom
+
+            moments = cv2.moments(im_diff_lab_u8) # moments gives us the centroid
+            cx = moments['m10']/moments['m00'] # weighted centroid in x coordinates
+            cy = moments['m01']/moments['m00'] # weighted centroid in y coordinates
+            cy = self.y_location
+
+            # plot for debugging
+            if debug:
+                plt.clf()
+                plt.ion()
+                plt.imshow(im_diff_lab_u8, cmap=cm.Greys_r)
+                plt.plot([cx], [cy], 'r+', markersize=50.0)
+                plt.autoscale(tight=True)
+                plt.draw()
+                plt.show()
+
+            # prepare for the next frame
+            im0 = im
+            im0_lab = im_lab
+            im0_gray = im_gray
+
+        return
 
 if __name__ == '__main__':
 
-    storage = '/home/livius/Code/livius/livius/Example Data'
-    filename = 'video_7.mp4'
+    #storage = '../Videos'
+    #filename = 'video_7.mp4'
+    storage = '/is/ei/eklenske/Videos/dummy/thumbnails/'
+    filename = ''
 
     # plot_histogram_distances()
     # sys.exit(0)
 
-    if True:
-        obj = DummyTracker(os.path.join(storage, filename),
-                           slide_coordinates=np.array([[ 0.36004776, 0.01330207],
-                                                       [ 0.68053395, 0.03251761],
-                                                       [ 0.67519468, 0.42169076],
-                                                       [ 0.3592881, 0.41536275]]),
-                           resize_max=640,
-                           speaker_bb_height_location=(155, 260))
-        new_clip = obj.speakerTracker()
+    try:
 
-    # plot_histogram_distances()
-    sys.exit(0)
-    new_clip.write_videofile("video_CMT_algorithm_kalman_filter.mp4")
+        if True:
+            obj = SimpleTracker(os.path.join(storage, filename),
+                              slide_coordinates=np.array([[ 0.36004776, 0.01330207],
+                                                          [ 0.68053395, 0.03251761],
+                                                          [ 0.67519468, 0.42169076],
+                                                          [ 0.3592881, 0.41536275]]),
+                              resize_max=640,
+                              speaker_bb_height_location=(155, 260),
+                              fps=30)
+            new_clip = obj.speakerTracker()
+            #plot_histogram_distances()
+
+        # plot_histogram_distances()
+        # sys.exit(0)
+        #new_clip.write_videofile("video_CMT_algorithm_kalman_filter.mp4")
+
+    except:
+        type, value, tb = sys.exc_info()
+        traceback.print_exc()
+        last_frame = lambda tb=tb: last_frame(tb.tb_next) if tb.tb_next else tb
+        frame = last_frame().tb_frame
+        ns = dict(frame.f_globals)
+        ns.update(frame.f_locals)
+        code.interact(local=ns)
