@@ -1687,11 +1687,11 @@ class SimpleTracker(object):
         self.fps = fps
         self.source = None
 
-        self.min_y_detect = 240
-        self.max_y_detect = 300
-        self.difference_threshold = 15.0
+        self.y_location = 200
 
-        self.y_location = 260
+        self.min_y_detect = self.y_location - 20
+        self.max_y_detect = self.y_location + 20
+        self.difference_threshold = 20.0
 
         self.slide_crop_coordinates = self._inner_rectangle(slide_coordinates)
         logging.info('[SLIDES] Slide coordinates: %s', self.slide_crop_coordinates)
@@ -1782,11 +1782,23 @@ class SimpleTracker(object):
         # initialize the old images
         im0 = self._resize(im0_not_resized)
         im0_lab = cv2.cvtColor(im0, cv2.COLOR_BGR2LAB)
-        im0_gray = cv2.cvtColor(im0_not_resized, cv2.COLOR_BGR2GRAY)
+        im0_gray = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
 
         frame_count = 0
 
-        while frame_count < self.numFrames - 1:
+        # initialize Kalman filter
+        m = np.matrix('0; 0')
+        m[0,0] = self.resize_max/2
+        P = np.matrix('100000 0; 0 100000')
+        A = np.matrix('1 0.01; 0 1')
+        C = np.matrix('1 0')
+        Q = np.matrix('50 0; 0 1')
+        R = np.matrix('300')
+
+        # plotting
+        mass = np.zeros(shape=(self.numFrames,1))
+
+        while frame_count < self.numFrames - 1: # -1
 
             status = cap.grab()
             if not status:
@@ -1802,16 +1814,16 @@ class SimpleTracker(object):
             if self.source=='video' and (self.fps is not None) and (frame_count % self.fps) != 0:
                 continue
 
-            logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s - %3.3f %%',
-                         frame_count,
-                         self.numFrames,
-                         current_time_stamp,
-                         datetime.timedelta(seconds=self.numFrames / self.fps),
-                         100 * float(frame_count) / self.numFrames)
+            #logging.info('[VIDEO] processing frame %.6d / %d - time %s / %s - %3.3f %%',
+                         #frame_count,
+                         #self.numFrames,
+                         #current_time_stamp,
+                         #datetime.timedelta(seconds=self.numFrames / self.fps),
+                         #100 * float(frame_count) / self.numFrames)
             status, im = cap.retrieve()
 
-            if not status:
-                logger.error('[VIDEO] error reading frame %d', frame_count)
+            #if not status:
+                #logger.error('[VIDEO] error reading frame %d', frame_count)
 
             # resize and color conversion
             im = self._resize(im)
@@ -1839,13 +1851,47 @@ class SimpleTracker(object):
             cy = moments['m01']/moments['m00'] # weighted centroid in y coordinates
             cy = self.y_location
 
+            # Kalman filter
+            #   prediction
+            m_ = A*m
+            P_ = C*P*C.transpose() + Q
+
+            nll = ((cx - C*m_)**2 / (2*P.item(0)))
+
+            mass[frame_count,0] = nll
+
+            if nll < 400:
+                #   update
+                r = cx - C*m_
+                S = C*P_*C.transpose() + R
+                K = P_*C.transpose()*np.linalg.inv(S)
+                m = m_ + K*r
+                P = P_ - K*S*K.transpose()
+            else:
+                P = P_
+
+            #mass[frame_count,0] = moments['m00']
+
+            kx = m.item(0)
+            if kx < 120:
+                kx = 120
+            speaker = im_gray[cy-50:cy+50, int(kx)-120:int(kx)+120]
+
             # plot for debugging
             if debug:
                 plt.clf()
                 plt.ion()
-                plt.imshow(im_diff_lab_u8, cmap=cm.Greys_r)
+
+                plt.subplot(2, 1, 1)
+                plt.imshow(im_gray, cmap=cm.Greys_r)
                 plt.plot([cx], [cy], 'r+', markersize=50.0)
+                plt.plot([m.item(0)], [cy], 'g+', markersize=50.0)
                 plt.autoscale(tight=True)
+
+                plt.subplot(2, 1, 2)
+                plt.imshow(speaker, cmap=cm.Greys_r)
+                #plt.plot(mass)
+
                 plt.draw()
                 plt.show()
 
@@ -1858,10 +1904,10 @@ class SimpleTracker(object):
 
 if __name__ == '__main__':
 
-    #storage = '../Videos'
-    #filename = 'video_7.mp4'
-    storage = '/is/ei/eklenske/Videos/dummy/thumbnails/'
-    filename = ''
+    storage = '../Videos'
+    filename = 'video_7.mp4'
+    #storage = '/is/ei/eklenske/Videos/dummy/thumbnails/'
+    #filename = ''
 
     # plot_histogram_distances()
     # sys.exit(0)
