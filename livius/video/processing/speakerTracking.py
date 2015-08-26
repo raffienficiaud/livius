@@ -1687,7 +1687,7 @@ class SimpleTracker(object):
         self.fps = fps
         self.source = None
 
-        self.y_location = 200
+        self.y_location = 200 # 200 for video_7, 270 for the other
 
         self.min_y_detect = self.y_location - 20
         self.max_y_detect = self.y_location + 20
@@ -1793,7 +1793,7 @@ class SimpleTracker(object):
         A = np.matrix('1 0.01; 0 1')
         C = np.matrix('1 0')
         Q = np.matrix('50 0; 0 1')
-        R = np.matrix('300')
+        R = np.matrix('100')
 
         # plotting
         mass = np.zeros(shape=(self.numFrames,1))
@@ -1841,10 +1841,12 @@ class SimpleTracker(object):
 
             ''' simple centroid "measurement" '''
 
+            gauss_filter = np.tile(np.exp(- (np.power(np.array(range(0,640))-m.item(0),2) / (2*25.0**2))), [im.shape[0],1])
             im_diff_lab_u8 = cv2.convertScaleAbs(im_diff_lab) # convert to 8 bit image
             im_diff_lab_u8[im_diff_lab_u8 < self.difference_threshold] = 0 # threshold to remove artifacts
             im_diff_lab_u8[:self.min_y_detect, : ] = 0 # zero out the top
             im_diff_lab_u8[self.max_y_detect:, : ] = 0 # zero out the bottom
+            im_diff_lab_u8 = im_diff_lab_u8*gauss_filter
 
             moments = cv2.moments(im_diff_lab_u8) # moments gives us the centroid
             cx = moments['m10']/moments['m00'] # weighted centroid in x coordinates
