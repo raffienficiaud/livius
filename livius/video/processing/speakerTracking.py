@@ -1798,6 +1798,8 @@ class SimpleTracker(object):
         # plotting
         mass = np.zeros(shape=(self.numFrames,1))
 
+        data = {}
+
         while frame_count < self.numFrames - 1: # -1
 
             status = cap.grab()
@@ -1853,6 +1855,9 @@ class SimpleTracker(object):
             cy = moments['m01']/moments['m00'] # weighted centroid in y coordinates
             cy = self.y_location
 
+            data[frame_count] = {}
+            data[frame_count]['x'] = cx
+
             # Kalman filter
             #   prediction
             m_ = A*m
@@ -1871,6 +1876,12 @@ class SimpleTracker(object):
                 P = P_ - K*S*K.transpose()
             else:
                 P = P_
+
+            data[frame_count]['m'] = m.item(0)
+
+            # store the calculated position
+            with open(os.path.join(_tmp_path, 'simpleTracker_%.6d.json' % frame_count), 'w') as f:
+                    f.write(json.dumps(data))
 
             #mass[frame_count,0] = moments['m00']
 
@@ -1904,6 +1915,27 @@ class SimpleTracker(object):
 
         return
 
+def plot_simpleTracker_result():
+    list_files = glob.glob(os.path.join(_tmp_path, 'simpleTracker_*.json'))
+    list_files.sort()
+    last_file = list_files[-1]
+    with open(last_file) as f:
+        data = json.load(f)
+    frame_indices = [(i, int(i)) for i in data.keys()]
+    frame_indices.sort(key=lambda x: x[1])
+
+    X = np.zeros((len(frame_indices),1))
+    M = np.zeros((len(frame_indices),1))
+    T = np.zeros((len(frame_indices),1))
+    for i in range(len(frame_indices)):
+        X[i] = data[frame_indices[i][0]]['x']
+        M[i] = data[frame_indices[i][0]]['m']
+        T[i] = frame_indices[i][1]
+
+    plt.plot(T,X,'b')
+    plt.plot(T,M,'r')
+    plt.show()
+
 if __name__ == '__main__':
 
     storage = '../Videos'
@@ -1916,7 +1948,7 @@ if __name__ == '__main__':
 
     try:
 
-        if True:
+        if not True:
             obj = SimpleTracker(os.path.join(storage, filename),
                               slide_coordinates=np.array([[ 0.36004776, 0.01330207],
                                                           [ 0.68053395, 0.03251761],
@@ -1927,6 +1959,8 @@ if __name__ == '__main__':
                               fps=30)
             new_clip = obj.speakerTracker()
             #plot_histogram_distances()
+        else:
+            plot_simpleTracker_result()
 
         # plot_histogram_distances()
         # sys.exit(0)
