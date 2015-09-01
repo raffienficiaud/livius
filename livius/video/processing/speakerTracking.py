@@ -1932,8 +1932,62 @@ def plot_simpleTracker_result():
         M[i] = data[frame_indices[i][0]]['m']
         T[i] = frame_indices[i][1]
 
+    # initialize Kalman filter / RTS smoother
+    m = np.matrix('0; 0')
+    m[0,0] = 320
+    P = np.matrix('100000 0; 0 100000')
+    A = np.matrix('1 0.01; 0 1')
+    C = np.matrix('1 0')
+    Q = np.matrix('50 0; 0 15')
+    R = np.matrix('75')
+
+    m_seq = [m]
+    P_seq = [P]
+
+    mp_seq = [m]
+    Pp_seq = [P]
+
+    # Kalman filter
+    for i in range(len(frame_indices)):
+        #   prediction
+        m_ = A*m
+        P_ = C*P*C.transpose() + Q
+
+        #   update
+        r = X[i] - C*m_
+        S = C*P_*C.transpose() + R
+        K = P_*C.transpose()*np.linalg.inv(S)
+        m = m_ + K*r
+        P = P_ - K*S*K.transpose()
+
+        m_seq = concatenate((m_seq, [m]),axis=0)
+        P_seq = concatenate((P_seq, [P]),axis=0)
+
+        mp_seq = concatenate((mp_seq, [m_]),axis=0)
+        Pp_seq = concatenate((Pp_seq, [P_]),axis=0)
+
+    ms_seq = m_seq
+    Ps_seq = P_seq
+
+    S = np.zeros((len(frame_indices), 1))
+    S[0] = ms_seq[0,0,0]
+    S[-1] = ms_seq[-1,0,0]
+
+    # RTS smoother
+    for i in reversed(range(1,len(frame_indices)-1)):
+
+        G = P_seq[i,:,:]*A.transpose()*np.linalg.inv(Pp_seq[i+1,:,:])
+        ms = m_seq[i,:,:] + G*(ms_seq[i+1,:,:] - mp_seq[i+1,:,:])
+        Ps = P_seq[i,:,:] + G*(Ps_seq[i+1,:,:] - Pp_seq[i+1,:,:])*G.transpose()
+
+        S[i] = ms.item(0)
+
+        ms_seq[i,:,:] = ms
+        Ps_seq[i,:,:] = Ps
+
     plt.plot(T,X,'b')
     plt.plot(T,M,'r')
+    plt.plot(T,S,'g')
     plt.show()
 
 if __name__ == '__main__':
