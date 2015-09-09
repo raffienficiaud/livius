@@ -1,11 +1,14 @@
 """
-This file provides the Job that will extract the information we need in order to contrast enhance
-the slide images.
+===============================
+Contrast Enhancement Boundaries
+===============================
+
+This module provides the Job for computing the boundaries for the histogram stretching
+we apply in order to enhance the contrast of the slides.
 """
 
 from ..job import Job
 
-import os
 import cv2
 import itertools
 from multiprocessing import Pool
@@ -15,16 +18,16 @@ from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_norma
 from ....util.histogram import get_histogram_min_max_with_percentile
 
 
-def get_min_max_boundary_from_file(args):
+def _get_min_max_boundary_from_file(args):
     """
     Load a frame from disk and computes the boundaries for the histogram stretching.
 
     :param args:
         A tuple (filename, rect) where
-            filename: The filename to be read
-            rect: The location of the slides specified by normalized coordinates [x,y,width,height]
+            * filename: The filename to be read
+            * rect: The location of the slides specified by normalized coordinates [x,y,width,height]
 
-    The histogram is computed on the cropped grayscale image.
+    .. note:: The histogram is computed on the cropped grayscale image.
     """
     filename, slide_crop_rect = args
     im = cv2.imread(filename)
@@ -43,19 +46,34 @@ def get_min_max_boundary_from_file(args):
 class ContrastEnhancementBoundaries(Job):
 
     """
-    Extracts the min and max boundaries we use for contrast enhancing the slides.
+    Job for extracting the min and max boundaries we use for contrast enhancing the slides.
+
+    **Parent inputs**
 
     The inputs of the parents are expected to be the following:
-    - A list of images (specified by filename) to operate on
-    - The location of the slides given as a rectangle: (x, y, widht, height)
+        * A list of images (specified by filename) to operate on
+        * The location of the slides given as a rectangle: [x, y, widht, height]
+        * A list of stable segments `[t_segment_start, t_segment_end]`
 
-    The output of this Job are two functions with signature :: time -> boundary.
-    The first function specifies the min boundary at time t.
-    The second function specifies the max boundary at time t.
+    **Job outputs**
+
+    The output of this Job are two functions with signature::
+
+        time -> boundary.
+
+    * The first function specifies the min boundary at time t.
+    * The second function specifies the max boundary at time t.
+
+    .. note::
+        These functions check if the specified time lies in a stable segment.
+        If it does, it returns the average boundaries for this segment.
+        If t does not belong to a stable segment we interpolate linearly
+        between the boundaries of the two segments it lies between.
     """
 
     name = 'contrast_enhancement_boundaries'
 
+    #:
     outputs_to_cache = ['min_bounds',
                         'max_bounds']
 
@@ -77,7 +95,7 @@ class ContrastEnhancementBoundaries(Job):
 
         pool = Pool(processes=6)
 
-        boundaries = pool.map(get_min_max_boundary_from_file,
+        boundaries = pool.map(_get_min_max_boundary_from_file,
                               itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
 
         # Create two single lists

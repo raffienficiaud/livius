@@ -1,5 +1,8 @@
 """
-Defines the FFMpeg job that transforms a video file into a sequence of thumbnail images.
+FFMpeg To Thumbnails
+====================
+
+This module defines the FFMpeg job that transforms a video file into a sequence of thumbnail images.
 
 Those thumbnails are more suitable for analysis.
 """
@@ -35,11 +38,39 @@ def extract_thumbnails(video_file_name, output_width, output_folder):
 
 class FFMpegThumbnailsJob(Job):
 
+    """
+    Job for extracting thumbnails from a video.
+
+    **Job Parameters**
+
+    Parameters of the Job (expected to be passed when constructing a workflow instance):
+
+    :param video_filename: The name of the video file to process
+
+    Optional parameters:
+
+    :param thumbnails_location: absolute location of the generated thumbnails
+    :param video_width: The width of the generated thumbnails
+    :param video_fps: How many frames per second to extract
+
+    **Parent inputs**
+
+    None
+
+    **Job outputs**
+
+    This job returns
+        * A list of filenames that specify the generated thumbnails.
+
+    """
+
     name = "ffmpeg_thumbnails"
+    #:
     attributes_to_serialize = ['video_filename',
                                'video_fps',
                                'video_width',
                                'thumbnails_location']
+    #:
     outputs_to_cache = ['thumbnail_files']
 
     @staticmethod

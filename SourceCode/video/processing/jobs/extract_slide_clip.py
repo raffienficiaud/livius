@@ -1,4 +1,10 @@
-"""This file provides the Job for extracting the slide clip from the videofile."""
+"""
+==================
+Extract Slide Clip
+==================
+
+This module provides the Job for extracting the slide clip from the videofile.
+"""
 
 from ..job import Job
 
@@ -20,24 +26,33 @@ from ....util.tools import get_transformation_points_from_normalized_rect,\
 class WarpSlideJob(Job):
 
     """
-    Warps the slides into perspective and crops them.
+    Job for warping the slides into perspective and cropping them.
+
+    **Job parameters**
 
     Parameters of the Job (expected to be passed when constructing a workflow instance):
-        slide_clip_desired_format  The output size of the slide images for the composite video.
+
+    :param slide_clip_desired_format:  The output size of the slide images for the composite video.
 
 
-    Inputs of the parents:
-        The location of the slides given as a list of points.
-        (The slide location is then assumed to be the outer bounding box of this polygon)
+    **Parent inputs**
 
-    Returns a Callable object that provides a function
+    The inputs of the parents are
+        * The location of the slides given as a list of points.
+          (The slide rectangle is then assumed to be the outer bounding box of this polygon)
 
-            f :: img -> img
 
-    which applies the wanted slide transformation.
+    **Job outputs**
+
+    Returns a Callable object that provides a function::
+
+        img -> img
+
+    which applies the desired slide transformation.
     """
 
     name = 'warp_slides'
+    #:
     attributes_to_serialize = ['slide_clip_desired_format']
     parents = [SelectSlide]
 
@@ -87,18 +102,22 @@ class WarpSlideJob(Job):
 class EnhanceContrastJob(Job):
 
     """
-    Enhances the contrast in the slide images.
+    Job for enhancing the contrast in the slide images.
 
-    Inputs of the parents:
-        A tuple of functions that provide the min and max boundary used for
-        contrast enhancing
+    **Parent inputs**
+
+    The inputs of the parents are:
+        * A tuple of functions (time -> boundary) that provide the min and max boundary used for
+          histogram stretching at each time t.
 
 
-    Returns a callable object that provides a function:
+    **Job outputs**
 
-            f :: img, t -> img
+    Returns a callable object that provides a function::
 
-    which enhances the contrast of the given image.
+        img, t -> img
+
+    which enhances the contrast of the given image at time t.
     """
 
     name = 'enhance_contrast'
@@ -143,12 +162,16 @@ class EnhanceContrastJob(Job):
 class ExtractSlideClipJob(Job):
 
     """
-    Extracts the Slide Clip from the Video.
+    Job for extracting the Slide Clip from the Video.
 
-    Inputs of the parents:
-        - A function for warping the Slides into perspective
-        - A function for enhancing the contrast of the warped Slides
+    **Parent inputs**
 
+    The inputs of the parents are
+        * A function for warping the Slides into perspective (:class:`WarpSlideJob`)
+        * A function for enhancing the contrast of the warped Slides (:class:`EnhanceContrastJob`)
+
+
+    **Job outputs**
 
     The output is the transformed video clip.
 

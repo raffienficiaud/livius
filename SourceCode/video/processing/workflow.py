@@ -1,4 +1,9 @@
-"""Defines one or several workflow using the standard/basic jobs."""
+"""
+Workflow
+========
+
+This module defines several workflow using the standard/basic Jobs.
+"""
 
 from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
 from .jobs.histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
@@ -30,12 +35,12 @@ def workflow_extract_slide_clip():
     Return a workflow that extracs the slide clip from a video.
 
     Consists of many tasks such as
-    - ffmpg thumbnail generation
-    - Polygon Selection for the Slides and Speaker
-    - Histogram Computations
-    - Histogram Correlations
-    - Segment Computation
-    - Perspective Transformations and Contrast Enhancement.
+        * ffmpg thumbnail generation
+        * Polygon Selection for the Slides and Speaker
+        * Histogram Computations
+        * Histogram Correlations
+        * Segment Computation
+        * Perspective Transformations and Contrast Enhancement.
     """
     HistogramsLABDiff.add_parent(GatherSelections)
     HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
@@ -116,4 +121,4 @@ if __name__ == '__main__':
 
     outputs = process(workflow, **params)
 
-    # outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
+    outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))

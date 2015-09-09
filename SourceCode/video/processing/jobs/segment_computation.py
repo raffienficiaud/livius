@@ -1,7 +1,10 @@
-"""Defines a job for extracting the segments from the histogram correlations."""
+"""
+Segment Computation
+===================
 
-import os
-import json
+This module defines a Job for extracting the stable segments of the video
+from the histogram correlations.
+"""
 
 from ..job import Job
 
@@ -9,31 +12,47 @@ from ..job import Job
 class SegmentComputationJob(Job):
 
     """
-    Splits the video into stable segments.
+    Job for splitting the video into stable segments.
 
-    We assume that we can apply a constant contrast enhancement for the slides in those Segments.
+    .. note::
+        We assume that we can apply a constant contrast enhancement for the slides in those
+        stable parts of the video.
 
+
+    **Job parameters**
     Parameters of the Job (expected to be passed when constructing a workflow instance):
-        - segment_computation_tolerance:
-            How much deviation from correlation 1.0 do we allow
 
-        - segment_computation_min_length_in_seconds:
-            The minimum length of a stable segment. If segments are shorter, we count it as not
-            being stable.
+    :param segment_computation_tolerance:
+        How much deviation from correlation 1.0 do we allow
 
-
-    Inputs of the parents:
-        - a function :: frame_index -> correlation
-        - The number of files
+    :param segment_computation_min_length_in_seconds:
+        The minimum length of a stable segment. If segments are shorter, we count it as not
+        being stable.
 
 
-    The output is:
-        A list of segments, each specified by [t_start, t_end].
+    **Parent inputs**
+
+    The inputs of the parents are:
+        * A function::
+
+            frame_index -> correlation
+
+          (:py:class:`.histogram_correlations.HistogramCorrelationJob`)
+
+        * The number of files
+
+
+    **Job outputs**
+
+    The output of this Job is:
+        * A list of segments, each specified by `[t_start, t_end]`.
     """
 
     name = "compute_segments"
+    #:
     attributes_to_serialize = ['segment_computation_tolerance',
                                'segment_computation_min_length_in_seconds']
+    #:
     outputs_to_cache = ['segments']
 
     def __init__(self,
