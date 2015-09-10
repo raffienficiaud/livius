@@ -8,12 +8,15 @@ This page describes how to build and run a workflow (= DAG of Jobs)
 Introduction
 ------------
 
-In the :py:mod:`workflow module <SourceCode.video.processing.workflow>`  there are two example workflows that can be used. One only extracts
+In the :py:mod:`workflow module <video.processing.workflow>`  there are two example workflows that can be used. One only extracts
 the thumbnails from the video and the other one.
 
 The workflow can be run from the command line in the main **livius** folder via
 
-    python -m SourceCode.video.processing.workflow
+.. code::
+
+    python -m video.processing.workflow
+
 
 (after following the livius installation procedure from Parnia's documentation.)
 

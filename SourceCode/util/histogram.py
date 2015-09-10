@@ -1,5 +1,8 @@
 '''
-This module contains several utilities for histograms
+Histograms
+==========
+
+This module contains utilities for histograms
 '''
 import cv2
 

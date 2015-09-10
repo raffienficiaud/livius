@@ -1,4 +1,7 @@
 '''
+User interaction
+================
+
 Module containing several functions for interacting with users.
 '''
 

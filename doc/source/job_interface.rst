@@ -162,7 +162,7 @@ Since it is more convenient for other Jobs to operate with a proper function ins
 
         return Functor(self.histogram_correlations)
 
-The :py:class:`Functor <SourceCode.util.functor.Functor>` class just wraps the dictionary in a callable object.
+The :py:class:`Functor <util.functor.Functor>` class just wraps the dictionary in a callable object.
 When this object is called with an index, it returns the value of the index from the dictionary.
 
 ---------
