@@ -19,7 +19,7 @@ from moviepy.editor import VideoFileClip
 from .histogram_computation import SelectSlide
 from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
 
-from ....util.tools import get_transformation_points_from_normalized_rect,\
+from ....util.tools import get_transformation_points_from_normalized_rect, \
                            get_polygon_outer_bounding_box
 
 
@@ -38,6 +38,7 @@ class WarpSlideJob(Job):
     **Parent inputs**
 
     The inputs of the parents are
+
         * The location of the slides given as a list of points.
           (The slide rectangle is then assumed to be the outer bounding box of this polygon)
 
@@ -52,7 +53,7 @@ class WarpSlideJob(Job):
     """
 
     name = 'warp_slides'
-    #:
+    # :
     attributes_to_serialize = ['slide_clip_desired_format']
     parents = [SelectSlide]
 
@@ -84,9 +85,9 @@ class WarpSlideJob(Job):
                 """Cut out the slides from the video and warps them into perspective."""
                 # Extract Slides
                 slideShow = np.array([[0, 0],
-                                      [self.desiredLayout[0]-1, 0],
-                                      [self.desiredLayout[0]-1, self.desiredLayout[1]-1],
-                                      [0, self.desiredLayout[1]-1]],
+                                      [self.desiredLayout[0] - 1, 0],
+                                      [self.desiredLayout[0] - 1, self.desiredLayout[1] - 1],
+                                      [0, self.desiredLayout[1] - 1]],
                                      np.float32)
 
                 slide_coordinates = get_transformation_points_from_normalized_rect(slide_rect, image)

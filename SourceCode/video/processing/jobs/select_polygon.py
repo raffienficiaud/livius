@@ -14,28 +14,26 @@ from ....util.user_interaction import get_polygon_from_user
 
 
 class SelectPolygonJob(Job):
-
     """
     This Job shows one frame of the input video (or extracted thumbnail image) to the user and asks
     for a polygon defining the location of the slides
 
 
-    **Job parameters**
+    **Job parameters and outputs**
 
     :param video_filename: The name of the video file to process
+    :returns:
+        * ``get_outputs``: the selected points as a list of normalized coordinates `[x, y]`
 
-
-    **Job outputs**
-
-    * The selected points as a list of normalized coordinates `[x, y]`
     """
 
     name = "select_polygon"
-    #:
+
     attributes_to_serialize = ['video_filename']
-    #:
+
     outputs_to_cache = ['points']
-    #: Specifies the window title that is shown to the user when asked to perform the area selection.
+
+    # Specifies the window title that is shown to the user when asked to perform the area selection.
     window_title = ''
 
     def __init__(self,

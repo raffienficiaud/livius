@@ -34,6 +34,27 @@ Livius already contains many different jobs as well as some workflows.
 * A workflow example is detailed here: :doc:`example_workflow`
 * It is also easy to define new jobs: the job interface is detailed here: :doc:`job_interface`
 
+Running the scripts
+===================
+
+The general command line parameters are given below:
+
+.. program-output:: python -m SourceCode --help
+    :cwd: ../../ 
+
+
+Installation
+============
+
+For FFMpeg related processing, ``ffmpeg`` should be installed and accessible from the command line. 
+
+.. code::
+
+  pip install numpy
+  pip install moviepy
+  pip install sphinx
+  pip install sphinxcontrib-programoutput 
+
 Indices and tables
 ==================
 

@@ -23,6 +23,7 @@ class HistogramCorrelationJob(Job):
     **Parent inputs**
 
     The inputs of the parents are:
+
         * A function::
 
             (frame_index, area_name) -> Histogram
@@ -35,6 +36,7 @@ class HistogramCorrelationJob(Job):
     **Job outputs**
 
     The output of this Job is:
+
         * A function::
 
             frame_index -> HistogramCorrelation
@@ -42,9 +44,9 @@ class HistogramCorrelationJob(Job):
     """
 
     name = 'histogram_correlation'
-    #:
+    # :
     attributes_to_serialize = []
-    #:
+    # :
     outputs_to_cache = ['histogram_correlations']
 
     def __init__(self, *args, **kwargs):

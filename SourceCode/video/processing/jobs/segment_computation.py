@@ -32,7 +32,8 @@ class SegmentComputationJob(Job):
 
     **Parent inputs**
 
-    The inputs of the parents are:
+    The inputs of the parents are
+
         * A function::
 
             frame_index -> correlation
@@ -44,15 +45,16 @@ class SegmentComputationJob(Job):
 
     **Job outputs**
 
-    The output of this Job is:
+    The output of this Job is
+
         * A list of segments, each specified by `[t_start, t_end]`.
     """
 
     name = "compute_segments"
-    #:
+    # :
     attributes_to_serialize = ['segment_computation_tolerance',
                                'segment_computation_min_length_in_seconds']
-    #:
+    # :
     outputs_to_cache = ['segments']
 
     def __init__(self,

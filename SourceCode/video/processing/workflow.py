@@ -2,7 +2,10 @@
 Workflow
 ========
 
-This module defines several workflow using the standard/basic Jobs.
+This module defines several workflow using the standard/basic Jobs. To list
+all the workflows from the command line, the ``--list-workflows`` switch may
+be used.
+
 """
 
 from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
@@ -22,6 +25,9 @@ logging.basicConfig(format=FORMAT)
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+# note
+# in order to appear in the --list-workflow command line option, the workflow in this file
+# should start with the 'workflow_' name
 
 def workflow_thumnails_only():
     """Return a workflow made by only one node that extracts the thumnails from a video."""
@@ -29,18 +35,19 @@ def workflow_thumnails_only():
 
     return ffmpeg
 
-
 def workflow_extract_slide_clip():
     """
     Return a workflow that extracs the slide clip from a video.
 
     Consists of many tasks such as
+
         * ffmpg thumbnail generation
         * Polygon Selection for the Slides and Speaker
         * Histogram Computations
         * Histogram Correlations
         * Segment Computation
         * Perspective Transformations and Contrast Enhancement.
+
     """
     HistogramsLABDiff.add_parent(GatherSelections)
     HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)

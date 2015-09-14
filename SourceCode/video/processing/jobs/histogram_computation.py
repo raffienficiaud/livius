@@ -30,7 +30,8 @@ class HistogramsLABDiff(Job):
 
     **Parent inputs**
 
-    The inputs of the parents are
+    The inputs of the parents are:
+
         * A list of tuples `(name, rectangle)` specifying the locations where the histogram should
           be computed.
 
@@ -45,7 +46,8 @@ class HistogramsLABDiff(Job):
 
     **Job outputs**
 
-    The output of this Job is
+    The output of this Job is:
+
         * A function::
 
             frame_index, rectangle_name -> histogram
@@ -54,7 +56,6 @@ class HistogramsLABDiff(Job):
     """
 
     name = 'histogram_imlabdiff'
-    #:
     outputs_to_cache = ['histograms_labdiff']
 
     def __init__(self,
@@ -138,11 +139,10 @@ class HistogramsLABDiff(Job):
 
 
 class NumberOfVerticalStripes(Job):
-
     """Small Job that stores the number of vertical stripes used for speaker tracking."""
 
     name = 'number_of_vertical_stripes'
-    #:
+    # :
     outputs_to_cache = ['nb_vertical_stripes']
 
     def __init__(self, *args, **kwargs):
@@ -178,6 +178,7 @@ class GatherSelections(Job):
     **Job outputs**
 
     The output of this Job is:
+
         * A list of tuples `(name, rect)` where each tuples contains
             * The name of the area
             * A normalized rectangle `[x,y,width,height]` that specifies the area.
