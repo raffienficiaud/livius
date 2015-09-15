@@ -7,7 +7,6 @@ This module provides a class that wraps data into a callable object.
 
 
 class Functor(object):
-
     """
     Creates a callable object from the given data.
     The data must be indexable by the arguments that are provided when calling the object.

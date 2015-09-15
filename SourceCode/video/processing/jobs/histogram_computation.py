@@ -6,6 +6,13 @@ This module provides a Job for the computation of the several histograms in
 order to detect different changes in the scene (lightning, speaker motion, etc).
 
 It also provides a Job for gathering all user input (slide location, speaker location).
+
+.. autosummary::
+
+  HistogramsLABDiff
+  NumberOfVerticalStripes
+  GatherSelections
+
 """
 
 from ..job import Job
@@ -16,19 +23,16 @@ import functools
 from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates, \
                            sort_dictionary_by_integer_key
 from ....util.functor import Functor
-from .select_polygon import SelectPolygonJob
+from .select_polygon import SelectPolygonJob, SelectSlide, SelectSpeaker
 
 
 class HistogramsLABDiff(Job):
 
     """
-    Job for computing histograms on polygons between two consecutive frames in specific areas of
+    Computes the histograms on polygons between two consecutive frames in specific areas of
     the plane.
 
-    .. note:: The areas are specified by normalized coordinates
-
-
-    **Parent inputs**
+    .. rubric:: Workflow inputs
 
     The inputs of the parents are:
 
@@ -36,23 +40,21 @@ class HistogramsLABDiff(Job):
           be computed.
 
             * `name` is indicating the name of the rectangle.
-            * `rectangle` is given as `(x,y, width, height)`.
+            * `rectangle` is given as `(x,y, width, height)`, in **normalized coordinates**
 
-          .. note::
-              If several rectangles exist for the same name, those are merged
-              (which may be useful if the area is defined by several disconnected polygons).
+          If several rectangles exist for the same name, those are merged (useful if the area
+          is defined by several disconnected polygons). See :py:class:`GatherSelections` for a possible
+          input
+
         * A list of images specified by filename
 
+    .. rubric:: Workflow outputs
 
-    **Job outputs**
+    The output of this Job is binary a function::
 
-    The output of this Job is:
+        frame_index, rectangle_name -> histogram
 
-        * A function::
-
-            frame_index, rectangle_name -> histogram
-
-          that provides the histogram in the difference image in this particular rectangle.
+    that provides the histogram in the difference image in this particular rectangle.
     """
 
     name = 'histogram_imlabdiff'
@@ -65,7 +67,7 @@ class HistogramsLABDiff(Job):
 
     def load_state(self):
         """
-        Sort the histograms by frame_index in order to be able to compare states.
+        Sort the histograms by ``frame_index`` in order to be able to compare states.
 
         This is necessary because the json module can load and store dictionaries
         out of order.
@@ -139,7 +141,7 @@ class HistogramsLABDiff(Job):
 
 
 class NumberOfVerticalStripes(Job):
-    """Small Job that stores the number of vertical stripes used for speaker tracking."""
+    """Indicates the number of vertical stripes used for speaker tracking."""
 
     name = 'number_of_vertical_stripes'
     # :
@@ -158,30 +160,17 @@ class NumberOfVerticalStripes(Job):
         return self.nb_vertical_stripes
 
 
-# overriding some default behaviour with specific names
-class SelectSlide(SelectPolygonJob):
-    name = 'select_slides'
-    window_title = 'Select the location of the Slides'
-
-
-class SelectSpeaker(SelectPolygonJob):
-    name = 'select_speaker'
-    window_title = 'Select the location of the Speaker'
-
-
 class GatherSelections(Job):
+    """Process the slide and speaker location for generating normalized areas for histogram
+    computation.
 
-    """
-    Job for combining the polygon selections for the slides & speaker location.
+    .. rubric:: Workflow outputs
 
+    The output of this Job is a list of tuples `(name, rect)` where each tuples
+    contains:
 
-    **Job outputs**
-
-    The output of this Job is:
-
-        * A list of tuples `(name, rect)` where each tuples contains
-            * The name of the area
-            * A normalized rectangle `[x,y,width,height]` that specifies the area.
+        * The name of the area
+        * A normalized rectangle `[x,y,width,height]` that specifies the area.
     """
 
     name = 'gather_selections'

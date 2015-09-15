@@ -3,51 +3,49 @@ Segment Computation
 ===================
 
 This module defines a Job for extracting the stable segments of the video
-from the histogram correlations.
+from the histogram correlations. A stable segment is a period of time during
+which the variation of the slide appearance is not "too high", according to some
+internal metrics.
+
+Once the stable segments have been detected, it is possible to apply a contrast
+enhancement on those parts using a simple histogram streching (see :py:class:`` for
+more details).
+
+.. autosummary::
+
+  SegmentComputationJob
+
 """
 
 from ..job import Job
 
 
 class SegmentComputationJob(Job):
-
     """
-    Job for splitting the video into stable segments.
+    Detection of `"stable"` segments of the video.
 
-    .. note::
-        We assume that we can apply a constant contrast enhancement for the slides in those
-        stable parts of the video.
+    The purpose of this Job is to provide a way to detect time frames during which
+    a simple processing may be performed in order to enhance the slides.
 
+    .. rubric:: Runtime parameters
 
-    **Job parameters**
-    Parameters of the Job (expected to be passed when constructing a workflow instance):
+    * See :py:func:`__init__`
 
-    :param segment_computation_tolerance:
-        How much deviation from correlation 1.0 do we allow
-
-    :param segment_computation_min_length_in_seconds:
-        The minimum length of a stable segment. If segments are shorter, we count it as not
-        being stable.
-
-
-    **Parent inputs**
+    .. rubric:: Workflow inputs
 
     The inputs of the parents are
 
-        * A function::
+    * A function::
 
-            frame_index -> correlation
+        frame_index -> correlation
 
-          (:py:class:`.histogram_correlations.HistogramCorrelationJob`)
+      (see :py:class:`.histogram_correlations.HistogramCorrelationJob` for an example)
 
-        * The number of files
+    * The number of files
 
+    .. rubric:: Workflow outputs
 
-    **Job outputs**
-
-    The output of this Job is
-
-        * A list of segments, each specified by `[t_start, t_end]`.
+    * The output of this Job is a list of segments, each specified by `[t_start, t_end]`.
     """
 
     name = "compute_segments"
@@ -60,7 +58,19 @@ class SegmentComputationJob(Job):
     def __init__(self,
                  *args,
                  **kwargs):
+        """
+        :param float segment_computation_tolerance: indicates how much deviation from correlation 1.0
+            is tolerated for being in a stable segment
 
+        :param int segment_computation_min_length_in_seconds: indicates the minimum length of a stable segment
+            in seconds.
+
+        .. note::
+
+           In case the segment lenght is shorter than ``segment_computation_min_length_in_seconds``
+           the frames on the segment will be flagged as `unstable`.
+
+        """
         super(SegmentComputationJob, self).__init__(*args,
                                                     **kwargs)
 

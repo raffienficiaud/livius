@@ -20,11 +20,13 @@ class SelectPolygonJob(Job):
 
     .. rubric:: Runtime parameter
 
-    ``video_filename``: The name of the video file to process
+    See :py:func:`__init__`.
 
     .. rubric:: Workflow input
 
-    Either nothing, in which case the video file is used
+    * either nothing, in which case the video file is used
+    * or a list of image file names, in which case a randomly picked image is
+      shown for input.
 
     .. rubric:: Workflow output
 
@@ -38,8 +40,9 @@ class SelectPolygonJob(Job):
 
     outputs_to_cache = ['points']
 
-    # Specifies the window title that is shown to the user when asked to perform the area selection.
+    # Specifies the window title that is shown to the user when asked to perform the area selection
     window_title = ''
+
 
     def __init__(self,
                  *args,
@@ -91,3 +94,24 @@ class SelectPolygonJob(Job):
         if self.points is None:
             raise RuntimeError('The points have not been selected yet')
         return self.points
+
+
+# overriding some default behaviour with specific names
+class SelectSlide(SelectPolygonJob):
+    """User input for slide location.
+
+    Refines the behaviour of :py:class:`SelectPolygonJob`.
+    """
+
+    name = 'select_slides'
+    window_title = 'Select the location of the Slides'
+
+
+class SelectSpeaker(SelectPolygonJob):
+    """User input for speaker location.
+
+    Refines the behaviour of :py:class:`SelectPolygonJob`.
+    """
+
+    name = 'select_speaker'
+    window_title = 'Select the location of the Speaker'

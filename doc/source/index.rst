@@ -54,6 +54,7 @@ For FFMpeg related processing, ``ffmpeg`` should be installed and accessible fro
   pip install moviepy
   pip install sphinx
   pip install sphinxcontrib-programoutput 
+  pip install sphinx_bootstrap_theme
 
 Indices and tables
 ==================

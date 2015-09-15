@@ -49,7 +49,7 @@ class FFMpegThumbnailsJob(Job):
 
     .. rubric:: Runtime parameters
 
-    See :py:func:`FFMpegThumbnailsJob.__init__` for details.
+    * See :py:func:`FFMpegThumbnailsJob.__init__` for details.
 
     .. rubric:: Workflow output
 

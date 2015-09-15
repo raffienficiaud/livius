@@ -15,31 +15,29 @@ from ....util.tools import sort_dictionary_by_integer_key
 
 
 class HistogramCorrelationJob(Job):
-
     """
-    Job for the computation of the Histogram correlations.
+    Computates the histogram correlations between two consecutive frames
+    on specific areas.
 
-
-    **Parent inputs**
+    .. rubric:: Workflow inputs
 
     The inputs of the parents are:
 
-        * A function::
+        * A function giving an histogram per frame and area name::
 
             (frame_index, area_name) -> Histogram
 
-          (:py:class:`.histogram_computation.HistogramsLABDiff`)
+          See :py:class:`.histogram_computation.HistogramsLABDiff` for an
+          implementation example.
 
         * The number of thumbnails
         * The number of vertical stripes
 
-    **Job outputs**
+    .. rubric:: Workflow outputs
 
-    The output of this Job is:
+    The output of this Job is a function giving the correlation per frame::
 
-        * A function::
-
-            frame_index -> HistogramCorrelation
+        frame_index -> HistogramCorrelation
 
     """
 
