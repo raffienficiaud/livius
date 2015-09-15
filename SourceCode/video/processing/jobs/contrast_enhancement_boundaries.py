@@ -1,17 +1,18 @@
 """
-===============================
 Contrast Enhancement Boundaries
 ===============================
 
 This module provides the Job for computing the boundaries for the histogram stretching
 we apply in order to enhance the contrast of the slides.
 
+.. autosummary::
+
+  ContrastEnhancementBoundaries
 
 """
 
 from ..job import Job
 
-import cv2
 import itertools
 from multiprocessing import Pool
 
@@ -31,6 +32,9 @@ def _get_min_max_boundary_from_file(args):
 
     .. note:: The histogram is computed on the cropped grayscale image.
     """
+
+    import cv2
+
     filename, slide_crop_rect = args
     im = cv2.imread(filename)
     im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)

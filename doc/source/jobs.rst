@@ -25,30 +25,13 @@ The jobs fall into the following categories:
 Reference
 ---------
 
-.. automodule:: SourceCode.video.processing.jobs.select_polygon
-   :members:
-   :special-members:
+.. toctree::
+   :name: jobtoc
 
-.. automodule:: SourceCode.video.processing.jobs.contrast_enhancement_boundaries
-   :members:
-   :special-members:
-
-.. automodule:: SourceCode.video.processing.jobs.extract_slide_clip
-   :members:
-   :special-members:
-
-.. automodule:: SourceCode.video.processing.jobs.ffmpeg_to_thumbnails
-   :members:
-   :special-members:
-
-.. automodule:: SourceCode.video.processing.jobs.histogram_computation
-   :members:
-   :special-members:
-
-.. automodule:: SourceCode.video.processing.jobs.histogram_correlations
-   :members:
-   :special-members:
-
-.. automodule:: SourceCode.video.processing.jobs.segment_computation
-   :members:
-   :special-members:
+   video.processing.jobs.select_polygon<jobs/select_polygon>
+   video.processing.jobs.contrast_enhancement_boundaries<jobs/contrast_enhancement>
+   video.processing.jobs.extract_slide_clip<jobs/extract_slide_clip>
+   video.processing.jobs.ffmpeg_to_thumbnails<jobs/ffmpeg_to_thumbnails>
+   video.processing.jobs.histogram_computation<jobs/histogram_computation>
+   video.processing.jobs.histogram_correlations<jobs/histogram_correlations>
+   video.processing.jobs.segment_computation<jobs/segment_computation>
