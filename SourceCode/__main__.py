@@ -40,10 +40,8 @@ parser.add_argument('--list-workflows',
                     action='store_true',
                     help='lists all available workflows and exits')
 parser.add_argument('--workflow',
-                    dest='workflow',
                     help='specifies the workflow to use')
 parser.add_argument('--temporary-folder',
-                    dest='temp_folder',
                     help='specifies the workflow to use')
 
 args = parser.parse_args()
@@ -93,18 +91,38 @@ if args.video_file:
 # loads the workflow
 import video.processing.workflow as workflow_module
 try:
-    workflow_obj = getattr(workflow_module, args.workflow)
+    workflow_factory_obj = getattr(workflow_module, args.workflow)
 except Exception, e:
     logger.error('[CONFIG] the workflow %s cannot be loaded', args.workflow)
     sys.exit(1)
 
 # loads the video files
-video_files = args.video_file
+video_files = args.video_file if args.video_file is not None else []
 if args.video_folder is not None:
     for f in args.video_folder:
         video_files += os.listdir(f)
 
-for f in video_files:
-    logger.info("[PROCESSING] %s", f)
+if not video_files:
+    logger.error('[CONFIG] the video list to be processed is empty')
+    sys.exit(1)
 
+for f in video_files:
+    logger.info("[FILE] -> %s <- will be processed", f)
+
+if not args.temporary_folder:
+    args.temporary_folder = os.path.abspath(os.path.join(os.path.dirname(video_files[0]), 'tmp_livius'))
+
+# process all files
+for f in video_files:
+    params = {'video_filename': f,
+              'thumbnails_location': os.path.join(args.temporary_folder, os.path.basename(f), 'thumbnails'),
+              # 'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
+              # 'segment_computation_tolerance': 0.05,
+              # 'segment_computation_min_length_in_seconds': 2,
+              # 'slide_clip_desired_format': [1280, 960],
+              # 'nb_vertical_stripes': 10
+              }
+
+    outputs = workflow_module.process(workflow_factory_obj(), **params)
+    # outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
 
