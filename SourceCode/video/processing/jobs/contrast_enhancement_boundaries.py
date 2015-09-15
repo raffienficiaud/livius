@@ -5,6 +5,8 @@ Contrast Enhancement Boundaries
 
 This module provides the Job for computing the boundaries for the histogram stretching
 we apply in order to enhance the contrast of the slides.
+
+
 """
 
 from ..job import Job
@@ -13,7 +15,7 @@ import cv2
 import itertools
 from multiprocessing import Pool
 
-from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates,\
+from ....util.tools import get_polygon_outer_bounding_box, crop_image_from_normalized_coordinates, \
                            linear_interpolation
 from ....util.histogram import get_histogram_min_max_with_percentile
 
@@ -48,14 +50,19 @@ class ContrastEnhancementBoundaries(Job):
     """
     Job for extracting the min and max boundaries we use for contrast enhancing the slides.
 
-    **Parent inputs**
+    .. rubric:: Runtime parameters
+
+    This class does not have any runtime configuration.
+
+    .. rubric:: Workflow inputs
 
     The inputs of the parents are expected to be the following:
+
         * A list of images (specified by filename) to operate on
         * The location of the slides given as a rectangle: [x, y, widht, height]
         * A list of stable segments `[t_segment_start, t_segment_end]`
 
-    **Job outputs**
+    .. rubric:: Workflow outputs
 
     The output of this Job are two functions with signature::
 
@@ -73,7 +80,7 @@ class ContrastEnhancementBoundaries(Job):
 
     name = 'contrast_enhancement_boundaries'
 
-    #:
+    # :
     outputs_to_cache = ['min_bounds',
                         'max_bounds']
 
@@ -134,8 +141,8 @@ class ContrastEnhancementBoundaries(Job):
 
                         else:
                             # We are between two segments and thus have to interpolate
-                            t0 = self.segments[segment_index - 1][1]   # End of last segment
-                            t1 = self.segments[segment_index][0]       # Start of new segment
+                            t0 = self.segments[segment_index - 1][1]  # End of last segment
+                            t1 = self.segments[segment_index][0]  # Start of new segment
 
                             boundary0 = self.boundary_for_segment[segment_index - 1]
                             boundary1 = self.boundary_for_segment[segment_index]

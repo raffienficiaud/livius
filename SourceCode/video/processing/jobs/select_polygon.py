@@ -2,7 +2,7 @@
 Select Polygon
 ==============
 
-This module defines a Job for selecting a specific area from a video file name.
+This module defines a unique Job :py:class:`SelectPolygonJob` for selecting a specific area from a video file name.
 """
 
 import os
@@ -18,12 +18,17 @@ class SelectPolygonJob(Job):
     This Job shows one frame of the input video (or extracted thumbnail image) to the user and asks
     for a polygon defining the location of the slides
 
+    .. rubric:: Runtime parameter
 
-    **Job parameters and outputs**
+    ``video_filename``: The name of the video file to process
 
-    :param video_filename: The name of the video file to process
-    :returns:
-        * ``get_outputs``: the selected points as a list of normalized coordinates `[x, y]`
+    .. rubric:: Workflow input
+
+    Either nothing, in which case the video file is used
+
+    .. rubric:: Workflow output
+
+    The selected points as a list of normalized coordinates `[x, y]`
 
     """
 
@@ -41,6 +46,7 @@ class SelectPolygonJob(Job):
                  **kwargs):
         """
         Expected parameters in kwargs:
+
         :param video_filename: The name of the video file to process
         """
         super(SelectPolygonJob, self).__init__(*args, **kwargs)

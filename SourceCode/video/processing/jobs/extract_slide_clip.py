@@ -12,8 +12,6 @@ import cv2
 import numpy as np
 import os
 
-# from moviepy.editor import *
-# from moviepy.Clip import *
 from moviepy.editor import VideoFileClip
 
 from .histogram_computation import SelectSlide
@@ -24,26 +22,21 @@ from ....util.tools import get_transformation_points_from_normalized_rect, \
 
 
 class WarpSlideJob(Job):
-
     """
     Job for warping the slides into perspective and cropping them.
 
-    **Job parameters**
+    .. rubric:: Runtime parameters
 
-    Parameters of the Job (expected to be passed when constructing a workflow instance):
+    * ``slide_clip_desired_format`` the output size of the slide images for the composite video.
 
-    :param slide_clip_desired_format:  The output size of the slide images for the composite video.
-
-
-    **Parent inputs**
+    .. rubric:: Workflow inputs
 
     The inputs of the parents are
 
         * The location of the slides given as a list of points.
           (The slide rectangle is then assumed to be the outer bounding box of this polygon)
 
-
-    **Job outputs**
+    .. rubric:: Workflow outputs
 
     Returns a Callable object that provides a function::
 
@@ -105,14 +98,14 @@ class EnhanceContrastJob(Job):
     """
     Job for enhancing the contrast in the slide images.
 
-    **Parent inputs**
+    .. rubric:: Workflow inputs
 
-    The inputs of the parents are:
-        * A tuple of functions (time -> boundary) that provide the min and max boundary used for
-          histogram stretching at each time t.
+    The job is expecting the following from the parents:
 
+    * A tuple of functions (time -> boundary) that provide the min and max boundary used for
+      histogram stretching at each time t.
 
-    **Job outputs**
+    .. rubric:: Workflow outputs
 
     Returns a callable object that provides a function::
 
@@ -165,14 +158,14 @@ class ExtractSlideClipJob(Job):
     """
     Job for extracting the Slide Clip from the Video.
 
-    **Parent inputs**
+    .. rubric:: Workflow inputs
 
     The inputs of the parents are
-        * A function for warping the Slides into perspective (:class:`WarpSlideJob`)
-        * A function for enhancing the contrast of the warped Slides (:class:`EnhanceContrastJob`)
 
+    * A function for warping the Slides into perspective (:class:`WarpSlideJob`)
+    * A function for enhancing the contrast of the warped Slides (:class:`EnhanceContrastJob`)
 
-    **Job outputs**
+    .. rubric:: Workflow outputs
 
     The output is the transformed video clip.
 

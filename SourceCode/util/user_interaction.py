@@ -13,7 +13,8 @@ from random import randint
 def get_polygon_from_user(im,
                           nb_points_polygon,
                           window_name=None):
-    """Shows a window with the given image, inviting the user to click on several points
+    """
+    Shows a window with the given image, inviting the user to click on several points
     in order to define a polygon
 
     :param (numpy array) im: image to show
