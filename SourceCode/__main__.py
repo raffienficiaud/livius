@@ -41,8 +41,10 @@ parser.add_argument('--list-workflows',
                     help='lists all available workflows and exits')
 parser.add_argument('--workflow',
                     help='specifies the workflow to use')
-parser.add_argument('--temporary-folder',
-                    help='specifies the workflow to use')
+parser.add_argument('--thumbnails-folder',
+                    help='specifies the folder where the thumbnails will be stored/retrieved')
+parser.add_argument('--output-folder',
+                    help='specifies the output folder')
 
 args = parser.parse_args()
 
@@ -106,17 +108,37 @@ if not video_files:
     logger.error('[CONFIG] the video list to be processed is empty')
     sys.exit(1)
 
-for f in video_files:
-    logger.info("[FILE] -> %s <- will be processed", f)
+if not args.output_folder:
+    logger.error('[CONFIG] the video list to be processed is empty')
+    sys.exit(1)
 
-if not args.temporary_folder:
-    args.temporary_folder = os.path.abspath(os.path.join(os.path.dirname(video_files[0]), 'tmp_livius'))
+args.output_folder = os.path.abspath(args.output_folder)
+
+if not args.thumbnails_folder:
+    args.thumbnails_folder = os.path.join(args.output_folder, 'thumbnails')
+
+logger.info("[CONFIG] output folder %s", args.output_folder)
+logger.info("[CONFIG] thumbnails folder %s", args.thumbnails_folder)
+logger.info("[CONFIG] workflow %s", args.workflow)
+
+for f in video_files:
+    logger.info("[VIDEO] -> %s <-", f)
 
 # process all files
 for f in video_files:
+
+    video_base_name = os.path.splitext(os.path.basename(f))[0]
+    output_location = os.path.join(args.output_folder, video_base_name)
+    if not os.path.exists(output_location):
+        os.makedirs(output_location)
+
+    thumbnails_location = os.path.join(args.thumbnails_folder, video_base_name)
+    if not os.path.exists(thumbnails_location):
+        os.makedirs(thumbnails_location)
+
     params = {'video_filename': f,
-              'thumbnails_location': os.path.join(args.temporary_folder, os.path.basename(f), 'thumbnails'),
-              # 'json_prefix': os.path.join(proc_folder, 'processing_video_7_'),
+              'thumbnails_location': thumbnails_location,
+              'json_prefix': os.path.join(output_location, video_base_name),
               # 'segment_computation_tolerance': 0.05,
               # 'segment_computation_min_length_in_seconds': 2,
               # 'slide_clip_desired_format': [1280, 960],
