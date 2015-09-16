@@ -33,22 +33,22 @@ class Job(object):
     (e.g the fact that keys are always stored as unicode strings).
     """
 
-    #: Name of the Job (used for identification).
+    # : Name of the Job (used for identification).
     name = "root"
 
-    #: List of attributes that represent the Job's state
+    # : List of attributes that represent the Job's state
     attributes_to_serialize = []
 
-    #: Outputs of the Job.
+    # : Outputs of the Job.
     outputs_to_cache = []
 
-    #: List of parents.
-    #:
-    #: .. important::
-    #:      The order of the parents is important as it
-    #:      determines the order in which the outputs of
-    #:      outputs of the parent Jobs are passed to this
-    #:      Job's :func:`run` method.
+    # : List of parents.
+    # :
+    # : .. important::
+    # :      The order of the parents is important as it
+    # :      determines the order in which the outputs of
+    # :      outputs of the parent Jobs are passed to this
+    # :      Job's :func:`run` method.
     parents = None
 
     # private API
@@ -84,8 +84,8 @@ class Job(object):
 
         self._is_frozen = False
 
-        json_prefix = kwargs.get('json_prefix', '')
-        self.json_filename = json_prefix + '_' + self.name + '.json'
+        self.json_prefix = kwargs.get('json_prefix', '')
+        self.json_filename = self.json_prefix + '_' + self.name + '.json'
 
         # creation of the serialized attributes
         for k in self.attributes_to_serialize:
@@ -187,6 +187,7 @@ class Job(object):
         dict_json = self.load_state()
 
         if dict_json is None:
+            logger.debug("Job.are_states_equal: failure reported by self.load_state")
             return False
 
         try:
@@ -239,7 +240,7 @@ class Job(object):
             return None
 
         if not os.path.exists(self.json_filename):
-            logger.debug("Loading the state failed: File does not exist %s.", self.json_filename)
+            logger.debug("Job.load_state: file does not exist %s.", self.json_filename)
             return None
 
         dict_json = json.load(open(self.json_filename))
@@ -261,6 +262,7 @@ class Job(object):
         of the parents to this node.
         """
         if self.is_up_to_date():
+            logger.info('Job.process: %s/%s state is up to date', os.path.basename(self.json_prefix), self.name)
             return
 
         # if not up to date, we need all the parents
@@ -269,6 +271,7 @@ class Job(object):
             par.process()
             parent_outputs.append(par.get_outputs())
 
+        logger.info('Job.process: %s/%s processing...', os.path.basename(self.json_prefix), self.name)
         self.run(*parent_outputs)
         self.serialize_state()
         # after this call, the current instance should be up to date
