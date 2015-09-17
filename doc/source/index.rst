@@ -34,10 +34,17 @@ Livius already contains many different jobs as well as some workflows.
 * A workflow example is detailed here: :doc:`example_workflow`
 * It is also easy to define new jobs: the job interface is detailed here: :doc:`job_interface`
 
-Running the scripts
-===================
+Running Livius
+==============
+Once you know more about the workflow you want to use, you may run the processing of this 
+workflow over a bunch of videos simply by running
 
-The general command line parameters are given below:
+.. code::
+
+  cd $livius_src
+  python -m SourceCode --workflow=my_workflow --output-folder=/a/big/disk --video-folder=my_folder_full_of_videos
+
+The detailed options of Livius are given below (just type ``--help`` in the previous command line):
 
 .. program-output:: python -m SourceCode --help
     :cwd: ../../ 
@@ -46,12 +53,16 @@ The general command line parameters are given below:
 Installation
 ============
 
-For FFMpeg related processing, ``ffmpeg`` should be installed and accessible from the command line. 
+For FFMpeg related processing, ``ffmpeg`` should be installed and accessible from the command line. The 
+dependencies of Livius are the following (which may be installed in a virtual environment, see/search
+in the wiki for more details).
 
 .. code::
 
   pip install numpy
   pip install moviepy
+  
+  # for the documentation
   pip install sphinx
   pip install sphinxcontrib-programoutput 
   pip install sphinx_bootstrap_theme
