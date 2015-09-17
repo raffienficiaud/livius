@@ -35,6 +35,11 @@ def workflow_thumnails_only():
 
     return ffmpeg
 
+def workflow_slide_detection_window():
+    """Returns a trivial workflow that requires the user to select the slide locations only"""
+
+    return SelectSlide
+
 def workflow_extract_slide_clip():
     """
     Return a workflow that extracs the slide clip from a video.
