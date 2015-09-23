@@ -29,16 +29,19 @@ logger.setLevel(logging.DEBUG)
 # in order to appear in the --list-workflow command line option, the workflow in this file
 # should start with the 'workflow_' name
 
-def workflow_thumnails_only():
+
+def workflow_thumbnails_only():
     """Return a workflow made by only one node that extracts the thumnails from a video."""
     ffmpeg = ffmpeg_factory()
 
     return ffmpeg
 
+
 def workflow_slide_detection_window():
     """Returns a trivial workflow that requires the user to select the slide locations only"""
 
     return SelectSlide
+
 
 def workflow_extract_slide_clip():
     """
@@ -46,7 +49,7 @@ def workflow_extract_slide_clip():
 
     Consists of many tasks such as
 
-        * ffmpg thumbnail generation
+        * ffmpeg thumbnail generation
         * Polygon Selection for the Slides and Speaker
         * Histogram Computations
         * Histogram Correlations
