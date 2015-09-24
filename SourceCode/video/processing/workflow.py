@@ -31,7 +31,7 @@ logger.setLevel(logging.DEBUG)
 
 
 def workflow_thumbnails_only():
-    """Return a workflow made by only one node that extracts the thumnails from a video."""
+    """Return a workflow made by only one node that extracts the thumbnails from a video."""
     ffmpeg = ffmpeg_factory()
 
     return ffmpeg
