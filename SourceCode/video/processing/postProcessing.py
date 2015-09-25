@@ -6,27 +6,18 @@ import os
 # Import everything needed to edit video clips
 from moviepy.editor import *
 from moviepy.Clip import *
-#from moviepy.video.tools.cuts import FramesMatches
-#from moviepy.video.fx.crop import crop
+# from moviepy.video.tools.cuts import FramesMatches
+# from moviepy.video.fx.crop import crop
 from moviepy.video.VideoClip import *
-from moviepy.config import get_setting # ffmpeg, ffmpeg.exe, etc...
+from moviepy.config import get_setting  # ffmpeg, ffmpeg.exe, etc...
 
-#Importing ploting libraries for shoeing purposes
+# Importing ploting libraries for shoeing purposes
 import matplotlib.pyplot as plt
 from pylab import *
 import functools
 
 # Importing Opencv
 import cv2
-
-class VideoAnalysis:
-    """Retrieves information about the Video such as histogram_differences, histogram_boundaries."""
-
-    def get_histogram_information(self, video, coordinates):
-        # @todo(Stephan):
-        # Should this be the lab/gray difference and stripe computation as for the speaker tracker?
-        # Probably put this into it's own file.
-        pass
 
 
 class PostProcessor:
@@ -60,10 +51,10 @@ class Warper:
         """Cuts out the slides from the video and warps them into perspective.
         """
         # Extract Slides
-        slideShow = np.array([[0,0],
-                              [self.desiredScreenLayout[0]-1, 0],
-                              [self.desiredScreenLayout[0]-1, self.desiredScreenLayout[1]-1],
-                              [0,self.desiredScreenLayout[1]-1]],
+        slideShow = np.array([[0, 0],
+                              [self.desiredScreenLayout[0] - 1, 0],
+                              [self.desiredScreenLayout[0] - 1, self.desiredScreenLayout[1] - 1],
+                              [0, self.desiredScreenLayout[1] - 1]],
                              np.float32)
         retval = cv2.getPerspectiveTransform(self.slide_coordinates, slideShow)
         warp = cv2.warpPerspective(image, retval, self.desiredScreenLayout)
@@ -113,7 +104,7 @@ class ContrastEnhancer:
         if debug:
            print "Getting histogram_boundaries for time %s", t
 
-        for (start,end) in self.segments:
+        for (start, end) in self.segments:
 
             if (start <= t) and (t <= end):
                 # We are inside a segment and thus know the boundaries
@@ -130,8 +121,8 @@ class ContrastEnhancer:
 
                 else:
                     # We are between two segments and thus have to interpolate
-                    t0 = self.segments[segment_index - 1][1]   # End of last segment
-                    t1 = self.segments[segment_index][0]       # Start of new segment
+                    t0 = self.segments[segment_index - 1][1]  # End of last segment
+                    t1 = self.segments[segment_index][0]  # Start of new segment
 
                     min0, max0 = self.segment_histogram_boundaries[segment_index - 1]
                     min1, max1 = self.segment_histogram_boundaries[segment_index]
