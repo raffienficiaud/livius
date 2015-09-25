@@ -13,6 +13,7 @@ Contents:
 
    Existing Jobs<jobs>
    Existing Workflows<workflow>
+   Output video creation<final_video>
    job_interface
    example_workflow
    utilities

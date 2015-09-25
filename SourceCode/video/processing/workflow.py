@@ -9,7 +9,7 @@ be used.
 """
 
 from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
-from .jobs.histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
+from .jobs.histogram_computation import HistogramsLABDiff, GenerateHistogramAreas, SelectSlide
 from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob, NumberOfFilesJob
 from .jobs.histogram_correlations import HistogramCorrelationJob
 from .jobs.segment_computation import SegmentComputationJob
@@ -57,7 +57,7 @@ def workflow_extract_slide_clip():
         * Perspective Transformations and Contrast Enhancement.
 
     """
-    HistogramsLABDiff.add_parent(GatherSelections)
+    HistogramsLABDiff.add_parent(GenerateHistogramAreas)
     HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
 
     HistogramCorrelationJob.add_parent(HistogramsLABDiff)

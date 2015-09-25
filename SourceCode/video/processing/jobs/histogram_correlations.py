@@ -71,6 +71,7 @@ class HistogramCorrelationJob(Job):
         # Second parent is the NumberOfFiles
         number_of_files = args[1]
 
+
         # init
         self.histogram_correlations = {}
 
@@ -95,7 +96,7 @@ class HistogramCorrelationJob(Job):
 
             if previous_speaker_histogram_plane is not None:
                 # @todo(Stephan): Compute the energy here?
-                # Maybe create a new Job and a common subclass (cf. GatherSelections)
+                # Maybe create a new Job and a common subclass (cf. GenerateHistogramAreas)
                 pass
 
             previous_slide_histogram = slide_histogram

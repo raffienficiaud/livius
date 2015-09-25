@@ -10,8 +10,8 @@ It also provides a Job for gathering all user input (slide location, speaker loc
 .. autosummary::
 
   HistogramsLABDiff
-  NumberOfVerticalStripes
-  GatherSelections
+  NumberOfVerticalStripesForSpeaker
+  GenerateHistogramAreas
 
 """
 
@@ -29,24 +29,27 @@ from .select_polygon import SelectPolygonJob, SelectSlide, SelectSpeaker
 class HistogramsLABDiff(Job):
 
     """
-    Computes the histograms on polygons between two consecutive frames in specific areas of
-    the plane.
+    Computes the histograms on the difference image of two consecutive frames.
+
+    The difference image
+    is expressed in the LAB color space using an Euclidean metric. The histograms are computed on
+    several areas of the image plane.
 
     .. rubric:: Workflow inputs
 
     The inputs of the parents are:
 
-        * A list of tuples `(name, rectangle)` specifying the locations where the histogram should
-          be computed.
+    * A list of tuples `(name, rectangle)` specifying the locations where the histogram should
+      be computed.
 
-            * `name` is indicating the name of the rectangle.
-            * `rectangle` is given as `(x,y, width, height)`, in **normalized coordinates**
+      * `name` is indicating the name of the rectangle.
+      * `rectangle` is given as `(x,y, width, height)`, in **normalized coordinates**
 
-          If several rectangles exist for the same name, those are merged (useful if the area
-          is defined by several disconnected polygons). See :py:class:`GatherSelections` for a possible
-          input
+      If several rectangles exist for the same name, those are merged (useful if the area
+      is defined by several disconnected polygons). See :py:class:`GenerateHistogramAreas` for a possible
+      input
 
-        * A list of images specified by filename
+    * A list of images specified by filename, on which the histograms will be computed
 
     .. rubric:: Workflow outputs
 
@@ -55,6 +58,10 @@ class HistogramsLABDiff(Job):
         frame_index, rectangle_name -> histogram
 
     that provides the histogram in the difference image in this particular rectangle.
+
+    .. rubric:: Complexity
+
+    Linear in the number of thumbnails. Reads each thumbnail image once.
     """
 
     name = 'histogram_imlabdiff'
@@ -140,41 +147,43 @@ class HistogramsLABDiff(Job):
         return Functor(self.histograms_labdiff, transform=functools.partial(np.array, dtype=np.float32))
 
 
-class NumberOfVerticalStripes(Job):
+class NumberOfVerticalStripesForSpeaker(Job):
     """Indicates the number of vertical stripes used for speaker tracking."""
 
-    name = 'number_of_vertical_stripes'
+    name = 'number_of_vertical_stripes_speaker'
     # :
     outputs_to_cache = ['nb_vertical_stripes']
 
     def __init__(self, *args, **kwargs):
-        super(NumberOfVerticalStripes, self).__init__(*args, **kwargs)
+        super(NumberOfVerticalStripesForSpeaker, self).__init__(*args, **kwargs)
         assert('nb_vertical_stripes' in kwargs)
 
     def run(self, *args, **kwargs):
         pass
 
     def get_outputs(self):
-        super(NumberOfVerticalStripes, self).get_outputs()
+        super(NumberOfVerticalStripesForSpeaker, self).get_outputs()
 
         return self.nb_vertical_stripes
 
 
-class GatherSelections(Job):
-    """Process the slide and speaker location for generating normalized areas for histogram
-    computation.
+class GenerateHistogramAreas(Job):
+    """Generates the area of interest on which histograms should be computed by the downstream.
 
     .. rubric:: Workflow outputs
 
-    The output of this Job is a list of tuples `(name, rect)` where each tuples
+    Each area is identified by a name and a rectangle location.
+    The output of this job is a list of tuples `(name, rect)` where each tuples
     contains:
 
         * The name of the area
         * A normalized rectangle `[x,y,width,height]` that specifies the area.
+
+
     """
 
     name = 'gather_selections'
-    parents = [SelectSlide, SelectSpeaker, NumberOfVerticalStripes]
+    parents = [SelectSlide, SelectSpeaker, NumberOfVerticalStripesForSpeaker]
     outputs_to_cache = ['rectangle_locations']
 
     def run(self, *args, **kwargs):
@@ -186,10 +195,11 @@ class GatherSelections(Job):
         slide_rec = get_polygon_outer_bounding_box(slide_loc)
         x, y, width, height = slide_rec
 
+        # those two areas are the left and right side of the slide area
         first_light_change_area = [0, y, x, height]
         second_light_change_area = [x + width, y, 1 - (x + width), height]
 
-        # @note(Stephan): Unicode names in order to compare to the json file
+        # Unicode names in order to compare to the json file
         self.rectangle_locations += [u'slides', first_light_change_area], \
                                     [u'slides', second_light_change_area]
 
@@ -213,7 +223,7 @@ class GatherSelections(Job):
                                      rect_stripe],
 
     def get_outputs(self):
-        super(GatherSelections, self).get_outputs()
+        super(GenerateHistogramAreas, self).get_outputs()
 
         if self.rectangle_locations is None:
             raise RuntimeError('The Areas we want to compute the histograms on have not been computed yet.')
