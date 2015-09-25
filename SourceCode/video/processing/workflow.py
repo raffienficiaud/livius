@@ -45,16 +45,16 @@ def workflow_slide_detection_window():
 
 def workflow_extract_slide_clip():
     """
-    Return a workflow that extracs the slide clip from a video.
+    Return a workflow that creates the MoviePy clip for the slides.
 
-    Consists of many tasks such as
+    The clip for the slides include a contrast enhancement.
 
-        * ffmpeg thumbnail generation
-        * Polygon Selection for the Slides and Speaker
-        * Histogram Computations
-        * Histogram Correlations
-        * Segment Computation
-        * Perspective Transformations and Contrast Enhancement.
+    * ffmpeg thumbnail generation
+    * Polygon Selection for the Slides and Speaker
+    * Histogram Computations
+    * Histogram Correlations
+    * Segment Computation
+    * Perspective Transformations and Contrast Enhancement.
 
     """
     HistogramsLABDiff.add_parent(GenerateHistogramAreas)
@@ -70,8 +70,21 @@ def workflow_extract_slide_clip():
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
     ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
 
+    # nessary parents are already in ExtractSlideClipJob, but this is a bit
+    # confusing.
     return ExtractSlideClipJob
 
+def workflow_video_creation():
+    # pass
+    w_slide_clip = workflow_extract_slide_clip()
+
+    from .jobs.dummy_clip import DummyClipJob
+    from .jobs.create_movie import ClipsToMovie
+
+    ClipsToMovie.add_parent(w_slide_clip)
+    ClipsToMovie.add_parent(DummyClipJob)
+
+    return ClipsToMovie
 
 def process(workflow_instance, **kwargs):
 

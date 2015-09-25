@@ -50,9 +50,11 @@ def _get_min_max_boundary_from_file(args):
 
 
 class ContrastEnhancementBoundaries(Job):
-
     """
-    Job for extracting the min and max boundaries we use for contrast enhancing the slides.
+    Job for extracting the min and max boundaries we use for enhancing the contrast of
+    the slides.
+
+    The boundaries are computed on the thumbnail image transformed to grayscale.
 
     .. rubric:: Runtime parameters
 
@@ -76,10 +78,15 @@ class ContrastEnhancementBoundaries(Job):
     * The second function specifies the max boundary at time t.
 
     .. note::
+
         These functions check if the specified time lies in a stable segment.
         If it does, it returns the average boundaries for this segment.
         If t does not belong to a stable segment we interpolate linearly
         between the boundaries of the two segments it lies between.
+
+    .. rubric:: Complexity
+
+    Linear in the number of thumbnails. The thumbnails are read once.
     """
 
     name = 'contrast_enhancement_boundaries'
@@ -96,7 +103,7 @@ class ContrastEnhancementBoundaries(Job):
     def run(self, *args, **kwargs):
         assert(len(args) >= 3)
 
-        # First parent is ffmpeg
+        # First parent is ffmpeg (list of thumbnails)
         image_list = args[0]
 
         # Second parent is selected slide

@@ -9,23 +9,24 @@ import numpy as np
 import os.path
 
 
-def createFinalVideo(slideClip, speakerClip,
-                        pathToBackgroundImage,
-                        pathToFinalImage,
-                        audio,
-                        fps,
-                        sizeOfLayout=(1920, 1080),
-                        sizeOfScreen=(1280, 960),
-                        sizeOfSpeaker=(620, 360),
-                        talkInfo=' ',
-                        speakerInfo=' ',
-                        instituteInfo=' ',
-                        dateInfo='July 2015',
-                        firstPause=10.0,
-                        nameToSaveFile='Output',
-                        codecFormat='libx264',
-                        container='.mp4',
-                        flagWrite=True):
+def createFinalVideo(slideClip,
+                     speakerClip,
+                     pathToBackgroundImage,
+                     pathToFinalImage,
+                     audio,
+                     fps,
+                     sizeOfLayout=(1920, 1080),
+                     sizeOfScreen=(1280, 960),
+                     sizeOfSpeaker=(620, 360),
+                     talkInfo=' ',
+                     speakerInfo=' ',
+                     instituteInfo=' ',
+                     dateInfo='July 2015',
+                     firstPause=10.0,
+                     nameToSaveFile='Output',
+                     codecFormat='libx264',
+                     container='.mp4',
+                     flagWrite=True):
 
     """
     This function serves to form the video layout, create the final video and write it.
