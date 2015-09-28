@@ -2,7 +2,14 @@
 Select Polygon
 ==============
 
-This module defines a unique Job :py:class:`SelectPolygonJob` for selecting a specific area from a video file name.
+This module defines a unique jobs for selecting polygons on images and/or videos.
+
+.. autosummary::
+
+  SelectPolygonJob
+  SelectSlide
+  SelectSpeaker
+
 """
 
 import os
@@ -34,13 +41,20 @@ class SelectPolygonJob(Job):
 
     """
 
+    #: name of the job in the workflow
     name = "select_polygon"
 
+    #: Cached inputs:
+    #:
+    #: * ``video_filename`` the name of the input video
     attributes_to_serialize = ['video_filename']
 
+    #: Cached outputs:
+    #:
+    #: * ``points``: location of the points of the selected polygon, in normalized coordinates
     outputs_to_cache = ['points']
 
-    # Specifies the window title that is shown to the user when asked to perform the area selection
+    #: Specifies the window title that is shown to the user when asked to perform the area selection
     window_title = ''
 
 
@@ -96,14 +110,15 @@ class SelectPolygonJob(Job):
         return self.points
 
 
-# overriding some default behaviour with specific names
 class SelectSlide(SelectPolygonJob):
     """User input for slide location.
 
     Refines the behaviour of :py:class:`SelectPolygonJob`.
     """
 
+    #: name of the job in the workflow
     name = 'select_slides'
+
     window_title = 'Select the location of the Slides'
 
 
@@ -113,5 +128,7 @@ class SelectSpeaker(SelectPolygonJob):
     Refines the behaviour of :py:class:`SelectPolygonJob`.
     """
 
+    #: name of the job in the workflow
     name = 'select_speaker'
+
     window_title = 'Select the location of the Speaker'

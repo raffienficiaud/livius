@@ -8,7 +8,7 @@ be used.
 
 """
 
-from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
+from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob
 from .jobs.histogram_computation import HistogramsLABDiff, GenerateHistogramAreas, SelectSlide
 from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob, NumberOfFilesJob
 from .jobs.histogram_correlations import HistogramCorrelationJob
@@ -32,9 +32,8 @@ logger.setLevel(logging.DEBUG)
 
 def workflow_thumbnails_only():
     """Return a workflow made by only one node that extracts the thumbnails from a video."""
-    ffmpeg = ffmpeg_factory()
 
-    return ffmpeg
+    return FFMpegThumbnailsJob
 
 
 def workflow_slide_detection_window():
@@ -75,7 +74,13 @@ def workflow_extract_slide_clip():
     return ExtractSlideClipJob
 
 def workflow_video_creation():
-    # pass
+    """Workflow creating the final video
+
+    It potentially uses the already extracted thumbnails and intermediate processing
+    as the Jobs are redundant with :py:func:`workflow_extract_slide_clip`.
+
+    """
+
     w_slide_clip = workflow_extract_slide_clip()
 
     from .jobs.dummy_clip import DummyClipJob

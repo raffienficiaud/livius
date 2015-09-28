@@ -46,6 +46,11 @@ parser.add_argument('--thumbnails-folder',
 parser.add_argument('--output-folder',
                     help='specifies the output folder')
 
+parser.add_argument('--option',
+                    metavar='KEY=VALUE',
+                    help='Additional runtime option.',
+                    action='append')
+
 args = parser.parse_args()
 
 # getting loggers
@@ -123,6 +128,13 @@ logger.info("[CONFIG] workflow %s", args.workflow)
 
 for f in video_files:
     logger.info("[VIDEO] -> %s <-", f)
+
+options = {}
+if args.option:
+    for v in args.option:
+        s = v.split('=')
+        if s > -1:
+            options[v[:s]] = v[s:]
 
 # process all files
 for f in video_files:

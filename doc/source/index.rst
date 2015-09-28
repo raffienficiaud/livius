@@ -17,6 +17,7 @@ Contents:
    job_interface
    example_workflow
    utilities
+   Visualization utilities<visualization>
    sphinx_how_to
 
 Getting started
@@ -50,6 +51,8 @@ The detailed options of Livius are given below (just type ``--help`` in the prev
 .. program-output:: python -m SourceCode --help
     :cwd: ../../ 
 
+The parameter ``--option`` may be used to define additional options needed by the runtime behaviour of the Jobs. Those 
+parameters are described in the Jobs.
 
 Installation
 ============

@@ -8,23 +8,64 @@ This page describes the Job interface that is used for building a workflow.
 Introduction
 ------------
 
-A Job is a Node in a Directed Acyclic Graph that defines an action on the output of its parents and specifies output(s) that other Jobs/Nodes can use again as their inputs.
+A Job is a Node in a Directed Acyclic Graph that performs an **action** on values coming into the Job (the output of its parents) and 
+specifies output(s) that other Jobs/Nodes can use again as their inputs.
+In the following, **upstream** means that the values are being consumed by the Job and coming from the parent job(s), while **downstream** means that the job is providing
+outputs to the child jobs (consumed or not).  
 
 .. note::
-    Root Jobs of the DAG only operate on specified parameters and not
-    on inputs of other Jobs.
+    Root Jobs of the DAG only operate on specified parameters and do not 
+    use any other upstream inputs. 
 
+---------------------------------
+Job state and computation caching
+---------------------------------
+
+Jobs are specially designed to avoid recomputations. They store their state and their outputs to the file system. For the purpose of storing their state, Jobs provide the 
+functions to ease the definition of what is needed and what should be stored. 
+When a Job is asked to perform the **action** that it is supposed to do, it first checks if the parents need to recompute anything. If not, it means that the parents 
+state can be immediately retrieved from the stored file, which saves the computations at the cost of loading/saving the state. 
+For the current job, if the parameters have not changed and the parents do not need to recomputed their output,
+the current job may also retrieve its state from the stored file.
+
+All this functionality (loading/storing state, comparing states, check for outdated parents) is already taken care of by the 
+:py:class:`Job <SourceCode.video.processing.job.Job>` class, and only a few number of *fields* need to be set up. 
+
+*********
+Extension
+*********
+If the default method for loading the state back from the JSON file needs some additional functionality, it is possible to overload the
+:py:func:`load_state <SourceCode.video.processing.job.Job.load_state>` function.
+
+*****************************
+Runtime and static parameters
+*****************************
 Each Job may have parameters that define its current state. These parameters are flushed to a JSON file together with the outputs of the Job. This allows us to
 store intermediate computations in a simple manner and to avoid recomputing actions whose parameters did not change.
 
-All this functionality (loading/storing state, comparing states, check for outdated parents) is taken care of by the :py:class:`Job <SourceCode.video.processing.job.Job>` class.
 It also initializes all specified parameters so we only have to specify these via name (See :ref:`example_job` for the implementation of a Job example)
+
+
+------------------
+Job identification
+------------------
+
+Every job is named using the simple ``name`` attribute::
+
+    class HistogramCorrelationJob(Job):
+        name = 'histogram_correlation'
+        
+This name **should** be unique in the workflow. If the behaviour of a job is needed several times in a workflow (but with different parameters), then 
+new classes may be defined being child of the job to reuse, this time with a different name. This is the case for instance for the classes 
+:py:class:`SelectSlide <SourceCode.video.processing.jobs.select_polygon.SelectSlide>` and :py:class:`SelectSpeaker <SourceCode.video.processing.jobs.select_polygon.SelectSpeaker>`, 
+refining the behaviour of :py:class:`SelectPolygonJob <SourceCode.video.processing.jobs.select_polygon.SelectPolygonJob>`.
+
+----------
+Job action
+----------
 
 Subclasses only need to define their specific parameters, outputs and parents and overload the :py:func:`run <SourceCode.video.processing.job.Job.run>` and
 :py:func:`get_outputs <SourceCode.video.processing.job.Job.get_outputs>` functions.
-
-If the default method for loading the state back from the JSON file needs some additional functionality, it is possible to overload the
-:py:func:`load_state <SourceCode.video.processing.job.Job.load_state>` function.
 
 
 

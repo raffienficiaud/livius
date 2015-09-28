@@ -46,7 +46,7 @@ class WarpSlideJob(Job):
     """
 
     name = 'warp_slides'
-    # :
+    #:
     attributes_to_serialize = ['slide_clip_desired_format']
     parents = [SelectSlide]
 
@@ -64,7 +64,7 @@ class WarpSlideJob(Job):
         slide_location = self.select_slides.get_outputs()
         slide_rect = get_polygon_outer_bounding_box(slide_location)
 
-        class Warper:
+        class Warper(object):
 
             """Callable object for warping the frame into perspective and cropping the slides."""
 
@@ -129,7 +129,7 @@ class EnhanceContrastJob(Job):
 
         get_min_bounds, get_max_bounds = self.contrast_enhancement_boundaries.get_outputs()
 
-        class ContrastEnhancer:
+        class ContrastEnhancer(object):
 
             """Callable object for enhancing the contrast of the slides."""
 

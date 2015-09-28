@@ -64,7 +64,13 @@ class HistogramsLABDiff(Job):
     Linear in the number of thumbnails. Reads each thumbnail image once.
     """
 
+    #: Name of the job in the workflow
     name = 'histogram_imlabdiff'
+
+    #: Cached outputs:
+    #:
+    #: * ``histograms_labdiff`` histogram of the difference image of two consecutive images in the video
+    #:   sequence (computed in LAB space)
     outputs_to_cache = ['histograms_labdiff']
 
     def __init__(self,
