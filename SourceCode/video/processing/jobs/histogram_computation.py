@@ -27,7 +27,6 @@ from .select_polygon import SelectPolygonJob, SelectSlide, SelectSpeaker
 
 
 class HistogramsLABDiff(Job):
-
     """
     Computes the histograms on the difference image of two consecutive frames.
 
@@ -154,10 +153,20 @@ class HistogramsLABDiff(Job):
 
 
 class NumberOfVerticalStripesForSpeaker(Job):
-    """Indicates the number of vertical stripes used for speaker tracking."""
+    """Indicates the number of vertical stripes used for speaker tracking.
 
+    .. rubric:: Runtime parameters
+
+    * ``nb_vertical_stripes`` the number of vertical stripes for the speaker tracking.
+
+    """
+
+    #: name of the job in the workflow
     name = 'number_of_vertical_stripes_speaker'
-    # :
+
+    #: Cached outputs:
+    #:
+    #: * ``nb_vertical_stripes`` number of vertical divisions of the image for speacker tracking
     outputs_to_cache = ['nb_vertical_stripes']
 
     def __init__(self, *args, **kwargs):
@@ -182,14 +191,18 @@ class GenerateHistogramAreas(Job):
     The output of this job is a list of tuples `(name, rect)` where each tuples
     contains:
 
-        * The name of the area
-        * A normalized rectangle `[x,y,width,height]` that specifies the area.
-
-
+    * The name of the area
+    * A normalized rectangle `[x,y,width,height]` that specifies the area.
     """
 
+    #: name of the job in the workflow
     name = 'gather_selections'
+
     parents = [SelectSlide, SelectSpeaker, NumberOfVerticalStripesForSpeaker]
+
+    #: Cached outputs:
+    #:
+    #: * ``rectangle_locations`` name and location of the areas on which the histograms should be computed
     outputs_to_cache = ['rectangle_locations']
 
     def run(self, *args, **kwargs):

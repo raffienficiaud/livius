@@ -48,8 +48,14 @@ parser.add_argument('--output-folder',
 
 parser.add_argument('--option',
                     metavar='KEY=VALUE',
-                    help='Additional runtime option.',
+                    help="""Additional runtime option. Each parameter has the form --option=key=value.
+                    This option may appear multiple times. """,
                     action='append')
+
+parser.add_argument('--option-file',
+                    metavar='FILE.json',
+                    help="""Reads a set of additional runtime options from a json file.
+                    This options in this file may be overriden by the --option.""")
 
 args = parser.parse_args()
 
@@ -129,12 +135,23 @@ logger.info("[CONFIG] workflow %s", args.workflow)
 for f in video_files:
     logger.info("[VIDEO] -> %s <-", f)
 
+
 options = {}
+if args.option_file:
+    if not os.path.exists(args.option_file):
+        logger.error('[CONFIG] the option file %s does not exist', args.option_file)
+        sys.exit(1)
+
+    with open(args.option_file) as f:
+        import json
+        d = json.load(f)
+        options.update(d)
+
 if args.option:
     for v in args.option:
         s = v.split('=')
-        if s > -1:
-            options[v[:s]] = v[s:]
+        if s is not None:
+            options[s[0]] = s[1]
 
 # process all files
 for f in video_files:
@@ -148,14 +165,21 @@ for f in video_files:
     if not os.path.exists(thumbnails_location):
         os.makedirs(thumbnails_location)
 
-    params = {'video_filename': f,
-              'thumbnails_location': thumbnails_location,
-              'json_prefix': os.path.join(output_location, video_base_name),
+    params = options.copy()
+
+
+    # those important parameter should not be overriden
+    params.update({'video_filename': f,
+                   'thumbnails_location': thumbnails_location,
+                   'json_prefix': os.path.join(output_location, video_base_name),
+                   })
               # 'segment_computation_tolerance': 0.05,
               # 'segment_computation_min_length_in_seconds': 2,
               # 'slide_clip_desired_format': [1280, 960],
               # 'nb_vertical_stripes': 10
-              }
+
+
+    # params.update(options)
 
     outputs = workflow_module.process(workflow_factory_obj(), **params)
     # outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))

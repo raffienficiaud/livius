@@ -21,6 +21,8 @@ The jobs fall into the following categories:
 
 * slide processing: the functionality is covered by the module 
   :py:mod:`extract_slide_clip <SourceCode.video.processing.jobs.extract_slide_clip>`
+  
+* video content creation: those type of jobs create objects suitable for MoviePy as inputs.
 
 Reference
 ---------
@@ -35,3 +37,4 @@ Reference
    video.processing.jobs.histogram_computation<jobs/histogram_computation>
    video.processing.jobs.histogram_correlations<jobs/histogram_correlations>
    video.processing.jobs.segment_computation<jobs/segment_computation>
+   video.processing.jobs.create_movie<jobs/video_content_creation>

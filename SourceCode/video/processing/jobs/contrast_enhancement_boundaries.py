@@ -64,9 +64,9 @@ class ContrastEnhancementBoundaries(Job):
 
     The inputs of the parents are expected to be the following:
 
-        * A list of images (specified by filename) to operate on
-        * The location of the slides given as a rectangle: [x, y, widht, height]
-        * A list of stable segments `[t_segment_start, t_segment_end]`
+    * A list of images (specified by filename) to operate on
+    * The location of the slides given as a rectangle: [x, y, widht, height]
+    * A list of stable segments `[t_segment_start, t_segment_end]`
 
     .. rubric:: Workflow outputs
 

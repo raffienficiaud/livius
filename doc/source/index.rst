@@ -52,7 +52,12 @@ The detailed options of Livius are given below (just type ``--help`` in the prev
     :cwd: ../../ 
 
 The parameter ``--option`` may be used to define additional options needed by the runtime behaviour of the Jobs. Those 
-parameters are described in the Jobs.
+parameters are described in the Jobs in the rubrics **Runtime parameters**.
+
+Setting several parameters from the command line may be cumbersome. It is possible to pass ``--option-file`` which will
+read several parameters from a json file. A default configuration file is provided as ``default_config.json``. The parameters
+set by the ``--option`` may override the parameters set by the ``--option-file`` so that it is possible to override the 
+default settings from the command line.
 
 Installation
 ============
