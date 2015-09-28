@@ -78,6 +78,18 @@ class Job(object):
         """Return all the parents jobs of this class."""
         return cls.parents
 
+    @classmethod
+    def workflow_to_string(cls, current_index=0):
+        """Returns a string version of the workflow"""
+
+        pref = ' ' * 2 * current_index
+        str = pref + cls.name + '\n'
+
+        if cls.get_parents() is not None:
+            for p in cls.get_parents():
+                str += p.workflow_to_string(current_index + 1)
+        return str
+
     def __init__(self, *args, **kwargs):
         """:param json_prefix: the prefix used for serializing the state of this runner."""
         super(Job, self).__init__()
@@ -303,3 +315,4 @@ class Job(object):
             self.cache_output()
 
         return None
+

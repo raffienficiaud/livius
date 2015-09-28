@@ -69,7 +69,7 @@ def workflow_extract_slide_clip():
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
     ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
 
-    # nessary parents are already in ExtractSlideClipJob, but this is a bit
+    # necessary parents are already in ExtractSlideClipJob, but this is a bit
     # confusing.
     return ExtractSlideClipJob
 

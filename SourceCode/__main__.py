@@ -57,6 +57,12 @@ parser.add_argument('--option-file',
                     help="""Reads a set of additional runtime options from a json file.
                     This options in this file may be overriden by the --option.""")
 
+parser.add_argument('--print-workflow',
+                    action='store_true',
+                    help="""Prints the workflow (text/dot) and exits.""")
+
+
+
 args = parser.parse_args()
 
 # getting loggers
@@ -114,6 +120,10 @@ video_files = args.video_file if args.video_file is not None else []
 if args.video_folder is not None:
     for f in args.video_folder:
         video_files += os.listdir(f)
+
+if args.print_workflow:
+    print workflow_factory_obj().workflow_to_string()
+    sys.exit(0)
 
 if not video_files:
     logger.error('[CONFIG] the video list to be processed is empty')
