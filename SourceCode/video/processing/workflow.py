@@ -83,11 +83,11 @@ def workflow_video_creation():
 
     w_slide_clip = workflow_extract_slide_clip()
 
-    from .jobs.dummy_clip import DummyClipJob
+    from .jobs.dummy_clip import RandomImageClipJob
     from .jobs.create_movie import ClipsToMovie
 
     ClipsToMovie.add_parent(w_slide_clip)
-    ClipsToMovie.add_parent(DummyClipJob)
+    ClipsToMovie.add_parent(RandomImageClipJob)
 
     return ClipsToMovie
 

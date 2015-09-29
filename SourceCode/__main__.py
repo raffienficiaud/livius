@@ -163,6 +163,9 @@ if args.option:
         if s is not None:
             options[s[0]] = s[1]
 
+# we need only one instance of the workflow as the parents are static fields
+workflow_instance = workflow_factory_obj()
+
 # process all files
 for f in video_files:
 
@@ -191,6 +194,6 @@ for f in video_files:
 
     # params.update(options)
 
-    outputs = workflow_module.process(workflow_factory_obj(), **params)
+    outputs = workflow_module.process(workflow_instance, **params)
     # outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
 
