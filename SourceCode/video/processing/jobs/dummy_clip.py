@@ -11,7 +11,7 @@ This file contains one unique Job for creating a dummy mmoviePy clip.
 """
 
 from ..job import Job
-
+from moviepy.editor import VideoClip, VideoFileClip
 
 class RandomImageClipJob(Job):
 
@@ -60,9 +60,10 @@ class RandomImageClipJob(Job):
         import numpy as np
         def make_frame(t):
             """Function that chains together all the post processing effects."""
-            s = self.frame_size
-            s.append(3)
-            return np.random(*s) * 255
+            return np.random.random(self.frame_size + [3]) * 255
 
         clip = VideoClip(make_frame)
+
+        if hasattr(self, 'video_filename'):
+            clip = clip.set_duration(VideoFileClip(self.video_filename).duration)
         return clip

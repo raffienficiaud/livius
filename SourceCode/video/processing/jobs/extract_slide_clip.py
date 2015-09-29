@@ -196,6 +196,7 @@ class ExtractSlideClipJob(Job):
 
     def __init__(self, *args, **kwargs):
         super(ExtractSlideClipJob, self).__init__(*args, **kwargs)
+        assert('video_filename' in kwargs)
 
     def run(self, *args, **kwargs):
         pass
@@ -206,7 +207,7 @@ class ExtractSlideClipJob(Job):
         warp_slide = self.warp_slides.get_outputs()
         enhance_contrast = self.enhance_contrast.get_outputs()
 
-        # TODO add video cut? here or at the aggregation part
+        # not doing the cut here but rather in the final video composition
         clip = VideoFileClip(self.video_filename)
 
         def apply_effects(get_frame, t):
@@ -218,4 +219,5 @@ class ExtractSlideClipJob(Job):
 
             return contrast_enhanced
 
+        # retains the duration of the clip
         return clip.fl(apply_effects)

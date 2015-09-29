@@ -35,7 +35,7 @@ def get_transformation_points_from_normalized_rect(rect, image):
     :param rect: A normalized rectangle specified by [x,y,width,height]
     :param image: The image (specifies the scaling for the transformation points)
     """
-    x,y,width,height = rect
+    x, y, width, height = rect
     image_height, image_width = image.shape[:2]
 
     minx = x * image_width
@@ -197,11 +197,7 @@ def video_duration_shrink (fullVideoPath, tStart, tEnd, writeFlie=False):
         newVideo.write_videofile("shrinkedVideo.mp4", fps=mainVideo.fps, codec='libx264')
 
 
-
-
 def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
-
-
     """
     This function can be served for getting the sum of the difference of the pixel value of selected frames.
     After creating an instance of the class and call the corresponding method,
@@ -249,9 +245,6 @@ def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow
         plt.show()
 
     return finalDiffSumNorm
-
-
-
 
 
 def max_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow):

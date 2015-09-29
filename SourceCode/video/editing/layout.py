@@ -7,23 +7,33 @@ main function:
 
 import numpy as np
 import os.path
+import sys
+from moviepy.video.compositing.concatenate import concatenate
+
+# this settings are dependent on the background image
+
+#: Default layout
+default_layout = {'canvas_video_size': (1920, 1080),
+                  'slides_video_size': (1280, 960),
+                  'speaker_video_size': (620, 360),
+                  'speaker_video_position': (0, 360),
+                  'slides_video_position': (640, 60)}
 
 
-def createFinalVideo(slideClip,
-                     speakerClip,
-                     pathToBackgroundImage,
-                     pathToFinalImage,
-                     audio,
+def createFinalVideo(slide_clip,
+                     speaker_clip,
+                     audio_clip,
+                     video_background_image,
+                     intro_image_and_durations,
+                     credit_images_and_durations,
                      fps,
-                     sizeOfLayout=(1920, 1080),
-                     sizeOfScreen=(1280, 960),
-                     sizeOfSpeaker=(620, 360),
+                     layout=None,
                      talkInfo=' ',
                      speakerInfo=' ',
                      instituteInfo=' ',
                      dateInfo='July 2015',
-                     firstPause=10.0,
-                     nameToSaveFile='Output',
+                     first_segment_duration=10,
+                     output_file_name='Output',
                      codecFormat='libx264',
                      container='.mp4',
                      flagWrite=True):
@@ -31,29 +41,43 @@ def createFinalVideo(slideClip,
     """
     This function serves to form the video layout, create the final video and write it.
 
-    :param slideClip: The slide clip. This is a moviepy video object.
-    :param speakerClip: The screen clip. This is a moviepy video object.
-    :param str pathToBackgroundImage: the path of background image
-    :param str pathToFinalImage: The path of final image for supporting groups and organizations
-    :param audio: the audio file to be attached to the video file. This is a moviepy audio object.
+    :param slide_clip: The slide clip. This is a moviepy video object.
+    :param speaker_clip: The screen clip. This is a moviepy video object.
+    :param str video_background_image: the path to background image
+    :param list credit_images_and_durations: a list of 2-uples containing the credit information. The first element
+      of the tuple is the image file to be shozn, the second is the duration of the image in the video.
+      If the duration is ``None``, it is set to 2 seconds.
+    :param audio_clip: the audio_clip file to be attached to the video file. This is a moviepy audio_clip object.
     :param fps: frame per second
-    :param tuple sizeOfLayout: The desired size of whole layout
-    :param tuple sizeOfScreen: The desired size of screen part
-    :param tuple sizeOfSpeaker: The desired size of speaker part
+    :param dict layout: indicates the layout of the different video streams. This is a dictionary containing the
+      following elements, each of them being a 2-uple indicating either a size or a position:
+
+      * "canvas_video_size": The desired size of whole layout
+      * "slides_video_size": The desired size of screen part
+      * "speaker_video_size": The desired size of speaker part
+      * "speaker_video_position": the position of the speaker substream
+      * "slides_video_position": the position of the slides substream
+
+      If any of those parameter is missing, it is replaced by the default given by the default layout.
+
+      .. note: this layout is of course dependent on the background image
+
     :param str talkInfo: Information about talk like the title, the subject, etc.
     :param str speakerInfo: Information about talk like the title, the subject, etc.
     :param str instituteInfo: Information about instiute/University.
     :param str dateInfo: Information about the date of talk.
-    :param firstPause: The amount of time in seconds to start the lecture. Actually,
-        this amount of time can be used for showing some information at the beginning of the clip.
-        default: 10.0 sec
-    :param str nameToSaveFile: A name to save the file
+    :param first_segment_duration: Duration *in seconds* of the first segment of the video, showing the title.
+        Defaults to 10 seconds.
+    :param str output_file_name: the output file name without extension.
     :param str codecFormat: The codec format to write the new video into the file
         Codec to use for image encoding. Can be any codec supported by ffmpeg, but the container
         must be set accordingly.
     :param str container: the video file format (container) including all streams.
     :param bool flagWrite: A flag to set whether write the new video or not
 
+    .. rubric:: Images
+
+    The background image is shown during the whole video.
 
     .. rubric:: Hints for video
 
@@ -78,13 +102,13 @@ def createFinalVideo(slideClip,
 
     .. rubric:: Hints for audio
 
-    The parameter ``audio`` may be a boolean or the path of a file.
-    If ``True`` and the clip has an audio clip attached, this
-    audio clip will be incorporated as a soundtrack in the movie.
-    If ``audio`` is the name of an audio file, this audio file
+    The parameter ``audio_clip`` may be a boolean or the path of a file.
+    If ``True`` and the clip has an audio_clip clip attached, this
+    audio_clip clip will be incorporated as a soundtrack in the movie.
+    If ``audio_clip`` is the name of an audio_clip file, this audio_clip file
     will be incorporated as a soundtrack in the movie.
 
-    Possible audio codecs are:
+    Possible audio_clip codecs are:
 
     * ``'libmp3lame'``: for '.mp3'
     * ``'libvorbis'``: for 'ogg'
@@ -94,20 +118,20 @@ def createFinalVideo(slideClip,
 
      Example::
 
-        createFinalVideo(slideClip,speakerClip,
-                        pathToBackgroundImage,
-                        pathToFinalImage,
-                        audio,
+        createFinalVideo(slide_clip,speaker_clip,
+                        video_background_image,
+                        audio_clip,
+                        credit_images_and_durations,
                         fps = 30,
-                        sizeOfLayout = (1920, 1080),
-                        sizeOfScreen = (1280, 960),
-                        sizeOfSpeaker = (620, 360),
+                        canvas_video_size = (1920, 1080),
+                        slides_video_size = (1280, 960),
+                        speaker_video_size = (620, 360),
                         talkInfo = 'How to use SVM kernels',
                         speakerInfo = 'Prof. Bernhard Schoelkopf',
                         instituteInfo = 'Empirical Inference',
                         dateInfo = 'July 2015',
-                        firstPause = 10,
-                        nameToSaveFile = 'video',
+                        first_segment_duration = 10,
+                        output_file_name = 'video',
                         codecFormat = 'libx264',
                         container = '.mp4',
                         flagWrite = True)
@@ -115,69 +139,76 @@ def createFinalVideo(slideClip,
 
     """
 
-    # from moviepy.editor import *
-    # from moviepy.Clip import *
-    # import matplotlib.pyplot as plt
-    # from pylab import *
 
 
 
-    '''
-    if slideClip.fps != speakerClip.fps:
-        print "[layout] Error: The fps of two videos should be the same"
-    '''
-    backgroundImage = ImageClip(pathToBackgroundImage)
-    finalImage = ImageClip(pathToFinalImage)
-    # Resize the videos and images to the desire size
-    backgroundImageResized = backgroundImage.resize((sizeOfLayout[0], sizeOfLayout[1]))
-    finalImageResized = finalImage.resize((sizeOfLayout[0], sizeOfLayout[1]))
-    slideClipResized = slideClip.resize((sizeOfScreen[0], sizeOfScreen[1]))
+    from moviepy.video.VideoClip import ImageClip, TextClip
+    from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+    from moviepy.audio.AudioClip import CompositeAudioClip
 
-    speakerClipResized = speakerClip.resize((sizeOfSpeaker[0], sizeOfSpeaker[1]))
+    # setting the sizes
+    if layout is None:
+        layout = {}
 
-    if (sizeOfLayout[0] < (sizeOfScreen[0] or sizeOfSpeaker[0])) and (sizeOfLayout[1] < (sizeOfScreen[1] or sizeOfSpeaker[1])):
+    final_layout = dict(default_layout)
+    final_layout.update(layout)
+
+    canvas_video_size = final_layout['canvas_video_size']
+    slides_video_size = final_layout['slides_video_size']
+    speaker_video_size = final_layout['speaker_video_size']
+    speaker_video_position = final_layout['speaker_video_position']
+    slides_video_position = final_layout['slides_video_position']
+
+    # some utility functions
+    def resize_clip_if_needed(clip, desired_size):
+        if clip.w != desired_size[0] or clip.h != desired_size[1] or True:
+            return clip.resize(desired_size)
+        return clip
+
+    def create_image_clip(image_filename):
+        # having some encoding issues in moviepy
+        if isinstance(image_filename, unicode):
+            image_filename = image_filename.encode(sys.getdefaultencoding())
+
+        return ImageClip(image_filename)
+
+
+    def create_slide_show_of_images(images_and_durations):
+        all_slides = []
+        for image, duration in images_and_durations:
+
+            image_clip = create_image_clip(image)
+            if (image_clip.w != canvas_video_size[0]) or (image_clip.h != canvas_video_size[1]):
+                # resize only if needed
+                image_clip = image_clip.resize((canvas_video_size[1], canvas_video_size[1]))
+
+            image_clip = image_clip.set_duration(duration if duration is not None else 2)  # 2 secs is the default
+
+            all_slides.append(image_clip)
+
+        return concatenate(all_slides)
+
+    if isinstance(video_background_image, unicode):
+        video_background_image = video_background_image.encode(sys.getdefaultencoding())
+
+    if (canvas_video_size[0] < (slides_video_size[0] or speaker_video_size[0])) \
+        and (canvas_video_size[1] < (slides_video_size[1] or speaker_video_size[1])):
         print "[layout] Warning: The selected sizes are not appropriate."
 
 
-    desiredInfo1 = talkInfo
-    # Generate a text clip. You can customize the font, color, etc.
-    txtClipInfo1 = TextClip(desiredInfo1, fontsize=25, color='white', font="Amiri")
-    # Say that you want it to appear 10s
-    txtClipInfo1 = txtClipInfo1.set_pos((640, 1030)).set_duration(slideClip.duration)
-
-    desiredInfo2 = speakerInfo
-    # Generate a text clip. You can customize the font, color, etc.
-    txtClipInfo2 = TextClip(desiredInfo2, fontsize=25, color='white', font="Amiri")
-    # Say that you want it to appear 10s
-    txtClipInfo2 = txtClipInfo2.set_pos((640, 1060)).set_duration(slideClip.duration)
-
-    '''
-    desiredStringBeginningLeft = 'Main Organizer'
-    desiredStringBeginningRight = 'Video Team'
-    desiredStringBeginningMiddle = 'Audio Team'
-
-
-    txtClipBeginLeft = TextClip(desiredStringBeginningLeft,fontsize=40,color='white',font="Amiri")
-    txtClipBeginLeft = txtClipBeginLeft.set_pos((100 , sizeOfLayout[1]/3)).set_duration(firstPause/2)
-
-    txtClipBeginRight = TextClip(desiredStringBeginningRight,fontsize=40,color='white',font="Amiri")
-    txtClipBeginRight = txtClipBeginRight.set_pos(((sizeOfLayout[0]/3) +100 , sizeOfLayout[1]/3)).set_duration(firstPause/2)
-
-    txtClipBeginMiddle = TextClip(desiredStringBeginningMiddle,fontsize=40,color='white',font="Amiri")
-    txtClipBeginMiddle = txtClipBeginMiddle.set_pos(((2*sizeOfLayout[0]/3) +100, sizeOfLayout[1]/3)).set_duration(firstPause/2)
-    '''
+    import ipdb
+    ipdb.set_trace()
 
     # The template for the second show
-
     titleText = talkInfo
     speakerText = speakerInfo
     instituteText = instituteInfo
     defaultText = 'Machine Learning Summer School 2015'
     dateText = dateInfo
 
-    pixelLeftMargin = int(sizeOfLayout[0] / 3) - 100
+    pixelLeftMargin = int(canvas_video_size[0] / 3) - 100
     pixelRightMargin = 100
-    maxNumHorizontalPixel = sizeOfLayout[0] - pixelLeftMargin - pixelRightMargin
+    maxNumHorizontalPixel = canvas_video_size[0] - pixelLeftMargin - pixelRightMargin
 
     lenStringTitleText = len(titleText)
     # print lenStringTitleText
@@ -188,50 +219,96 @@ def createFinalVideo(slideClip,
     pixelPerCharSpeakerText = int((maxNumHorizontalPixel / lenStringSpeakerText))
 
 
+    ####
+    # First segment: title,
+    if 0:
+        # this is shitty, we do not use that
+        txtClipTitleText = TextClip(titleText, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
+        txtClipTitleText = txtClipTitleText.set_position(((canvas_video_size[0] / 3) - 100 , canvas_video_size[1] / 3))
 
-    txtClipTitleText = TextClip(titleText, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
-    txtClipTitleText = txtClipTitleText.set_pos(((sizeOfLayout[0] / 3) - 100 , sizeOfLayout[1] / 3)).set_duration(firstPause)
+        txtClipSpeakerText = TextClip(speakerText, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
+        txtClipSpeakerText = txtClipSpeakerText.set_position(((canvas_video_size[0] / 3) - 100 , canvas_video_size[1] / 3 + 100))
 
-    txtClipSpeakerText = TextClip(speakerText, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
-    txtClipSpeakerText = txtClipSpeakerText.set_pos(((sizeOfLayout[0] / 3) - 100 , sizeOfLayout[1] / 3 + 100)).set_duration(firstPause)
+        txtClipInstituteText = TextClip(instituteText, fontsize=36, color='white', font="Amiri")
+        txtClipInstituteText = txtClipInstituteText.set_position(((canvas_video_size[0] / 3) - 100, canvas_video_size[1] / 3 + 170))
+
+        txtClipDefaultText = TextClip(defaultText, fontsize=40, color='white', font="Amiri")
+        txtClipDefaultText = txtClipDefaultText.set_position(((canvas_video_size[0] / 3) - 100, canvas_video_size[1] / 3 + 300))
+
+        txtClipDateText = TextClip(dateText, fontsize=40, color='white', font="Amiri")
+        txtClipDateText = txtClipDateText.set_position(((canvas_video_size[0] / 3) - 100, canvas_video_size[1] / 3 + 350))
+
+        # this does not work, the sizes should be set properly
+        # and the fonts are ugly
+        first_segment_clip = CompositeVideoClip([txtClipTitleText])  #, txtClipSpeakerText, txtClipInstituteText, txtClipDefaultText, txtClipDateText])
+        first_segment_clip = first_segment_clip.set_duration(first_segment_duration)
+        #first_segment_clip = first_segment_clip.set_start(0)
+
+    else:
+        first_segment_clip = create_slide_show_of_images(intro_image_and_durations)
 
 
-    txtClipInstituteText = TextClip(instituteText, fontsize=36, color='white', font="Amiri")
-    txtClipInstituteText = txtClipInstituteText.set_pos(((sizeOfLayout[0] / 3) - 100, sizeOfLayout[1] / 3 + 170)).set_duration(firstPause)
+    ####
+    # second segment: the slides, videos, audio_clip, etc.
+    # resizing the slides and speaker clips if needed
+    speaker_clip_composed = resize_clip_if_needed(speaker_clip, speaker_video_size).set_position(speaker_video_position)
+    # the audio_clip is associated to this clip
+    if audio_clip is not None:
+        speaker_clip_composed = speaker_clip_composed.set_audio(audio_clip)
 
-    txtClipDefaultText = TextClip(defaultText, fontsize=40, color='white', font="Amiri")
-    txtClipDefaultText = txtClipDefaultText.set_pos(((sizeOfLayout[0] / 3) - 100, sizeOfLayout[1] / 3 + 300)).set_duration(firstPause)
+    slide_clip_composed = resize_clip_if_needed(slide_clip, slides_video_size).set_position(slides_video_position)
 
-    txtClipDateText = TextClip(dateText, fontsize=40, color='white', font="Amiri")
-    txtClipDateText = txtClipDateText.set_pos(((sizeOfLayout[0] / 3) - 100, sizeOfLayout[1] / 3 + 350)).set_duration(firstPause)
+    # this one will be used for reference on properties
+    # apparently in MoviePy, we cannot nest CompositeVideoClip, which is why it is done this way
+    # and not putting this part into a CompositeVideoClip
+    second_segment_clip = slide_clip_composed
 
 
-    outputVideo = CompositeVideoClip([backgroundImageResized.set_duration((slideClip.duration + firstPause)),
-                                    speakerClipResized.set_pos((10, 360)).set_start(firstPause),
-                                    slideClipResized.set_pos((640, 60)).set_start(firstPause),
-                                    txtClipInfo1.set_start(firstPause),
-                                    txtClipInfo2.set_start(firstPause),
-                                    # txtClipBeginLeft.set_start(0),
-                                    # txtClipBeginRight.set_start(0),
-                                    # txtClipBeginMiddle.set_start(0),
-                                    txtClipTitleText.set_start(0),
-                                    txtClipSpeakerText.set_start(0),
-                                    txtClipInstituteText.set_start(0),
-                                    txtClipDefaultText.set_start(0),
-                                    txtClipDateText.set_start(0),
-                                    finalImageResized.set_duration(10).set_start(slideClip.duration)])
+    second_segment_clip = second_segment_clip.set_duration(5)  #speaker_clip.duration)  # same duration as any input clip
+
+    #! TODO
+    # if we need to pause things, and to set start and stop, this should be done here
+
+    #second_segment_clip = second_segment_clip.set_start(first_segment_clip.end)
+
+
+    ####
+    # second segment overlay: title, info, background: duration equal to the second segment clip
+    info_underslides = '%s - %s' % (speakerInfo, talkInfo)
+    talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font="Amiri")
+
+    talk_info_clip = talk_info_clip.set_position((slide_clip_composed.pos(0)[0],
+                                                  slide_clip_composed.pos(0)[1] + slide_clip_composed.h + 15))
+
+    background_image_clip = resize_clip_if_needed(create_image_clip(video_background_image), canvas_video_size)
+
+    second_segment_overlay_clip = CompositeVideoClip([background_image_clip,
+                                                      talk_info_clip,
+                                                      speaker_clip_composed,
+                                                      slide_clip_composed])
+
+    # same attributes as the clip it is supposed to overlay
+    second_segment_overlay_clip = second_segment_overlay_clip.set_duration(second_segment_clip.duration)
+
+
+    ###
+    # third segment: credits etc.
+    third_segment_clip = create_slide_show_of_images(credit_images_and_durations)
+
+
+    # the final video
+    outputVideo = concatenate([first_segment_clip, second_segment_overlay_clip, third_segment_clip])  #, , second_segment_overlay_clip, third_segment_clip])
 
 
 
 
 
     if flagWrite:
-        # base = os.path.basename(pathToBackgroundImage)
-        # directory = os.path.dirname(pathToBackgroundImage)
-        saveName = nameToSaveFile + container
-        compo = CompositeAudioClip([audio.set_start(firstPause)])
-        outputVideo = outputVideo.set_audio(compo)
-        outputVideo.write_videofile(saveName, fps, codec=codecFormat)
+        # base = os.path.basename(video_background_image)
+        # directory = os.path.dirname(video_background_image)
+        #compo = CompositeAudioClip([audio_clip.set_start(first_segment_duration)])
+        #outputVideo = outputVideo.set_audio(compo)
+        outputVideo.write_videofile(output_file_name + container, fps, codec=codecFormat)
 
     return outputVideo
 
@@ -241,26 +318,26 @@ if __name__ == '__main__':
 
     # video_duration_shrink (targetVideo, tStart=(40,50.0), tEnd=(45,0.0), writeFlie = True)
     targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
-    slideClip = VideoFileClip(targetVideo, audio=False)
+    slide_clip = VideoFileClip(targetVideo, audio=False)
     targetVideo2 = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
-    speakerClip = VideoFileClip(targetVideo2, audio=False)
+    speaker_clip = VideoFileClip(targetVideo2, audio=False)
     pathToBackgroundImage = "/is/ei/pbahar/Downloads/EdgarFiles/background_images_mlss2013/background_example.png"
     audio = AudioFileClip(targetVideo)
 
-    createFinalVideo(slideClip, speakerClip,
+    createFinalVideo(slide_clip, speaker_clip,
                         pathToBackgroundImage,
                         pathToBackgroundImage,
                         audio,
                         fps=30,
-                        sizeOfLayout=(1920, 1080),
-                        sizeOfScreen=(1280, 960),
-                        sizeOfSpeaker=(620, 360),
+                        canvas_video_size=(1920, 1080),
+                        slides_video_size=(1280, 960),
+                        speaker_video_size=(620, 360),
                         talkInfo='How to use svm kernels',
                         speakerInfo='Prof. Bernhard Schoelkopf',
                         instituteInfo='Empirical Inference',
                         dateInfo='July 25th 2015',
-                        firstPause=10,
-                        nameToSaveFile='video_test',
+                        first_segment_duration=10,
+                        output_file_name='video_test',
                         codecFormat='libx264',
                         container='.mp4',
                         flagWrite=True)
