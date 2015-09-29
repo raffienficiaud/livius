@@ -3,7 +3,16 @@
 Extract Slide Clip
 ==================
 
-This module provides the Job for extracting the slide clip from the videofile.
+This module provides the Job for extracting the slide clip from the videofile. The main class of interest is
+:py:class:`ExtractSlideClipJob` that performs all the necessary transformations on the slides, and creates a
+callable object suitable for MoviePy.
+
+.. autosummary::
+
+  WarpSlideJob
+  EnhanceContrastJob
+  ExtractSlideClipJob
+
 """
 
 from ..job import Job
@@ -33,8 +42,8 @@ class WarpSlideJob(Job):
 
     The inputs of the parents are
 
-        * The location of the slides given as a list of points.
-          (The slide rectangle is then assumed to be the outer bounding box of this polygon)
+    * The location of the slides given as a list of points.
+      (The slide rectangle is then assumed to be the outer bounding box of this polygon)
 
     .. rubric:: Workflow outputs
 
@@ -45,9 +54,17 @@ class WarpSlideJob(Job):
     which applies the desired slide transformation.
     """
 
+    #: name of the job in the workflow
     name = 'warp_slides'
+
+    #: Cached inputs:
     #:
+    #: * ``slide_clip_desired_format`` output size of the slides
     attributes_to_serialize = ['slide_clip_desired_format']
+
+    #: Parents:
+    #:
+    #: * :py:class:`SelectSlide` provides the location of the slides in the video stream
     parents = [SelectSlide]
 
     def __init__(self, *args, **kwargs):
@@ -94,7 +111,6 @@ class WarpSlideJob(Job):
 
 
 class EnhanceContrastJob(Job):
-
     """
     Job for enhancing the contrast in the slide images.
 
@@ -114,6 +130,7 @@ class EnhanceContrastJob(Job):
     which enhances the contrast of the given image at time t.
     """
 
+    #: name of the job in the workflow
     name = 'enhance_contrast'
     attributes_to_serialize = []
     parents = [ContrastEnhancementBoundaries]
@@ -154,7 +171,6 @@ class EnhanceContrastJob(Job):
 
 
 class ExtractSlideClipJob(Job):
-
     """
     Job for extracting the Slide Clip from the Video.
 
@@ -173,6 +189,7 @@ class ExtractSlideClipJob(Job):
         The transformations are only applied at write-time.
     """
 
+    #: name of the job in the workflow
     name = 'extract_slide_clip'
     attributes_to_serialize = []
     parents = [WarpSlideJob, EnhanceContrastJob]
@@ -189,6 +206,7 @@ class ExtractSlideClipJob(Job):
         warp_slide = self.warp_slides.get_outputs()
         enhance_contrast = self.enhance_contrast.get_outputs()
 
+        # TODO add video cut? here or at the aggregation part
         clip = VideoFileClip(self.video_filename)
 
         def apply_effects(get_frame, t):

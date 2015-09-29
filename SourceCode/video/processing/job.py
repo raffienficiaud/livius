@@ -136,6 +136,9 @@ class Job(object):
 
                 if par_instance.name in self._parent_names:
                     # not adding
+                    import ipdb
+                    ipdb.set_trace()
+
                     raise RuntimeError("name %s is already used for one parent of job %s" %
                                        (par_instance.name, self.name))
 

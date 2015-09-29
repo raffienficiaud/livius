@@ -58,12 +58,18 @@ class FFMpegThumbnailsJob(Job):
     """
 
     name = "ffmpeg_thumbnails"
-    # :
+    #: Cached inputs:
+    #:
+    #: * ``video_width`` width of the generated thumbnails
+    #: * ``video_fps`` framerate of the thumbnails
+    #: * ``thumbnails_location`` location of the thumbnails
     attributes_to_serialize = ['video_filename',
                                'video_fps',
                                'video_width',
                                'thumbnails_location']
-    # :
+    #: Cached outputs:
+    #:
+    #: * ``thumbnail_files`` list of generated files
     outputs_to_cache = ['thumbnail_files']
 
     @staticmethod

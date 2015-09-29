@@ -89,9 +89,13 @@ class ContrastEnhancementBoundaries(Job):
     Linear in the number of thumbnails. The thumbnails are read once.
     """
 
+    #: Name of the job in the workflow
     name = 'contrast_enhancement_boundaries'
 
-    # :
+    #: Cached output:
+    #:
+    #: * ``min_bounds`` min sequence function of time
+    #: * ``max_bounds`` max sequence function of time
     outputs_to_cache = ['min_bounds',
                         'max_bounds']
 
