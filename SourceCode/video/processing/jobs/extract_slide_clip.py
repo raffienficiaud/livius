@@ -18,7 +18,7 @@ from .histogram_computation import SelectSlide
 from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
 
 from ....util.tools import get_transformation_points_from_normalized_rect, \
-                           get_polygon_outer_bounding_box
+    get_polygon_outer_bounding_box
 
 
 class WarpSlideJob(Job):
