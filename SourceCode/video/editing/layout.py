@@ -30,7 +30,6 @@ def createFinalVideo(slide_clip,
                      layout=None,
                      talkInfo=' ',
                      speakerInfo=' ',
-                     instituteInfo=' ',
                      dateInfo='July 2015',
                      first_segment_duration=10,
                      output_file_name='Output',
@@ -64,7 +63,6 @@ def createFinalVideo(slide_clip,
 
     :param str talkInfo: Information about talk like the title, the subject, etc.
     :param str speakerInfo: Information about talk like the title, the subject, etc.
-    :param str instituteInfo: Information about instiute/University.
     :param str dateInfo: Information about the date of talk.
     :param first_segment_duration: Duration *in seconds* of the first segment of the video, showing the title.
         Defaults to 10 seconds.
@@ -128,7 +126,6 @@ def createFinalVideo(slide_clip,
                         speaker_video_size = (620, 360),
                         talkInfo = 'How to use SVM kernels',
                         speakerInfo = 'Prof. Bernhard Schoelkopf',
-                        instituteInfo = 'Empirical Inference',
                         dateInfo = 'July 2015',
                         first_segment_duration = 10,
                         output_file_name = 'video',
@@ -199,30 +196,32 @@ def createFinalVideo(slide_clip,
     import ipdb
     ipdb.set_trace()
 
-    # The template for the second show
-    titleText = talkInfo
-    speakerText = speakerInfo
-    instituteText = instituteInfo
-    defaultText = 'Machine Learning Summer School 2015'
-    dateText = dateInfo
 
-    pixelLeftMargin = int(canvas_video_size[0] / 3) - 100
-    pixelRightMargin = 100
-    maxNumHorizontalPixel = canvas_video_size[0] - pixelLeftMargin - pixelRightMargin
-
-    lenStringTitleText = len(titleText)
-    # print lenStringTitleText
-    pixelPerCharTitleText = int((maxNumHorizontalPixel / lenStringTitleText))
-
-
-    lenStringSpeakerText = len(speakerText)
-    pixelPerCharSpeakerText = int((maxNumHorizontalPixel / lenStringSpeakerText))
 
 
     ####
     # First segment: title,
     if 0:
         # this is shitty, we do not use that
+        # The template for the second show
+        titleText = talkInfo
+        speakerText = speakerInfo
+        instituteText = instituteInfo
+        defaultText = 'Machine Learning Summer School 2015'
+        dateText = dateInfo
+
+        pixelLeftMargin = int(canvas_video_size[0] / 3) - 100
+        pixelRightMargin = 100
+        maxNumHorizontalPixel = canvas_video_size[0] - pixelLeftMargin - pixelRightMargin
+
+        lenStringTitleText = len(titleText)
+        # print lenStringTitleText
+        pixelPerCharTitleText = int((maxNumHorizontalPixel / lenStringTitleText))
+
+
+        lenStringSpeakerText = len(speakerText)
+        pixelPerCharSpeakerText = int((maxNumHorizontalPixel / lenStringSpeakerText))
+
         txtClipTitleText = TextClip(titleText, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
         txtClipTitleText = txtClipTitleText.set_position(((canvas_video_size[0] / 3) - 100 , canvas_video_size[1] / 3))
 
@@ -297,7 +296,7 @@ def createFinalVideo(slide_clip,
 
 
     # the final video
-    outputVideo = concatenate([first_segment_clip, second_segment_overlay_clip, third_segment_clip])  #, , second_segment_overlay_clip, third_segment_clip])
+    outputVideo = concatenate([first_segment_clip, second_segment_overlay_clip, third_segment_clip])
 
 
 
@@ -334,7 +333,6 @@ if __name__ == '__main__':
                         speaker_video_size=(620, 360),
                         talkInfo='How to use svm kernels',
                         speakerInfo='Prof. Bernhard Schoelkopf',
-                        instituteInfo='Empirical Inference',
                         dateInfo='July 25th 2015',
                         first_segment_duration=10,
                         output_file_name='video_test',

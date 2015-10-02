@@ -20,7 +20,7 @@ import os
 import logging
 
 from moviepy.editor import AudioFileClip
-from ...editing.layout import createFinalVideo
+from ...editing.layout import createFinalVideo, default_layout as video_default_layout
 
 logger = logging.getLogger()
 
@@ -29,21 +29,25 @@ class ClipsToMovie(Job):
 
     .. rubric:: Runtime parameters
 
-    * ``video_edit_images_folder`` location of the background folders. This parameter is not cached as
+    * ``video_filename`` name of the video to process
+    * ``video_intro_images_folder`` location of the background folders. This parameter is not cached as
       it should be possible to relocate the files
-    * ``background_image_name`` file name of the background image (composed using ``video_edit_images_folder``).
+    * ``background_image_name`` file name of the background image (composed using ``video_intro_images_folder``).
     * ``credit_image_names`` image shown at the end of the video. Should be in the same path as ``background_image_name``
-      (hence given by ``video_edit_images_folder``).
+      (hence given by ``video_intro_images_folder``).
     * ``output_video_file`` name (without folder) of the output video.
     * ``output_video_folder`` folder where the videos are stored. This value is not cached for the same rationale as the
       other parameters.
 
     .. rubric:: Workflow input
 
-    The input consists in two moviePy clips, respectively for the slides and the speaker:
+    The input consists in two moviePy clips, and a metadata feed. The video clips are respectively
+    for the slides and the speaker:
 
     * slides: have been warped and corrected accordingly. Such a clip may be provided by :py:class:`ExtractSlideClipJob`.
     * speaker: tracking the speaker and stabilizing the tracked region over time.
+
+    The metadata feed is a dictionaty containing the informations about the video.
 
     """
 
@@ -58,15 +62,15 @@ class ClipsToMovie(Job):
     #: * ``background_image_name`` filename of the background image
     #: * ``credit_image_names`` image shown at the end of the video. By default their location is in the ressource folder of the
     #:   python livius package.
-    #: * ``canvas_size`` size of the final video
+    #: * ``video_layout`` the layout of the final video. See :py:func:`createFinalVideo` for a description
+    #:   of the layout.
     #: * ``intro_image_names`` the name of the image shown in introduction
     attributes_to_serialize = ['output_video_file',
                                'video_filename',
                                'slide_clip_desired_format',
                                'background_image_name',
-                               'intro_image_names',
                                'credit_image_names',
-                               'canvas_size']
+                               'video_layout']
 
     #: Cached output:
     #:
@@ -75,14 +79,14 @@ class ClipsToMovie(Job):
 
     def __init__(self, *args, **kwargs):
         """
-        :param str video_edit_images_folder: location of the background image. Changing this value
+        :param str video_intro_images_folder: location of the background image. Changing this value
           will not trigger a recomputation so that it is possible to relocate the files to another
           folder.
         :param str background_image_name: the name of the image used for background. If not specified, the function
           :py:func:`get_default_background_image` will be used instead. This value is cached.
         :param str background_image_name: the name of the image used for ending the video. If not specified, the function
           :py:func:`get_default_credit_images` will be used instead. This value is cached.
-        :param tuple canvas_size: the final size of the vide. Default to (1920, 1080). This value is cached
+        :param dict video_layout: the layout of the video. This value is cached
         :param str output_video_folder: folder where the output file will be created. Default to value returned by
           :py:func:`get_output_video_folder`.
         :param str output_video_file: full path name of the output video. Default to the value returned by
@@ -101,12 +105,29 @@ class ClipsToMovie(Job):
         self.background_image_name = unicode(kwargs.get('background_image_name', self.get_default_background_image()))
         self.credit_image_names = kwargs.get('credit_image_names', self.get_default_credit_images())
         self.credit_image_names = [unicode(i) for i in self.credit_image_names]
-        self.intro_image_names = kwargs.get('intro_image_names')
-        self.intro_image_names = [unicode(i) for i in self.intro_image_names]
-        self.canvas_size = list(kwargs.get('canvas_size', (1920, 1080)))  # from json comparison
+        self.layout = kwargs.get('layout', video_default_layout)  # from json comparison
         self.output_video_folder = unicode(kwargs.get('output_video_folder', self.get_output_video_folder()))
         self.output_video_file = kwargs.get('output_video_file', self.get_output_video_file())
-        self.video_edit_images_folder = unicode(kwargs.get('video_edit_images_folder', '/media/alme/processing_mahdi/PNG images/'))  # TODO change THAT THING
+        self.video_intro_images_folder = unicode(kwargs.get('video_intro_images_folder', '/media/alme/processing_mahdi/PNG images/'))  # TODO change THAT THING
+
+
+    def load_state(self):
+        """
+        Make the loaded list as tuples for the layout
+        """
+        state = super(ClipsToMovie, self).load_state()
+
+        if state is None:
+            return None
+
+        layout = state['layout']
+
+        for k in layout.keys():
+            layout[k] = tuple(layout[k])
+
+        state['layout'] = layout
+        return state
+
 
     def get_default_background_image(self):
         """Returns the name of the background image"""
@@ -148,6 +169,7 @@ class ClipsToMovie(Job):
 
         slide_clip = args[0]
         speaker_clip = args[1]
+        meta = args[2] if len(args) > 2 else None
 
         assert(hasattr(self, 'processing_time'))
         self.processing_time = None
@@ -159,13 +181,15 @@ class ClipsToMovie(Job):
         output_video = os.path.join(self.output_video_folder, self.output_video_file)
         output_video_no_container = os.path.splitext(output_video)[0]  # container will be appended by the layout function
 
-
+        # the folder containing the images common to all videos
         ressource_folder = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "ressources")
         video_background_image = os.path.join(ressource_folder, self.background_image_name)
 
 
         credit_images_and_durations = [(os.path.join(ressource_folder, i), None) for i in self.credit_image_names]  # None sets the duration to the default
-        intro_images_and_durations = [(os.path.join(self.video_edit_images_folder, i), None) for i in self.intro_image_names]  # None sets the duration to the default
+
+        if meta is not None and "intro_images" in meta:
+            intro_images_and_durations = [(os.path.join(self.video_intro_images_folder, i), None) for i in meta['intro_images']]  # None sets the duration to the default
 
         audio_clip = AudioFileClip(input_video)
 
@@ -176,10 +200,9 @@ class ClipsToMovie(Job):
                          intro_image_and_durations=intro_images_and_durations,
                          credit_images_and_durations=credit_images_and_durations,
                          fps=30,
-                         talkInfo='How to use svm kernels',
-                         speakerInfo='Prof. Bernhard Schoelkopf',
-                         instituteInfo='Empirical Inference',
-                         dateInfo='July 25th 2015',
+                         talkInfo=meta['talk_title'] if meta is not None else 'title',
+                         speakerInfo=meta['talk_speaker'] if meta is not None else 'name',
+                         dateInfo=meta['talk_date'] if meta is not None else 'today',
                          first_segment_duration=10,
                          output_file_name=output_video_no_container,
                          codecFormat='libx264',
