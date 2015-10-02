@@ -67,3 +67,45 @@ class RandomImageClipJob(Job):
         if hasattr(self, 'video_filename'):
             clip = clip.set_duration(VideoFileClip(self.video_filename).duration)
         return clip
+
+
+class OriginalVideoClipJob(Job):
+    """
+    Creates a moviePy clip containing the original video.
+
+    .. rubric:: Runtime parameters
+
+    .. rubric:: Workflow inputs
+
+    None
+
+    .. rubric:: Workflow outputs
+
+    MoviePy videoClip containing the original video.
+    """
+
+    #: name of the job in the workflow
+    name = 'random_image_clip'
+
+    #: Nothing to cache, the generated output is a moviepy object
+    #: that is accessed lazily.
+    attributes_to_serialize = []
+
+    def __init__(self, *args, **kwargs):
+        """
+        :param tuple original_video_clip_size: indicates the size of the video. Default to
+            the runtime parameter ``slide_clip_desired_format`` if available, ``(640, 480)``
+            otherwise.
+        """
+        super(OriginalVideoClipJob, self).__init__(*args, **kwargs)
+
+        self.frame_size = kwargs.get('original_video_clip_size', None)
+        if self.frame_size is None:
+            self.frame_size = kwargs.get('slide_clip_desired_format', (640, 480))
+
+    def run(self, *args, **kwargs):
+        pass
+
+    def get_outputs(self):
+        super(OriginalVideoClipJob, self).get_outputs()
+        return VideoFileClip(self.video_filename).resize(self.frame_size)
