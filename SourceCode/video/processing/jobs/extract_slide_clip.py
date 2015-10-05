@@ -191,12 +191,13 @@ class ExtractSlideClipJob(Job):
 
     #: name of the job in the workflow
     name = 'extract_slide_clip'
-    attributes_to_serialize = []
+    attributes_to_serialize = ['video_filename']
     parents = [WarpSlideJob, EnhanceContrastJob]
 
     def __init__(self, *args, **kwargs):
         super(ExtractSlideClipJob, self).__init__(*args, **kwargs)
         assert('video_filename' in kwargs)
+        assert('video_location' in kwargs)
 
     def run(self, *args, **kwargs):
         pass
@@ -208,7 +209,7 @@ class ExtractSlideClipJob(Job):
         enhance_contrast = self.enhance_contrast.get_outputs()
 
         # not doing the cut here but rather in the final video composition
-        clip = VideoFileClip(self.video_filename)
+        clip = VideoFileClip(os.path.join(self.video_location, self.video_filename))
 
         def apply_effects(get_frame, t):
             """Function that chains together all the post processing effects."""

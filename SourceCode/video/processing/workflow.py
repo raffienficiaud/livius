@@ -6,9 +6,16 @@ This module defines several workflow using the standard/basic Jobs. To list
 all the workflows from the command line, the ``--list-workflows`` switch may
 be used.
 
+.. autosummary::
+
+    workflow_thumbnails_only
+    workflow_slide_detection_window
+    workflow_extract_slide_clip
+    workflow_video_creation
+    process
+
 """
 
-from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob
 from .jobs.histogram_computation import HistogramsLABDiff, GenerateHistogramAreas, SelectSlide
 from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob, NumberOfFilesJob
 from .jobs.histogram_correlations import HistogramCorrelationJob
@@ -73,6 +80,7 @@ def workflow_extract_slide_clip():
     # confusing.
     return ExtractSlideClipJob
 
+
 def workflow_video_creation():
     """Workflow creating the final video
 
@@ -93,7 +101,11 @@ def workflow_video_creation():
 
     return ClipsToMovie
 
+
 def process(workflow_instance, **kwargs):
+    """Process an instance of a workflow using the runtime parameters
+    given by ``kwargs``.
+    """
 
     instance = workflow_instance(**kwargs)
     instance.process()

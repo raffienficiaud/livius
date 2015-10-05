@@ -12,6 +12,7 @@ This file contains one unique Job for creating a dummy mmoviePy clip.
 
 from ..job import Job
 from moviepy.editor import VideoClip, VideoFileClip
+import os
 
 class RandomImageClipJob(Job):
 
@@ -50,6 +51,9 @@ class RandomImageClipJob(Job):
         if self.frame_size is None:
             self.frame_size = kwargs.get('slide_clip_desired_format', (640, 480))
 
+        if hasattr(self, 'video_filename'):
+            assert('video_location' in kwargs)
+            self.video_location = kwargs['video_location']
 
     def run(self, *args, **kwargs):
         pass
@@ -65,7 +69,7 @@ class RandomImageClipJob(Job):
         clip = VideoClip(make_frame)
 
         if hasattr(self, 'video_filename'):
-            clip = clip.set_duration(VideoFileClip(self.video_filename).duration)
+            clip = clip.set_duration(VideoFileClip(os.path.join(self.video_location, self.video_filename)).duration)
         return clip
 
 
@@ -85,7 +89,7 @@ class OriginalVideoClipJob(Job):
     """
 
     #: name of the job in the workflow
-    name = 'random_image_clip'
+    name = 'original_video_clip'
 
     #: Nothing to cache, the generated output is a moviepy object
     #: that is accessed lazily.
@@ -96,6 +100,7 @@ class OriginalVideoClipJob(Job):
         :param tuple original_video_clip_size: indicates the size of the video. Default to
             the runtime parameter ``slide_clip_desired_format`` if available, ``(640, 480)``
             otherwise.
+
         """
         super(OriginalVideoClipJob, self).__init__(*args, **kwargs)
 
@@ -103,9 +108,13 @@ class OriginalVideoClipJob(Job):
         if self.frame_size is None:
             self.frame_size = kwargs.get('slide_clip_desired_format', (640, 480))
 
+        assert('video_location' in kwargs and self.video_location is not None)
+        assert('video_filename' in kwargs and self.video_filename is not None)
+        assert(os.path.exists(os.path.join(self.video_location, self.video_filename)))
+
     def run(self, *args, **kwargs):
         pass
 
     def get_outputs(self):
         super(OriginalVideoClipJob, self).get_outputs()
-        return VideoFileClip(self.video_filename).resize(self.frame_size)
+        return VideoFileClip(os.path.join(self.video_location, self.video_filename)).resize(self.frame_size)

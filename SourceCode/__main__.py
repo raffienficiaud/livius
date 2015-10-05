@@ -174,16 +174,17 @@ for f in video_files:
     if not os.path.exists(output_location):
         os.makedirs(output_location)
 
-    thumbnails_location = os.path.join(args.thumbnails_folder, video_base_name)
-    if not os.path.exists(thumbnails_location):
-        os.makedirs(thumbnails_location)
+    thumbnails_root = os.path.join(args.thumbnails_folder, video_base_name)
+    if not os.path.exists(thumbnails_root):
+        os.makedirs(thumbnails_root)
 
     params = options.copy()
 
 
     # those important parameter should not be overriden
-    params.update({'video_filename': f,
-                   'thumbnails_location': thumbnails_location,
+    params.update({'video_filename': os.path.basename(f),
+                   'video_location': os.path.dirname(f),
+                   'thumbnails_root': thumbnails_root,
                    'json_prefix': os.path.join(output_location, video_base_name),
                    })
               # 'segment_computation_tolerance': 0.05,

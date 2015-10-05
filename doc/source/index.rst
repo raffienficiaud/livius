@@ -44,7 +44,11 @@ workflow over a bunch of videos simply by running
 .. code::
 
   cd $livius_src
-  python -m SourceCode --workflow=my_workflow --output-folder=/a/big/disk --video-folder=my_folder_full_of_videos
+  python -m SourceCode \
+    --workflow=my_workflow \
+    --output-folder=/a/big/disk \
+    --video-folder=my_folder_full_of_videos \
+    --option=meta_location=/a/folder/containing/annotations
 
 The detailed options of Livius are given below (just type ``--help`` in the previous command line):
 

@@ -46,7 +46,7 @@ class SelectPolygonJob(Job):
 
     #: Cached inputs:
     #:
-    #: * ``video_filename`` the name of the input video
+    #: * ``video_filename`` the name of the input video without the path name
     attributes_to_serialize = ['video_filename']
 
     #: Cached outputs:
@@ -64,20 +64,27 @@ class SelectPolygonJob(Job):
         """
         Expected parameters in kwargs:
 
-        :param video_filename: The name of the video file to process
+        :param video_filename: The name of the video file to process, without the folder
+        :param video_location: the directory where the video file is (not cached for relation purposes).
+          This parameter is mandatory
         """
         super(SelectPolygonJob, self).__init__(*args, **kwargs)
 
-        video_filename = kwargs.get('video_filename', None)
-        if video_filename is None:
+
+        if self.video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
-        if not os.path.exists(video_filename):
+
+        assert('video_location' in kwargs)
+
+        if not os.path.exists(os.path.join(self.video_location, self.video_filename)):
             raise RuntimeError("The video file %s does not exist" % os.path.abspath(video_filename))
 
-        # this is necessary because the json files are stored in unicode, and the
+
+        # this `unicode` necessary because the json files are stored in unicode, and the
         # comparison of the list of files should work (unicode path operations
         # is unicode)
-        self.video_filename = os.path.abspath(unicode(video_filename))
+        self.video_filename = unicode(self.video_filename)
+
 
     def run(self, *args, **kwargs):
 
@@ -85,7 +92,7 @@ class SelectPolygonJob(Job):
             return True
 
         if not args:
-            cap = cv2.VideoCapture(self.video_filename)
+            cap = cv2.VideoCapture(os.path.join(self.video_location, self.video_filename))
             cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 500)  # drop the first 500 frames, just like that
 
             width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)

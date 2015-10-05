@@ -29,7 +29,8 @@ class ClipsToMovie(Job):
 
     .. rubric:: Runtime parameters
 
-    * ``video_filename`` name of the video to process
+    * ``video_filename`` name of the video to process (only the base name)
+    * ``video_location`` location of the video to process (not cached)
     * ``video_intro_images_folder`` location of the background folders. This parameter is not cached as
       it should be possible to relocate the files
     * ``background_image_name`` file name of the background image (composed using ``video_intro_images_folder``).
@@ -57,14 +58,13 @@ class ClipsToMovie(Job):
     #: Cached input:
     #:
     #: * ``video_output_file`` name of the output file
-    #: * ``video_filename`` input video file
+    #: * ``video_filename`` input video file (not containing the path)
     #: * ``slide_clip_desired_format`` final size of the slides
     #: * ``background_image_name`` filename of the background image
     #: * ``credit_image_names`` image shown at the end of the video. By default their location is in the ressource folder of the
     #:   python livius package.
     #: * ``video_layout`` the layout of the final video. See :py:func:`createFinalVideo` for a description
     #:   of the layout.
-    #: * ``intro_image_names`` the name of the image shown in introduction
     attributes_to_serialize = ['output_video_file',
                                'video_filename',
                                'slide_clip_desired_format',
@@ -79,6 +79,8 @@ class ClipsToMovie(Job):
 
     def __init__(self, *args, **kwargs):
         """
+        :param str video_location: directory under which the video is placed. This is not cached as the
+          directories might be different from one processing computer to the other (relocation).
         :param str video_intro_images_folder: location of the background image. Changing this value
           will not trigger a recomputation so that it is possible to relocate the files to another
           folder.
@@ -98,36 +100,22 @@ class ClipsToMovie(Job):
 
         assert('slide_clip_desired_format' in kwargs)
         assert('video_filename' in kwargs)
+        assert('video_location' in kwargs)
 
         # unicode is for comparison issues when retrieved from the json
         self.video_filename = unicode(self.video_filename)
 
         self.background_image_name = unicode(kwargs.get('background_image_name', self.get_default_background_image()))
         self.credit_image_names = kwargs.get('credit_image_names', self.get_default_credit_images())
-        self.credit_image_names = [unicode(i) for i in self.credit_image_names]
-        self.layout = kwargs.get('layout', video_default_layout)  # from json comparison
+        self.credit_image_names = [unicode(i) for i in self.credit_image_names]  #  unicode for json
+        self.video_layout = kwargs.get('video_layout', video_default_layout)
         self.output_video_folder = unicode(kwargs.get('output_video_folder', self.get_output_video_folder()))
         self.output_video_file = kwargs.get('output_video_file', self.get_output_video_file())
         self.video_intro_images_folder = unicode(kwargs.get('video_intro_images_folder', '/media/alme/processing_mahdi/PNG images/'))  # TODO change THAT THING
 
 
-    def load_state(self):
-        """
-        Make the loaded list as tuples for the layout
-        """
-        state = super(ClipsToMovie, self).load_state()
-
-        if state is None:
-            return None
-
-        layout = state['layout']
-
-        for k in layout.keys():
-            layout[k] = tuple(layout[k])
-
-        state['layout'] = layout
-        return state
-
+        # JSON constraint: keys are unicode, locations are lists
+        self.video_layout = dict([(unicode(k), list(v)) for k, v in self.video_layout.items()])
 
     def get_default_background_image(self):
         """Returns the name of the background image"""
@@ -146,7 +134,7 @@ class ClipsToMovie(Job):
     def get_output_video_file(self):
         """Returns the name without folder of the output video file. The output file is created using the name
         of the input file"""
-        return os.path.splitext(os.path.basename(self.video_filename))[0] + "_out" + self.get_container()
+        return os.path.splitext(self.video_filename)[0] + "_out" + self.get_container()
 
     def get_container(self):
         """Returns the container used for storing the output video streams"""
@@ -158,7 +146,7 @@ class ClipsToMovie(Job):
         if(not os.path.exists(os.path.join(self.output_video_folder, self.output_video_file))):
             return False
 
-        if(os.stat(os.path.join(self.output_video_folder, self.output_video_file)).st_mtime < os.stat(self.video_filename).st_mtime):
+        if(os.stat(os.path.join(self.output_video_folder, self.output_video_file)).st_mtime < os.stat(os.path.join(self.video_location, self.video_filename)).st_mtime):
             return False
 
         # default
@@ -177,17 +165,21 @@ class ClipsToMovie(Job):
         # start time, just to save something
         start = datetime.datetime.now()
 
-        input_video = self.video_filename
+        input_video = os.path.join(self.video_location, self.video_filename)
         output_video = os.path.join(self.output_video_folder, self.output_video_file)
         output_video_no_container = os.path.splitext(output_video)[0]  # container will be appended by the layout function
 
         # the folder containing the images common to all videos
-        ressource_folder = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "ressources")
+        ressource_folder = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "ressources")
         video_background_image = os.path.join(ressource_folder, self.background_image_name)
 
 
         credit_images_and_durations = [(os.path.join(ressource_folder, i), None) for i in self.credit_image_names]  # None sets the duration to the default
 
+        import ipdb
+        ipdb.set_trace()
+
+        intro_images_and_durations = []
         if meta is not None and "intro_images" in meta:
             intro_images_and_durations = [(os.path.join(self.video_intro_images_folder, i), None) for i in meta['intro_images']]  # None sets the duration to the default
 
@@ -222,6 +214,6 @@ class ClipsToMovie(Job):
     def get_outputs(self):
         super(ClipsToMovie, self).get_outputs()
         logger.info('[CREATEMOVIE] processed video %s in %s seconds', self.get_output_video_file(), self.processing_time)
-        return None
+        return self.processing_time
 
 

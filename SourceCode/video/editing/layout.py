@@ -1,14 +1,21 @@
-
 """
+Layout
+======
+
 This module implements layout and video formation for video editing part
 main function:
-- createFinalVideo
+
+.. autosummary::
+
+  createFinalVideo
+
 """
 
-import numpy as np
-import os.path
 import sys
 from moviepy.video.compositing.concatenate import concatenate
+
+import logging
+logger = logging.getLogger()
 
 # this settings are dependent on the background image
 
@@ -30,7 +37,7 @@ def createFinalVideo(slide_clip,
                      layout=None,
                      talkInfo=' ',
                      speakerInfo=' ',
-                     dateInfo='July 2015',
+                     dateInfo='',
                      first_segment_duration=10,
                      output_file_name='Output',
                      codecFormat='libx264',
@@ -136,12 +143,8 @@ def createFinalVideo(slide_clip,
 
     """
 
-
-
-
     from moviepy.video.VideoClip import ImageClip, TextClip
     from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
-    from moviepy.audio.AudioClip import CompositeAudioClip
 
     # setting the sizes
     if layout is None:
@@ -169,7 +172,6 @@ def createFinalVideo(slide_clip,
 
         return ImageClip(image_filename)
 
-
     def create_slide_show_of_images(images_and_durations):
         all_slides = []
         for image, duration in images_and_durations:
@@ -188,9 +190,10 @@ def createFinalVideo(slide_clip,
     if isinstance(video_background_image, unicode):
         video_background_image = video_background_image.encode(sys.getdefaultencoding())
 
-    if (canvas_video_size[0] < (slides_video_size[0] or speaker_video_size[0])) \
-        and (canvas_video_size[1] < (slides_video_size[1] or speaker_video_size[1])):
-        print "[layout] Warning: The selected sizes are not appropriate."
+    if (canvas_video_size[0] < (slides_video_size[0] or speaker_video_size[0])) and \
+       (canvas_video_size[1] < (slides_video_size[1] or speaker_video_size[1])):
+
+        logger.warning("[layout] Warning: The selected sizes are not appropriate")
 
 
     import ipdb
@@ -201,41 +204,33 @@ def createFinalVideo(slide_clip,
 
     ####
     # First segment: title,
-    if 0:
+    if intro_image_and_durations is None or not intro_image_and_durations:
         # this is shitty, we do not use that
         # The template for the second show
-        titleText = talkInfo
-        speakerText = speakerInfo
-        instituteText = instituteInfo
+        instituteText = "Max Planck Institute for Intelligent Systems"
         defaultText = 'Machine Learning Summer School 2015'
-        dateText = dateInfo
 
-        pixelLeftMargin = int(canvas_video_size[0] / 3) - 100
-        pixelRightMargin = 100
-        maxNumHorizontalPixel = canvas_video_size[0] - pixelLeftMargin - pixelRightMargin
+        left_margin = int(canvas_video_size[0] / 3) - 100
+        right_margin = 100
+        width = canvas_video_size[0] - left_margin - right_margin
 
-        lenStringTitleText = len(titleText)
-        # print lenStringTitleText
-        pixelPerCharTitleText = int((maxNumHorizontalPixel / lenStringTitleText))
+        pixelPerCharTitleText = width // len(talkInfo)
+        pixelPerCharSpeakerText = width // len(speakerInfo)
 
+        txtClipTitleText = TextClip(talkInfo, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
+        txtClipTitleText = txtClipTitleText.set_position((left_margin, canvas_video_size[1] / 3))
 
-        lenStringSpeakerText = len(speakerText)
-        pixelPerCharSpeakerText = int((maxNumHorizontalPixel / lenStringSpeakerText))
-
-        txtClipTitleText = TextClip(titleText, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
-        txtClipTitleText = txtClipTitleText.set_position(((canvas_video_size[0] / 3) - 100 , canvas_video_size[1] / 3))
-
-        txtClipSpeakerText = TextClip(speakerText, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
-        txtClipSpeakerText = txtClipSpeakerText.set_position(((canvas_video_size[0] / 3) - 100 , canvas_video_size[1] / 3 + 100))
+        txtClipSpeakerText = TextClip(speakerInfo, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
+        txtClipSpeakerText = txtClipSpeakerText.set_position((left_margin, canvas_video_size[1] / 3 + 100))
 
         txtClipInstituteText = TextClip(instituteText, fontsize=36, color='white', font="Amiri")
-        txtClipInstituteText = txtClipInstituteText.set_position(((canvas_video_size[0] / 3) - 100, canvas_video_size[1] / 3 + 170))
+        txtClipInstituteText = txtClipInstituteText.set_position((left_margin, canvas_video_size[1] / 3 + 170))
 
         txtClipDefaultText = TextClip(defaultText, fontsize=40, color='white', font="Amiri")
-        txtClipDefaultText = txtClipDefaultText.set_position(((canvas_video_size[0] / 3) - 100, canvas_video_size[1] / 3 + 300))
+        txtClipDefaultText = txtClipDefaultText.set_position((left_margin, canvas_video_size[1] / 3 + 300))
 
-        txtClipDateText = TextClip(dateText, fontsize=40, color='white', font="Amiri")
-        txtClipDateText = txtClipDateText.set_position(((canvas_video_size[0] / 3) - 100, canvas_video_size[1] / 3 + 350))
+        txtClipDateText = TextClip(dateInfo, fontsize=40, color='white', font="Amiri")
+        txtClipDateText = txtClipDateText.set_position((left_margin, canvas_video_size[1] / 3 + 350))
 
         # this does not work, the sizes should be set properly
         # and the fonts are ugly
@@ -245,7 +240,6 @@ def createFinalVideo(slide_clip,
 
     else:
         first_segment_clip = create_slide_show_of_images(intro_image_and_durations)
-
 
     ####
     # second segment: the slides, videos, audio_clip, etc.
@@ -270,7 +264,6 @@ def createFinalVideo(slide_clip,
 
     #second_segment_clip = second_segment_clip.set_start(first_segment_clip.end)
 
-
     ####
     # second segment overlay: title, info, background: duration equal to the second segment clip
     info_underslides = '%s - %s' % (speakerInfo, talkInfo)
@@ -289,54 +282,14 @@ def createFinalVideo(slide_clip,
     # same attributes as the clip it is supposed to overlay
     second_segment_overlay_clip = second_segment_overlay_clip.set_duration(second_segment_clip.duration)
 
-
     ###
     # third segment: credits etc.
     third_segment_clip = create_slide_show_of_images(credit_images_and_durations)
 
-
     # the final video
     outputVideo = concatenate([first_segment_clip, second_segment_overlay_clip, third_segment_clip])
 
-
-
-
-
     if flagWrite:
-        # base = os.path.basename(video_background_image)
-        # directory = os.path.dirname(video_background_image)
-        #compo = CompositeAudioClip([audio_clip.set_start(first_segment_duration)])
-        #outputVideo = outputVideo.set_audio(compo)
         outputVideo.write_videofile(output_file_name + container, fps, codec=codecFormat)
 
     return outputVideo
-
-
-if __name__ == '__main__':
-
-
-    # video_duration_shrink (targetVideo, tStart=(40,50.0), tEnd=(45,0.0), writeFlie = True)
-    targetVideo = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
-    slide_clip = VideoFileClip(targetVideo, audio=False)
-    targetVideo2 = "/media/pbahar/Data Raid/Videos/18.03.2015/video_6.mp4"
-    speaker_clip = VideoFileClip(targetVideo2, audio=False)
-    pathToBackgroundImage = "/is/ei/pbahar/Downloads/EdgarFiles/background_images_mlss2013/background_example.png"
-    audio = AudioFileClip(targetVideo)
-
-    createFinalVideo(slide_clip, speaker_clip,
-                        pathToBackgroundImage,
-                        pathToBackgroundImage,
-                        audio,
-                        fps=30,
-                        canvas_video_size=(1920, 1080),
-                        slides_video_size=(1280, 960),
-                        speaker_video_size=(620, 360),
-                        talkInfo='How to use svm kernels',
-                        speakerInfo='Prof. Bernhard Schoelkopf',
-                        dateInfo='July 25th 2015',
-                        first_segment_duration=10,
-                        output_file_name='video_test',
-                        codecFormat='libx264',
-                        container='.mp4',
-                        flagWrite=True)
-
