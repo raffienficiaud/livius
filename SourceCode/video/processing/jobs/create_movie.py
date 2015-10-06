@@ -83,7 +83,8 @@ class ClipsToMovie(Job):
           directories might be different from one processing computer to the other (relocation).
         :param str video_intro_images_folder: location of the background image. Changing this value
           will not trigger a recomputation so that it is possible to relocate the files to another
-          folder.
+          folder. Defaults to ``None``, in which case full paths are expected from the Metadata provider
+          (under the key ``intro_images``). See :py:class:`Metadata`.
         :param str background_image_name: the name of the image used for background. If not specified, the function
           :py:func:`get_default_background_image` will be used instead. This value is cached.
         :param str background_image_name: the name of the image used for ending the video. If not specified, the function
@@ -111,8 +112,10 @@ class ClipsToMovie(Job):
         self.video_layout = kwargs.get('video_layout', video_default_layout)
         self.output_video_folder = unicode(kwargs.get('output_video_folder', self.get_output_video_folder()))
         self.output_video_file = kwargs.get('output_video_file', self.get_output_video_file())
-        self.video_intro_images_folder = unicode(kwargs.get('video_intro_images_folder', '/media/alme/processing_mahdi/PNG images/'))  # TODO change THAT THING
 
+        self.video_intro_images_folder = None  # not cached, hence not created automatically
+        if 'video_intro_images_folder' in kwargs:
+            self.video_intro_images_folder = unicode(kwargs['video_intro_images_folder'])
 
         # JSON constraint: keys are unicode, locations are lists
         self.video_layout = dict([(unicode(k), list(v)) for k, v in self.video_layout.items()])
@@ -170,18 +173,30 @@ class ClipsToMovie(Job):
         output_video_no_container = os.path.splitext(output_video)[0]  # container will be appended by the layout function
 
         # the folder containing the images common to all videos
-        ressource_folder = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "ressources")
+        ressource_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "ressources"))
         video_background_image = os.path.join(ressource_folder, self.background_image_name)
 
 
         credit_images_and_durations = [(os.path.join(ressource_folder, i), None) for i in self.credit_image_names]  # None sets the duration to the default
 
-        import ipdb
-        ipdb.set_trace()
-
         intro_images_and_durations = []
         if meta is not None and "intro_images" in meta:
-            intro_images_and_durations = [(os.path.join(self.video_intro_images_folder, i), None) for i in meta['intro_images']]  # None sets the duration to the default
+            intro_images_and_durations = []
+            for current in meta['intro_images']:
+
+                image_file = current
+
+                if not os.path.exists(image_file):
+                    # fallback in case the image does not exist (full path not given)
+                    if self.video_intro_images_folder is not None:
+                        image_file = os.path.join(self.video_intro_images_folder, current)
+
+
+                if not os.path.exists(image_file):
+                    logger.error("[INTRO] image %s not found", image_file)
+                    raise RuntimeError("[INTRO] image %s does not exist" % image_file)
+
+                intro_images_and_durations += [(image_file, None)]  # None sets the duration to the default
 
         audio_clip = AudioFileClip(input_video)
 

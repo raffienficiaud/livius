@@ -60,6 +60,25 @@ new classes may be defined being child of the job to reuse, this time with a dif
 :py:class:`SelectSlide <SourceCode.video.processing.jobs.select_polygon.SelectSlide>` and :py:class:`SelectSpeaker <SourceCode.video.processing.jobs.select_polygon.SelectSpeaker>`, 
 refining the behaviour of :py:class:`SelectPolygonJob <SourceCode.video.processing.jobs.select_polygon.SelectPolygonJob>`.
 
+--------------------
+Job cache comparison
+--------------------
+The main entry of the cached value comparison is performed by the method :py:func:`Job.is_up_to_date`, which is possible
+to override in a child class (for eg. test for file existance, timestamp of files, etc).
+
+This method checks that the parents are up to date (and returns ``False`` if not), and then calls the function
+:py:func:`are_states_equal`, which is also possible to override.
+
+The current implementation of the comparison is that the values being compared are transformed to a string, and the 
+resulting strings are compared instead. 
+
+.. note::
+
+   If you override one of those member function, it is always possible to fall-back/call the default behaviour with
+   for instance::
+   
+       super(CurrentJobClass, self).is_up_to_date() 
+
 ----------
 Job action
 ----------

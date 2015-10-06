@@ -79,6 +79,30 @@ in the wiki for more details).
   pip install sphinx
   pip install sphinxcontrib-programoutput 
   pip install sphinx_bootstrap_theme
+  
+  
+Meta information associated to the videos
+=========================================
+The metadata associated to the video files describe the following:
+
+* the title of the talk
+* the speaker
+* the date
+* optionally an image used as introduction
+* optionally the pauses and begin/end of the video 
+
+The meta data is loaded by the Job :py:class:`Metadata`. If your metadata is stored in a way that differs with
+the expectation of :py:class:`Metadata`, it is easy to adapt this class to your needs.
+
+Relocatable files
+=================
+The design of Livius attempts to have relocatable files, which means that the some root folder 
+(eg. videos, metadata, cached values)
+might be specified and changed at runtime (command line invocation) without recomputing the intermediate or final results.
+
+With this design, it is also possible to compute the results with different machines, from the same sources, and 
+having different mount points.
+
 
 Indices and tables
 ==================

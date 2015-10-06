@@ -196,12 +196,6 @@ def createFinalVideo(slide_clip,
         logger.warning("[layout] Warning: The selected sizes are not appropriate")
 
 
-    import ipdb
-    ipdb.set_trace()
-
-
-
-
     ####
     # First segment: title,
     if intro_image_and_durations is None or not intro_image_and_durations:
@@ -217,8 +211,14 @@ def createFinalVideo(slide_clip,
         pixelPerCharTitleText = width // len(talkInfo)
         pixelPerCharSpeakerText = width // len(speakerInfo)
 
+        if isinstance(talkInfo, unicode):
+            talkInfo = talkInfo.encode('latin1')
+
         txtClipTitleText = TextClip(talkInfo, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
         txtClipTitleText = txtClipTitleText.set_position((left_margin, canvas_video_size[1] / 3))
+
+        if isinstance(speakerInfo, unicode):
+            speakerInfo = speakerInfo.encode('latin1')
 
         txtClipSpeakerText = TextClip(speakerInfo, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
         txtClipSpeakerText = txtClipSpeakerText.set_position((left_margin, canvas_video_size[1] / 3 + 100))
@@ -266,7 +266,12 @@ def createFinalVideo(slide_clip,
 
     ####
     # second segment overlay: title, info, background: duration equal to the second segment clip
-    info_underslides = '%s - %s' % (speakerInfo, talkInfo)
+    if isinstance(speakerInfo, unicode):
+        # some issues transforming strings. What is really expecting MoviePy? apparently utf8 works fine
+        # warning the utf8 is applied to the full /unicode/ string
+        info_underslides = (u'%s - %s' % (speakerInfo, talkInfo)).encode('utf8')
+    else:
+        info_underslides = '%s - %s' % (speakerInfo, talkInfo)
     talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font="Amiri")
 
     talk_info_clip = talk_info_clip.set_position((slide_clip_composed.pos(0)[0],

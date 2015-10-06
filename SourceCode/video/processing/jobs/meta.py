@@ -24,10 +24,13 @@ class Metadata(Job):
 
     The expected structure of the meta data is the following:
 
-    root of metadata
-    |- ``video_file_name_WE``
-    |-- ``video_file_name_WE.txt``
-    |-- ``some_png_image.png``
+    .. code::
+
+        root of metadata
+        |- video_file_name_WE
+           |- video_file_name_WE.txt
+           |- some_png_image.png
+
 
     where ``WE`` stands for /without extension/. The meta will look for the files containing the relevant
     information under the root directory containing the meta data, and the video filename WE. It will look for
@@ -35,8 +38,8 @@ class Metadata(Job):
 
     .. rubric:: Runtime parameters
 
-    * ``video_filename`` name of the video to process
-    *
+    * ``video_filename`` name of the video to process (mandatory, cached)
+    * ``meta_location`` location of the meta data (mandatory, not cached)
 
     """
 
@@ -45,20 +48,27 @@ class Metadata(Job):
     #: Cached input:
     #:
     #: * ``video_filename`` input video file
-    attributes_to_serialize = ['video_filename']
-
-    #: Cached output:
-    #:
     #: * ``intro_image_names`` the name of the image shown in introduction
     #: * ``video_begin`` beginning of the video
     #: * ``video_end`` end of the video
-    outputs_to_cache = ['intro_image_names',
-                        'video_begin',
-                        'video_end',
-                        'title',
-                        'speaker',
-                        'date'
-                        ]
+    #: * ``title`` title of the talk
+    #: * ``speaker`` speaker of the talk
+    #: * ``date`` date of the talk (full string)
+    #:
+    #: All the parameters read from the metadata file are considered as inputs to the Job. If we do otherwise
+    #: (eg. cached outputs), then it might happen that the job is not properly flagged as dirty when some
+    #: settings change (eg. adding an image file).
+    attributes_to_serialize = ['video_filename',
+                               'intro_image_names',
+                               'video_begin',
+                               'video_end',
+                               'title',
+                               'speaker',
+                               'date']
+
+    #: Cached output:
+    #:
+    outputs_to_cache = []
 
     def __init__(self, *args, **kwargs):
         """
@@ -81,9 +91,12 @@ class Metadata(Job):
 
         self._read_file_content()
 
-    def _get_meta_filename(self):
+    def _get_meta_location(self):
         return os.path.join(self.meta_location,
-                            os.path.splitext(self.video_filename)[0],
+                            os.path.splitext(self.video_filename)[0])
+
+    def _get_meta_filename(self):
+        return os.path.join(self._get_meta_location(),
                             os.path.splitext(self.video_filename)[0] + '.txt')
 
     def _read_file_content(self):
@@ -95,8 +108,10 @@ class Metadata(Job):
             self.speaker = d[0]
             self.date = d[3]
 
+        # listing the image files, sorting them, and considering them as introduction images.
         l = os.listdir(os.path.dirname(self._get_meta_filename()))
         self.intro_image_names = [i for i in l if os.path.splitext(i)[1].lower() == '.png']
+        self.intro_image_names.sort()
 
     def is_up_to_date(self):
         """is_up_to_date returns False if there was any update of the meta files"""
@@ -119,5 +134,5 @@ class Metadata(Job):
         return {'talk_title': self.title,
                 'talk_speaker': self.speaker,
                 'talk_date': self.date,
-                'intro_images': self.intro_image_names
+                'intro_images': [os.path.join(self._get_meta_location(), i) for i in self.intro_image_names]
                 }

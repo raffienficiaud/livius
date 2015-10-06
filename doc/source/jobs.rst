@@ -25,6 +25,10 @@ The jobs fall into the following categories:
 * video content creation: those type of jobs create objects suitable for MoviePy as inputs. Some utility
   classes/functions are also provided in the :py:mod:`dummy_clip <SourceCode.video.processing.jobs.dummy_clip>`
   module. 
+  
+* metadata management: jobs that are able to provide the workflow with meta data that will be used 
+  to eg. describe the video, add content (introduction, epilog images), etc. Located in the module 
+  :py:mod:`meta <SourceCode.video.processing.jobs.meta>`
 
 Reference
 ---------
@@ -41,3 +45,4 @@ Reference
    video.processing.jobs.segment_computation<jobs/segment_computation>
    video.processing.jobs.create_movie<jobs/video_content_creation>
    video.processing.jobs.dummy_clip<jobs/dummy_clips>
+   video.processing.jobs.dummy_clip<jobs/metadata>

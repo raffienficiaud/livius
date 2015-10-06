@@ -212,8 +212,15 @@ class Job(object):
         try:
             for k in self.attributes_to_serialize:
 
-                if str(dict_json[k]) != str(getattr(self, k)):
-                    logger.debug("Key %s mismatch: left=%s / right=%s", k, str(dict_json[k]), str(getattr(self, k)))
+                current_object = getattr(self, k)
+                if isinstance(current_object, unicode):
+                    if unicode(dict_json[k]) != unicode(current_object):
+                        logger.debug("Key %s mismatch: cached=%s / current=%s", k, unicode(dict_json[k]), unicode(getattr(self, k)))
+                        return False
+                    continue
+
+                if str(dict_json[k]) != str(current_object):
+                    logger.debug("Key %s mismatch: cached=%s / current=%s", k, str(dict_json[k]), str(getattr(self, k)))
                     return False
 
         except KeyError:
