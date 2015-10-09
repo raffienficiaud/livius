@@ -94,6 +94,8 @@ class ClipsToMovie(Job):
           :py:func:`get_output_video_folder`.
         :param str output_video_file: full path name of the output video. Default to the value returned by
           :py:func:`get_output_video_file`.
+        :param bool is_visual_test: if set to ``True`` limits the processing of the videos to 10 seconds. Defaults to
+          ``False``.
 
         """
 
@@ -112,6 +114,7 @@ class ClipsToMovie(Job):
         self.video_layout = kwargs.get('video_layout', video_default_layout)
         self.output_video_folder = unicode(kwargs.get('output_video_folder', self.get_output_video_folder()))
         self.output_video_file = kwargs.get('output_video_file', self.get_output_video_file())
+        self.is_test = kwargs.get('is_visual_test', False)
 
         self.video_intro_images_folder = None  # not cached, hence not created automatically
         if 'video_intro_images_folder' in kwargs:
@@ -214,7 +217,8 @@ class ClipsToMovie(Job):
                          output_file_name=output_video_no_container,
                          codecFormat='libx264',
                          container=self.get_container(),
-                         flagWrite=True)
+                         flagWrite=True,
+                         is_test=self.is_test)
 
 
         # stop time

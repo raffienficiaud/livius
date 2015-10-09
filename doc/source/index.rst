@@ -55,13 +55,20 @@ The detailed options of Livius are given below (just type ``--help`` in the prev
 .. program-output:: python -m SourceCode --help
     :cwd: ../../ 
 
-The parameter ``--option`` may be used to define additional options needed by the runtime behaviour of the Jobs. Those 
-parameters are described in the Jobs in the rubrics **Runtime parameters**.
+The parameter ``--option`` may be used to define additional options needed by the runtime behaviour of the Jobs. The 
+parameters accepted by the jobs are described in each job documentation under the rubric **Runtime parameters**.
+
+.. note::
+
+   Every job in the current workflow will see all of ``--option`` settings.
 
 Setting several parameters from the command line may be cumbersome. It is possible to pass ``--option-file`` which will
 read several parameters from a json file. A default configuration file is provided as ``default_config.json``. The parameters
 set by the ``--option`` may override the parameters set by the ``--option-file`` so that it is possible to override the 
 default settings from the command line.
+
+``--is_visual_test`` permits to limit the processing of the final video to 10 seconds, which may be convenient for visual checks.
+However the thumbnail extraction is (currently) performed for the full video. 
 
 Installation
 ============
@@ -102,6 +109,16 @@ might be specified and changed at runtime (command line invocation) without reco
 
 With this design, it is also possible to compute the results with different machines, from the same sources, and 
 having different mount points.
+
+Available ressources
+====================
+The repository contains images that can be used out of the box for running Livius on videos. Those images are more or less 
+related to the /Machine Learning Summer School/ (2013, 2015), but may be adapted easily.
+
+* ``SourceCode/ressources/background_mlss2015.png`` the background image during the talk, containing visual cues 
+  (grey area on which the slides and the speaker are overlayed), mainly for visual sanity check
+* ``SourceCode/ressources/background_no_grey_mlss2015.png``, same as ``background_mlss2015`` without grey areas (if one
+  of the stream is smaller than the target one). 
 
 
 Indices and tables

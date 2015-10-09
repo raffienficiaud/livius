@@ -42,7 +42,8 @@ def createFinalVideo(slide_clip,
                      output_file_name='Output',
                      codecFormat='libx264',
                      container='.mp4',
-                     flagWrite=True):
+                     flagWrite=True,
+                     is_test=False):
 
     """
     This function serves to form the video layout, create the final video and write it.
@@ -78,6 +79,7 @@ def createFinalVideo(slide_clip,
         Codec to use for image encoding. Can be any codec supported by ffmpeg, but the container
         must be set accordingly.
     :param str container: the video file format (container) including all streams.
+    :param bool is_test: if set to ``True``, only 10 seconds of the video are processed
     :param bool flagWrite: A flag to set whether write the new video or not
 
     .. rubric:: Images
@@ -276,8 +278,8 @@ def createFinalVideo(slide_clip,
     # and not putting this part into a CompositeVideoClip
     second_segment_clip = slide_clip_composed
 
-
-    second_segment_clip = second_segment_clip.set_duration(10)  #speaker_clip.duration)  # same duration as any input clip
+    if is_test:
+        second_segment_clip = second_segment_clip.set_duration(10)
 
     #! TODO
     # if we need to pause things, and to set start and stop, this should be done here

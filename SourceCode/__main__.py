@@ -61,6 +61,12 @@ parser.add_argument('--print-workflow',
                     action='store_true',
                     help="""Prints the workflow (text/dot) and exits.""")
 
+parser.add_argument('--is_visual_test',
+                    action='store_true',
+                    help="""If set on the command line, the video is processed only for 10 seconds.
+                    This however does not prevent the full thumbnail extraction.""")
+
+
 
 
 args = parser.parse_args()
@@ -186,6 +192,7 @@ for f in video_files:
                    'video_location': os.path.dirname(f),
                    'thumbnails_root': thumbnails_root,
                    'json_prefix': os.path.join(output_location, video_base_name),
+                   'is_visual_test': args.is_visual_test is not None
                    })
               # 'segment_computation_tolerance': 0.05,
               # 'segment_computation_min_length_in_seconds': 2,
