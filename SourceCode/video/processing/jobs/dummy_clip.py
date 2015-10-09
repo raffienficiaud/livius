@@ -86,6 +86,10 @@ class OriginalVideoClipJob(Job):
     .. rubric:: Workflow outputs
 
     MoviePy videoClip containing the original video.
+
+    .. note::
+
+       Does not preserve aspect ratio.
     """
 
     #: name of the job in the workflow
@@ -98,15 +102,12 @@ class OriginalVideoClipJob(Job):
     def __init__(self, *args, **kwargs):
         """
         :param tuple original_video_clip_size: indicates the size of the video. Default to
-            the runtime parameter ``slide_clip_desired_format`` if available, ``(640, 480)``
-            otherwise.
+            ``None`` (no resize).
 
         """
         super(OriginalVideoClipJob, self).__init__(*args, **kwargs)
 
         self.frame_size = kwargs.get('original_video_clip_size', None)
-        if self.frame_size is None:
-            self.frame_size = kwargs.get('slide_clip_desired_format', (640, 480))
 
         assert('video_location' in kwargs and self.video_location is not None)
         assert('video_filename' in kwargs and self.video_filename is not None)
@@ -117,4 +118,7 @@ class OriginalVideoClipJob(Job):
 
     def get_outputs(self):
         super(OriginalVideoClipJob, self).get_outputs()
-        return VideoFileClip(os.path.join(self.video_location, self.video_filename)).resize(self.frame_size)
+        clip = VideoFileClip(os.path.join(self.video_location, self.video_filename))
+        if(self.frame_size is not None):
+            clip = clip.resize(self.frame_size)
+        return clip

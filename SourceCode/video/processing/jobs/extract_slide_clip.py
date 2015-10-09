@@ -89,7 +89,7 @@ class WarpSlideJob(Job):
                 self.slide_rect = slide_rect
 
                 # @note(Stephan): Convert to tuple (List is for JSON storage)
-                self.desiredLayout = (desiredLayout[0], desiredLayout[1])
+                self.desiredLayout = tuple(desiredLayout)
 
             def __call__(self, image):
                 """Cut out the slides from the video and warps them into perspective."""

@@ -22,7 +22,7 @@ logger = logging.getLogger()
 #: Default layout
 default_layout = {'canvas_video_size': (1920, 1080),
                   'slides_video_size': (1280, 960),
-                  'speaker_video_size': (620, 360),
+                  'speaker_video_size': (640, 360),
                   'speaker_video_position': (0, 360),
                   'slides_video_position': (640, 60)}
 
@@ -160,9 +160,17 @@ def createFinalVideo(slide_clip,
     slides_video_position = final_layout['slides_video_position']
 
     # some utility functions
-    def resize_clip_if_needed(clip, desired_size):
-        if clip.w != desired_size[0] or clip.h != desired_size[1] or True:
-            return clip.resize(desired_size)
+    def resize_clip_if_needed(clip, desired_size, preserve_aspect_ratio=True):
+        if clip.w != desired_size[0] or clip.h != desired_size[1]:
+            if preserve_aspect_ratio:
+                aspect_ratio_target = float(desired_size[0]) / desired_size[1]
+                aspect_ratio_clip = float(clip.w) / clip.h
+                if aspect_ratio_clip > aspect_ratio_target:
+                    return clip.resize(width=desired_size[0])
+                else:
+                    return clip.resize(height=desired_size[1])
+            else:
+                return clip.resize(desired_size)
         return clip
 
     def create_image_clip(image_filename):
@@ -241,10 +249,22 @@ def createFinalVideo(slide_clip,
     else:
         first_segment_clip = create_slide_show_of_images(intro_image_and_durations)
 
+
     ####
     # second segment: the slides, videos, audio_clip, etc.
     # resizing the slides and speaker clips if needed
-    speaker_clip_composed = resize_clip_if_needed(speaker_clip, speaker_video_size).set_position(speaker_video_position)
+    speaker_clip_composed = resize_clip_if_needed(speaker_clip, speaker_video_size)
+
+    # center in height/width if resize uses aspect ratio conservation
+    centered_speaker_video_position = list(speaker_video_position)
+    if speaker_clip_composed.w != speaker_video_size[0]:
+        assert(speaker_clip_composed.w < speaker_video_size[0])
+        centered_speaker_video_position[0] += (speaker_video_size[0] - speaker_clip_composed.w) // 2
+    if speaker_clip_composed.h != speaker_video_size[1]:
+        assert(speaker_clip_composed.h < speaker_video_size[1])
+        centered_speaker_video_position[1] += (speaker_video_size[1] - speaker_clip_composed.h) // 2
+    speaker_clip_composed = speaker_clip_composed.set_position(centered_speaker_video_position)
+
     # the audio_clip is associated to this clip
     if audio_clip is not None:
         speaker_clip_composed = speaker_clip_composed.set_audio(audio_clip)
