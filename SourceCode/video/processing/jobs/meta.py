@@ -132,7 +132,7 @@ class Metadata(Job):
         logger.info('[METADATA] information extracted for video %s', self.video_filename)
 
         return {'talk_title': self.title,
-                'talk_speaker': self.speaker,
+                'speaker_name': self.speaker,
                 'talk_date': self.date,
                 'intro_images': [os.path.join(self._get_meta_location(), i) for i in self.intro_image_names]
                 }

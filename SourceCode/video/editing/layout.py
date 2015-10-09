@@ -35,9 +35,9 @@ def createFinalVideo(slide_clip,
                      credit_images_and_durations,
                      fps,
                      layout=None,
-                     talkInfo=' ',
-                     speakerInfo=' ',
-                     dateInfo='',
+                     talk_title=' ',
+                     speaker_name=' ',
+                     talk_date='',
                      first_segment_duration=10,
                      output_file_name='Output',
                      codecFormat='libx264',
@@ -68,9 +68,9 @@ def createFinalVideo(slide_clip,
 
       .. note: this layout is of course dependent on the background image
 
-    :param str talkInfo: Information about talk like the title, the subject, etc.
-    :param str speakerInfo: Information about talk like the title, the subject, etc.
-    :param str dateInfo: Information about the date of talk.
+    :param str talk_title: the title of the talk. Can be a unicode string.
+    :param str speaker_name: name of the speaker. Can be a unicode string.
+    :param str talk_date: date of the talk
     :param first_segment_duration: Duration *in seconds* of the first segment of the video, showing the title.
         Defaults to 10 seconds.
     :param str output_file_name: the output file name without extension.
@@ -131,9 +131,9 @@ def createFinalVideo(slide_clip,
                         canvas_video_size = (1920, 1080),
                         slides_video_size = (1280, 960),
                         speaker_video_size = (620, 360),
-                        talkInfo = 'How to use SVM kernels',
-                        speakerInfo = 'Prof. Bernhard Schoelkopf',
-                        dateInfo = 'July 2015',
+                        talk_title = 'How to use SVM kernels',
+                        speaker_name = 'Prof. Bernhard Schoelkopf',
+                        talk_date = 'July 2015',
                         first_segment_duration = 10,
                         output_file_name = 'video',
                         codecFormat = 'libx264',
@@ -216,19 +216,19 @@ def createFinalVideo(slide_clip,
         right_margin = 100
         width = canvas_video_size[0] - left_margin - right_margin
 
-        pixelPerCharTitleText = width // len(talkInfo)
-        pixelPerCharSpeakerText = width // len(speakerInfo)
+        pixelPerCharTitleText = width // len(talk_title)
+        pixelPerCharSpeakerText = width // len(speaker_name)
 
-        if isinstance(talkInfo, unicode):
-            talkInfo = talkInfo.encode('latin1')
+        if isinstance(talk_title, unicode):
+            talk_title = talk_title.encode('utf8')
 
-        txtClipTitleText = TextClip(talkInfo, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
+        txtClipTitleText = TextClip(talk_title, fontsize=pixelPerCharTitleText, color='white', font="Amiri")
         txtClipTitleText = txtClipTitleText.set_position((left_margin, canvas_video_size[1] / 3))
 
-        if isinstance(speakerInfo, unicode):
-            speakerInfo = speakerInfo.encode('latin1')
+        if isinstance(speaker_name, unicode):
+            speaker_name = speaker_name.encode('utf8')
 
-        txtClipSpeakerText = TextClip(speakerInfo, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
+        txtClipSpeakerText = TextClip(speaker_name, fontsize=pixelPerCharSpeakerText, color='white', font="Amiri")
         txtClipSpeakerText = txtClipSpeakerText.set_position((left_margin, canvas_video_size[1] / 3 + 100))
 
         txtClipInstituteText = TextClip(instituteText, fontsize=36, color='white', font="Amiri")
@@ -237,7 +237,7 @@ def createFinalVideo(slide_clip,
         txtClipDefaultText = TextClip(defaultText, fontsize=40, color='white', font="Amiri")
         txtClipDefaultText = txtClipDefaultText.set_position((left_margin, canvas_video_size[1] / 3 + 300))
 
-        txtClipDateText = TextClip(dateInfo, fontsize=40, color='white', font="Amiri")
+        txtClipDateText = TextClip(talk_date, fontsize=40, color='white', font="Amiri")
         txtClipDateText = txtClipDateText.set_position((left_margin, canvas_video_size[1] / 3 + 350))
 
         # this does not work, the sizes should be set properly
@@ -277,7 +277,7 @@ def createFinalVideo(slide_clip,
     second_segment_clip = slide_clip_composed
 
 
-    second_segment_clip = second_segment_clip.set_duration(5)  #speaker_clip.duration)  # same duration as any input clip
+    second_segment_clip = second_segment_clip.set_duration(10)  #speaker_clip.duration)  # same duration as any input clip
 
     #! TODO
     # if we need to pause things, and to set start and stop, this should be done here
@@ -286,12 +286,12 @@ def createFinalVideo(slide_clip,
 
     ####
     # second segment overlay: title, info, background: duration equal to the second segment clip
-    if isinstance(speakerInfo, unicode):
+    if isinstance(speaker_name, unicode):
         # some issues transforming strings. What is really expecting MoviePy? apparently utf8 works fine
         # warning the utf8 is applied to the full /unicode/ string
-        info_underslides = (u'%s - %s' % (speakerInfo, talkInfo)).encode('utf8')
+        info_underslides = (u'%s - %s' % (speaker_name, talk_title)).encode('utf8')
     else:
-        info_underslides = '%s - %s' % (speakerInfo, talkInfo)
+        info_underslides = '%s - %s' % (speaker_name, talk_title)
     talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font="Amiri")
 
     talk_info_clip = talk_info_clip.set_position((slide_clip_composed.pos(0)[0],
