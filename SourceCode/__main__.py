@@ -45,7 +45,11 @@ parser.add_argument('--thumbnails-folder',
                     help='specifies the folder where the thumbnails will be stored/retrieved')
 parser.add_argument('--output-folder',
                     help='specifies the output folder')
-
+parser.add_argument('--process-only-index',
+                    metavar='INDEX',
+                    help='''process only the file specified by the INDEX. The files are sorted
+                    so that this option may be used as an option for dispatching the processing
+                    of all the files on different machines (such as a cluster)''')
 parser.add_argument('--option',
                     metavar='KEY=VALUE',
                     help="""Additional runtime option. Each parameter has the form --option=key=value.
@@ -61,12 +65,10 @@ parser.add_argument('--print-workflow',
                     action='store_true',
                     help="""Prints the workflow (text/dot) and exits.""")
 
-parser.add_argument('--is_visual_test',
+parser.add_argument('--is-visual-test',
                     action='store_true',
                     help="""If set on the command line, the video is processed only for 10 seconds.
                     This however does not prevent the full thumbnail extraction.""")
-
-
 
 
 args = parser.parse_args()
@@ -77,19 +79,18 @@ logger.setLevel(logging.DEBUG)
 
 # list workflow
 if(args.list_workflows):
-    import video.processing.workflow as workflow_module
+    import video.processing.workflow as workflow_module_inspect
     import inspect
 
     prepend = '\t'
 
-    for entry in dir(workflow_module):
-        entry_obj = getattr(workflow_module, entry)
+    for entry in dir(workflow_module_inspect):
+        entry_obj = getattr(workflow_module_inspect, entry)
         if(inspect.isfunction(entry_obj) and entry.find('workflow') == 0):
             print
             print '#' * 15
             print 'workflow:', entry
             print prepend + inspect.getdoc(entry_obj).replace('\n', '\n' + prepend)
-
 
     sys.exit(0)
 
@@ -114,8 +115,8 @@ if args.video_file:
             sys.exit(1)
 
 # loads the workflow
-import video.processing.workflow as workflow_module
 try:
+    import video.processing.workflow as workflow_module
     workflow_factory_obj = getattr(workflow_module, args.workflow)
 except Exception, e:
     logger.error('[CONFIG] the workflow %s cannot be loaded', args.workflow)
@@ -148,8 +149,17 @@ logger.info("[CONFIG] output folder %s", args.output_folder)
 logger.info("[CONFIG] thumbnails folder %s", args.thumbnails_folder)
 logger.info("[CONFIG] workflow %s", args.workflow)
 
-for f in video_files:
-    logger.info("[VIDEO] -> %s <-", f)
+# sorting the videos so that they do not depend on the order given by the file
+# system
+video_files.sort()
+for e, f in enumerate(video_files):
+    s = ''
+    if args.process_only_index is not None:
+        if e == int(args.process_only_index):
+            s = '  ** processing **'
+        else:
+            s = '  (not processing)'
+    logger.info("[VIDEO] -> %s <-%s", f, s)
 
 
 options = {}
@@ -173,7 +183,11 @@ if args.option:
 workflow_instance = workflow_factory_obj()
 
 # process all files
-for f in video_files:
+for index, f in enumerate(video_files):
+
+    if args.process_only_index is not None:
+        if index != int(args.process_only_index):
+            continue
 
     video_base_name = os.path.splitext(os.path.basename(f))[0]
     output_location = os.path.join(args.output_folder, video_base_name)
@@ -186,7 +200,6 @@ for f in video_files:
 
     params = options.copy()
 
-
     # those important parameter should not be overriden
     params.update({'video_filename': os.path.basename(f),
                    'video_location': os.path.dirname(f),
@@ -194,14 +207,6 @@ for f in video_files:
                    'json_prefix': os.path.join(output_location, video_base_name),
                    'is_visual_test': args.is_visual_test is not None
                    })
-              # 'segment_computation_tolerance': 0.05,
-              # 'segment_computation_min_length_in_seconds': 2,
-              # 'slide_clip_desired_format': [1280, 960],
-              # 'nb_vertical_stripes': 10
-
-
-    # params.update(options)
 
     outputs = workflow_module.process(workflow_instance, **params)
     # outputs.write_videofile(os.path.join(slide_clip_folder, 'slideclip.mp4'))
-
