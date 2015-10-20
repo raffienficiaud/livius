@@ -55,7 +55,9 @@ parser.add_argument('--option',
                     help="""Additional runtime option. Each parameter has the form --option=key=value.
                     This option may appear multiple times. """,
                     action='append')
-
+parser.add_argument('--non-interactive',
+                    help='indicates that the processing will be not interactive (mainly for matplotlib backend)',
+                    action='store_true')
 parser.add_argument('--option-file',
                     metavar='FILE.json',
                     help="""Reads a set of additional runtime options from a json file.
@@ -76,6 +78,12 @@ args = parser.parse_args()
 # getting loggers
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
+
+# this should be the first thing
+if args.non_interactive is not None and args.non_interactive:
+    import matplotlib    
+    matplotlib.use('Agg')
+
 
 # list workflow
 if(args.list_workflows):
@@ -205,7 +213,7 @@ for index, f in enumerate(video_files):
                    'video_location': os.path.dirname(f),
                    'thumbnails_root': thumbnails_root,
                    'json_prefix': os.path.join(output_location, video_base_name),
-                   'is_visual_test': args.is_visual_test is not None
+                   'is_visual_test': args.is_visual_test is not None and args.is_visual_test
                    })
 
     outputs = workflow_module.process(workflow_instance, **params)

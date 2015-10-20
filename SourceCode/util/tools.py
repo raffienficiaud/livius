@@ -7,7 +7,6 @@ If you need any other convenient utilities, you would add them inside this modul
 import numpy as np
 import sys
 import json
-import matplotlib.pyplot as plt
 import cv2
 
 
@@ -241,6 +240,7 @@ def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow
     finalDiffSumNorm = finalDiffSum / counter
 
     if flagShow:
+	import matplotlib.pyplot as plt
         plt.imshow(finalDiffSumNorm, cmap=cm.Greys_r)
         plt.show()
 
@@ -292,6 +292,7 @@ def max_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow
     finalDiffMaxNorm = finalDiffMax / counter
 
     if flagShow:
+	import matplotlib.pyplot as plt
         plt.imshow(finalDiffMaxNorm, cmap=cm.Greys_r)
         plt.show()
 
@@ -347,6 +348,7 @@ def max_all_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
     finalMaxNorm = finalMax / counter
 
     if flagShow:
+	import matplotlib.pyplot as plt
         plt.imshow(finalMaxNorm, cmap=cm.Greys_r)
         plt.show()
 
