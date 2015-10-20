@@ -126,7 +126,7 @@ except Exception, e:
 video_files = args.video_file if args.video_file is not None else []
 if args.video_folder is not None:
     for f in args.video_folder:
-        video_files += os.listdir(f)
+        video_files += [os.path.abspath(os.path.join(f, i)) for i in os.listdir(f)]
 
 if args.print_workflow:
     print workflow_factory_obj().workflow_to_string()
