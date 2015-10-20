@@ -19,6 +19,16 @@ Contents:
    utilities
    Visualization utilities<visualization>
    sphinx_how_to
+   
+What is Livius?
+===============
+Livius is a small framework for making videos out of talks/presentations. It uses as input a video stream
+containing all the relevant informations: slides, speaker, sounds... and applies corrections to it:
+
+* slide contrast and aspect is corrected automatically
+* speaker is tracked (in progress)
+* title/epilog/credit pages may be added
+* the talk duration is cropped and pauses can be added as well (in progress) 
 
 Getting started
 ===============
@@ -70,6 +80,11 @@ default settings from the command line.
 ``--is_visual_test`` permits to limit the processing of the final video to 10 seconds, which may be convenient for visual checks.
 However the thumbnail extraction is (currently) performed for the full video. 
 
+``--process-only-index`` makes the command run the processing of only one video. This is convenient in case the 
+processing is run on a eg. cluster and each processing of a unique video spans one process.
+
+``--non-interactive`` might be needed in environment where no front-end interaction is possible (eg. remote session).
+
 Installation
 ============
 
@@ -79,7 +94,7 @@ in the wiki for more details).
 
 .. code::
 
-  pip install numpy
+  pip install numpy matplotlib
   pip install moviepy
   
   # for the documentation
@@ -98,8 +113,9 @@ The metadata associated to the video files describe the following:
 * optionally an image used as introduction
 * optionally the pauses and begin/end of the video 
 
-The meta data is loaded by the Job :py:class:`Metadata`. If your metadata is stored in a way that differs with
-the expectation of :py:class:`Metadata`, it is easy to adapt this class to your needs.
+The meta data is loaded by the Job :py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>`. 
+If your metadata is stored in a way that differs with the expectation of 
+:py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>`, it is easy to adapt this class to your needs.
 
 Relocatable files
 =================

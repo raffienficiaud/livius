@@ -32,7 +32,7 @@ class Metadata(Job):
            |- some_png_image.png
 
 
-    where ``WE`` stands for /without extension/. The meta will look for the files containing the relevant
+    where ``WE`` stands for *without extension*. The meta will look for the files containing the relevant
     information under the root directory containing the meta data, and the video filename WE. It will look for
     on picture in PNG format and consider it as the introduction picture.
 
@@ -40,6 +40,16 @@ class Metadata(Job):
 
     * ``video_filename`` name of the video to process (mandatory, cached)
     * ``meta_location`` location of the meta data (mandatory, not cached)
+
+    .. note::
+
+      Some of the attributes of the final video are set by the :py:class:`ClipsToMovie <SourceCode.video.processing.jobs.create_movie.ClipsToMovie>`
+      job (such as the credit/epilog
+      images, the background image, etc).
+
+    .. rubric:: Metadata file format
+
+      As its name indicates **not!** the file ``video_file_name_WE.txt`` is a json file containing the following informations:
 
     """
 
@@ -97,16 +107,19 @@ class Metadata(Job):
 
     def _get_meta_filename(self):
         return os.path.join(self._get_meta_location(),
-                            os.path.splitext(self.video_filename)[0] + '.txt')
+                            os.path.splitext(self.video_filename)[0] + '_metadata.json')
 
     def _read_file_content(self):
         with open(self._get_meta_filename()) as f:
             import json
-            d = json.load(f)['TalkDetail']
+            d = json.load(f)
 
-            self.title = d[1]
-            self.speaker = d[0]
-            self.date = d[3]
+            self.title = d['title']
+            self.speaker = d['speaker']
+            self.date = d['date']
+            self.video_begin = d['video_begin'] if 'video_begin' in d else None
+            self.video_end = d['video_end'] if 'video_end' in d else None
+
 
         # listing the image files, sorting them, and considering them as introduction images.
         l = os.listdir(os.path.dirname(self._get_meta_filename()))
@@ -136,3 +149,44 @@ class Metadata(Job):
                 'talk_date': self.date,
                 'intro_images': [os.path.join(self._get_meta_location(), i) for i in self.intro_image_names]
                 }
+
+
+def metadata_mogrifier(folder):
+    """Utility function for transforming broken metadata into a usable one"""
+    import json
+
+    list_videos = os.listdir(folder)
+
+    for current_video in list_videos:
+        dout = {}
+        full_path = os.path.abspath(os.path.join(folder, current_video))
+
+        video_filename = current_video
+
+        metadata_1 = os.path.join(full_path, video_filename + '.txt')
+
+        # this one should exist: main metadata
+        assert(os.path.exists(metadata_1))
+
+        if os.path.exists(metadata_1):
+            with open(metadata_1) as f:
+                d = json.load(f)['TalkDetail']
+
+                dout['title'] = d[1]
+                dout['speaker'] = d[0]
+                dout['date'] = d[3]
+
+        segment_file = os.path.join(full_path, 'processing_%s__Time_Total_Seconds.json' % video_filename)
+        if os.path.exists(segment_file):
+            with open(segment_file) as f:
+                d = json.load(f)['CuttingTimes']
+                if(d[0].lower() == 'yes'):
+                    dout['video_begin'] = d[1]
+                    dout['video_end'] = d[2]
+
+        out_file = os.path.join(full_path, video_filename + '_metadata.json')
+        with open(out_file, 'w') as f:
+            json.dump(dout, f, index=4)
+
+if __name__ == '__main__':
+    metadata_mogrifier(sys.arg[1])
