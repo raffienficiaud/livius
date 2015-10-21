@@ -15,6 +15,7 @@ import sys
 from moviepy.video.compositing.concatenate import concatenate
 
 import logging
+from timeit import itertools
 logger = logging.getLogger()
 
 # this settings are dependent on the background image
@@ -39,6 +40,7 @@ def createFinalVideo(slide_clip,
                      speaker_name=' ',
                      talk_date='',
                      first_segment_duration=10,
+                     pauses=None,
                      output_file_name='Output',
                      codecFormat='libx264',
                      container='.mp4',
@@ -74,6 +76,8 @@ def createFinalVideo(slide_clip,
     :param str talk_date: date of the talk
     :param first_segment_duration: Duration *in seconds* of the first segment of the video, showing the title.
         Defaults to 10 seconds.
+    :param list pauses: list of pauses that will not be included in the final video. The pauses consist
+        of pairs of strings that indicate a timeframe in the moviePy format.
     :param str output_file_name: the output file name without extension.
     :param str codecFormat: The codec format to write the new video into the file
         Codec to use for image encoding. Can be any codec supported by ffmpeg, but the container
@@ -147,6 +151,9 @@ def createFinalVideo(slide_clip,
 
     from moviepy.video.VideoClip import ImageClip, TextClip
     from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+    import moviepy.video.fx.all as vfx
+    import moviepy.audio.fx.all as afx
+    from moviepy.audio.fx.volumex import volumex
 
     # setting the sizes
     if layout is None:
@@ -256,6 +263,108 @@ def createFinalVideo(slide_clip,
     # second segment: the slides, videos, audio_clip, etc.
     # resizing the slides and speaker clips if needed
     speaker_clip_composed = resize_clip_if_needed(speaker_clip, speaker_video_size)
+    slide_clip_composed = resize_clip_if_needed(slide_clip, slides_video_size)
+
+    # the audio_clip is associated to this clip
+    if audio_clip is not None:
+        speaker_clip_composed = speaker_clip_composed.set_audio(audio_clip)
+
+    # this one will be used for reference on properties
+    # apparently in MoviePy, we cannot nest CompositeVideoClip, which is why it is done this way
+    # and not putting this part into a CompositeVideoClip
+    second_segment_clip = slide_clip_composed
+
+
+    # handling the pauses and the start/stop of the video
+    #import ipdb
+    #ipdb.set_trace()
+
+    # transform pauses into segments
+    segments = None
+    if pauses is not None and pauses:
+        segments = []
+        last_start = 0
+        for begin_pause, end_pause in pauses:
+            assert(begin_pause is not None or end_pause is not None)
+            if begin_pause is None:
+                logger.info('[VIDEO][CROP] removing start segment ending at %s', end_pause)
+                last_start = end_pause
+            elif end_pause is None:
+                logger.info('[VIDEO][CROP] removing end_pause segment starting at %s', begin_pause)
+                segments += [(last_start, begin_pause)]
+            else:
+                logger.info('[VIDEO][CROP] removing intermediate segment %s <--> %s', begin_pause, end_pause)
+                segments += [(last_start, begin_pause)]
+                last_start = end_pause
+
+        if not segments:
+            # in case we get only rid of the beginning
+            segments += [(last_start, None)]
+
+        # apply effects
+        def fadeinout_effects(clip_effect, fadein_duration=2, fadeout_duration=2):
+            ret = []
+            start = 0  # start/end segment without effect
+            end = None
+            if(fadein_duration > 0):
+                ret += [clip_effect.subclip(0, fadein_duration)
+                                   .fx(vfx.fadein, duration=fadein_duration)]
+                                   #.afx(afx.audio_fadein, fadein_duration)]
+                start = fadein_duration
+
+            if(fadeout_duration > 0):
+                end = -fadeout_duration
+
+            ret += [clip_effect.subclip(start, end)]
+
+            if(fadeout_duration > 0):
+                ret += [clip_effect.subclip(clip_effect.duration - fadeout_duration)
+                                   .fx(vfx.fadeout, duration=fadeout_duration)]
+                                   #.afx(afx.audio_fadeout, fadeout_duration)]
+
+            return ret
+
+        def segment_and_apply_effects(clip, segments):
+            # subclips
+            paused_clips = []
+            for current_segment in segments:
+                begin, end = current_segment
+
+                if end is None:
+                    # until the end
+                    paused_clips += [clip.subclip(t_start=begin)]
+                else:
+                    paused_clips += [clip.subclip(t_start=begin, t_end=end)]
+
+            pause_clips_with_effect = []
+            for current_selected_segment in paused_clips:
+                pause_clips_with_effect += fadeinout_effects(current_selected_segment)
+
+            return concatenate(pause_clips_with_effect)
+
+        # apply it to speaker and slide clips
+        slide_clip_composed = segment_and_apply_effects(slide_clip_composed, segments)
+        speaker_clip_composed = segment_and_apply_effects(speaker_clip_composed, segments)
+
+    # making processing shorter if this is a test
+    if is_test:
+        slide_clip_composed = slide_clip_composed.set_duration(10)
+        speaker_clip_composed = speaker_clip_composed.set_duration(10)
+
+    # we take again the slide clip as the reference one
+    second_segment_clip = slide_clip_composed
+
+
+    ####
+    # second segment overlay: title, info, background: duration equal to the second segment clip
+    # placement of the two streams above
+    if isinstance(speaker_name, unicode):
+        # some issues transforming strings. What is really expecting MoviePy? apparently utf8 works fine
+        # warning the utf8 is applied to the full /unicode/ string
+        info_underslides = (u'%s - %s' % (speaker_name, talk_title)).encode('utf8')
+    else:
+        info_underslides = '%s - %s' % (speaker_name, talk_title)
+    talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font="Amiri")
 
     # center in height/width if resize uses aspect ratio conservation
     centered_speaker_video_position = list(speaker_video_position)
@@ -267,40 +376,16 @@ def createFinalVideo(slide_clip,
         centered_speaker_video_position[1] += (speaker_video_size[1] - speaker_clip_composed.h) // 2
     speaker_clip_composed = speaker_clip_composed.set_position(centered_speaker_video_position)
 
-    # the audio_clip is associated to this clip
-    if audio_clip is not None:
-        speaker_clip_composed = speaker_clip_composed.set_audio(audio_clip)
+    slide_clip_composed = slide_clip_composed.set_position(slides_video_position)
 
-    slide_clip_composed = resize_clip_if_needed(slide_clip, slides_video_size).set_position(slides_video_position)
-
-    # this one will be used for reference on properties
-    # apparently in MoviePy, we cannot nest CompositeVideoClip, which is why it is done this way
-    # and not putting this part into a CompositeVideoClip
-    second_segment_clip = slide_clip_composed
-
-    if is_test:
-        second_segment_clip = second_segment_clip.set_duration(10)
-
-    #! TODO
-    # if we need to pause things, and to set start and stop, this should be done here
-
-    #second_segment_clip = second_segment_clip.set_start(first_segment_clip.end)
-
-    ####
-    # second segment overlay: title, info, background: duration equal to the second segment clip
-    if isinstance(speaker_name, unicode):
-        # some issues transforming strings. What is really expecting MoviePy? apparently utf8 works fine
-        # warning the utf8 is applied to the full /unicode/ string
-        info_underslides = (u'%s - %s' % (speaker_name, talk_title)).encode('utf8')
-    else:
-        info_underslides = '%s - %s' % (speaker_name, talk_title)
-    talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font="Amiri")
-
+    # talk texttual information
     talk_info_clip = talk_info_clip.set_position((slide_clip_composed.pos(0)[0],
                                                   slide_clip_composed.pos(0)[1] + slide_clip_composed.h + 15))
 
+    # background
     background_image_clip = resize_clip_if_needed(create_image_clip(video_background_image), canvas_video_size)
 
+    # stacking
     second_segment_overlay_clip = CompositeVideoClip([background_image_clip,
                                                       talk_info_clip,
                                                       speaker_clip_composed,

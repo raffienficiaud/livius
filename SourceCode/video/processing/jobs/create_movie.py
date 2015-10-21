@@ -8,9 +8,6 @@ This file contains the Job and functions for creating the final video for movieP
 
   ClipsToMovie
 
-
-
-
 """
 
 from ..job import Job
@@ -179,9 +176,9 @@ class ClipsToMovie(Job):
         ressource_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "ressources"))
         video_background_image = os.path.join(ressource_folder, self.background_image_name)
 
-
         credit_images_and_durations = [(os.path.join(ressource_folder, i), None) for i in self.credit_image_names]  # None sets the duration to the default
 
+        # introduction image
         intro_images_and_durations = []
         if meta is not None and "intro_images" in meta:
             intro_images_and_durations = []
@@ -201,6 +198,15 @@ class ClipsToMovie(Job):
 
                 intro_images_and_durations += [(image_file, None)]  # None sets the duration to the default
 
+        # pauses / including video begin/end
+        pauses = []
+        if meta is not None and "video_begin" in meta and meta['video_begin'] is not None:
+            pauses += [(None, meta['video_begin'])]  # None means video begin
+
+        if meta is not None and "video_end" in meta and meta['video_end'] is not None:
+            pauses += [(meta['video_end'], None)]  # None means video end
+
+
         audio_clip = AudioFileClip(input_video)
 
         createFinalVideo(slide_clip=slide_clip,
@@ -214,6 +220,7 @@ class ClipsToMovie(Job):
                          speaker_name=meta['speaker_name'] if meta is not None else 'name',
                          talk_date=meta['talk_date'] if meta is not None else 'today',
                          first_segment_duration=10,
+                         pauses=pauses,
                          output_file_name=output_video_no_container,
                          codecFormat='libx264',
                          container=self.get_container(),

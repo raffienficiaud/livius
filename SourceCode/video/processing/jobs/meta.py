@@ -5,6 +5,11 @@ Metadata
 This file contains a Job for extracting the metadata from a user annotated file. The format is specific to the
 MLSS 2015, but may be easily adapted to your needs.
 
+.. autosummary::
+
+  Metadata
+  metadata_mogrifier
+
 """
 
 
@@ -20,7 +25,7 @@ logger = logging.getLogger()
 class Metadata(Job):
     """
     Job taking the metadata location anf video filename and produce metadata suitable
-    for the movie composition object :py:class:`ClipsToMovie`.
+    for the movie composition object :py:class:`ClipsToMovie <SourceCode.video.processing.jobs.create_movie.ClipsToMovie>`.
 
     The expected structure of the meta data is the following:
 
@@ -28,7 +33,7 @@ class Metadata(Job):
 
         root of metadata
         |- video_file_name_WE
-           |- video_file_name_WE.txt
+           |- video_file_name_WE_metadata_input.json
            |- some_png_image.png
 
 
@@ -43,13 +48,20 @@ class Metadata(Job):
 
     .. note::
 
-      Some of the attributes of the final video are set by the :py:class:`ClipsToMovie <SourceCode.video.processing.jobs.create_movie.ClipsToMovie>`
+      Some of the attributes of the final video are set by the
+      :py:class:`ClipsToMovie <SourceCode.video.processing.jobs.create_movie.ClipsToMovie>`
       job (such as the credit/epilog
       images, the background image, etc).
 
     .. rubric:: Metadata file format
 
-      As its name indicates **not!** the file ``video_file_name_WE.txt`` is a json file containing the following informations:
+    As its name indicates the file ``video_file_name_WE_metadata_input.json`` is a json file containing the following fields:
+
+    * ``speaker`` the name of the speaker
+    * ``title`` the title of the talk
+    * ``date`` in a string format (it will not be interpreted in any way)
+    * ``video_begin`` (optional) indicates the beginning of the sequence in a moviePy format (eg. 00:00:57 for 57sec)
+    * ``video_end`` (optional) indicates the end of the sequence in a moviePy format
 
     """
 
@@ -107,7 +119,10 @@ class Metadata(Job):
 
     def _get_meta_filename(self):
         return os.path.join(self._get_meta_location(),
-                            os.path.splitext(self.video_filename)[0] + '_metadata.json')
+                            os.path.splitext(self.video_filename)[0] + '_metadata_input.json')
+
+    class __dummy(object):
+        pass
 
     def _read_file_content(self):
         with open(self._get_meta_filename()) as f:
@@ -117,8 +132,8 @@ class Metadata(Job):
             self.title = d['title']
             self.speaker = d['speaker']
             self.date = d['date']
-            self.video_begin = d['video_begin'] if 'video_begin' in d else None
-            self.video_end = d['video_end'] if 'video_end' in d else None
+            self.video_begin = d['video_begin'] if 'video_begin' in d else ""  # empty string evaluates to False and is serializable
+            self.video_end = d['video_end'] if 'video_end' in d else ""
 
 
         # listing the image files, sorting them, and considering them as introduction images.
@@ -147,12 +162,14 @@ class Metadata(Job):
         return {'talk_title': self.title,
                 'speaker_name': self.speaker,
                 'talk_date': self.date,
-                'intro_images': [os.path.join(self._get_meta_location(), i) for i in self.intro_image_names]
+                'intro_images': [os.path.join(self._get_meta_location(), i) for i in self.intro_image_names],
+                'video_begin': self.video_begin if self.video_begin != "" else None,
+                'video_end': self.video_end if self.video_end != "" else None
                 }
 
 
 def metadata_mogrifier(folder):
-    """Utility function for transforming broken metadata into a usable one"""
+    """Utility function transforming metadata stored in txt file into a format usable by :py:class:`Meta ` usable one. Should disappear."""
     import json
 
     list_videos = os.listdir(folder)
@@ -176,7 +193,7 @@ def metadata_mogrifier(folder):
                 dout['speaker'] = d[0]
                 dout['date'] = d[3]
 
-        segment_file = os.path.join(full_path, 'processing_%s__Time_Total_Seconds.json' % video_filename)
+        segment_file = os.path.join(full_path, 'processing_%s_Time_Total_Seconds.json' % video_filename)
         if os.path.exists(segment_file):
             with open(segment_file) as f:
                 d = json.load(f)['CuttingTimes']
@@ -184,9 +201,11 @@ def metadata_mogrifier(folder):
                     dout['video_begin'] = d[1]
                     dout['video_end'] = d[2]
 
-        out_file = os.path.join(full_path, video_filename + '_metadata.json')
+        out_file = os.path.join(full_path, video_filename + '_metadata_input.json')
         with open(out_file, 'w') as f:
-            json.dump(dout, f, index=4)
+            json.dump(dout, f, indent=4)
 
 if __name__ == '__main__':
-    metadata_mogrifier(sys.arg[1])
+    import sys
+    print sys.argv
+    metadata_mogrifier(sys.argv[1])
