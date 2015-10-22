@@ -194,7 +194,11 @@ class Job(object):
         return None
 
     def is_up_to_date(self):
-        """Indicate wether this step should be processed again."""
+        """Indicate wether this step should be processed again.
+
+        This may be overriden by a child Job for instance when the output is a file and cannot be seen
+        by the internal state (example: output file does not exist, input parameters makes the output file obsolete...)
+        """
         for par in self._parent_instances:
             if not par.is_up_to_date():
                 return False
@@ -258,7 +262,7 @@ class Job(object):
             d[k] = getattr(self, k)
 
         with open(self.json_filename, 'w') as f:
-            json.dump(d, f)
+            json.dump(d, f, indent=4)
 
     def load_state(self):
         """Load the json file."""
