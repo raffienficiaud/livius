@@ -141,18 +141,8 @@ class Metadata(Job):
         self.intro_image_names = [i for i in l if os.path.splitext(i)[1].lower() == '.png']
         self.intro_image_names.sort()
 
-    def is_up_to_date(self):
-        """is_up_to_date returns False if there was any update of the meta files"""
-
-        if not os.path.exists(self.json_filename):
-            return False
-
-        if(os.stat(self._get_meta_filename()).st_mtime >= os.stat(self.json_filename).st_mtime):
-            return False
-
-        return super(Metadata, self).is_up_to_date()
-
     def run(self, *args, **kwargs):
+        # doing nothing in particular
         pass
 
     def get_outputs(self):
@@ -169,7 +159,17 @@ class Metadata(Job):
 
 
 def metadata_mogrifier(folder):
-    """Utility function transforming metadata stored in txt file into a format usable by :py:class:`Meta ` usable one. Should disappear."""
+    """Utility function transforming metadata stored in txt file into a format usable by
+    :py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>` usable one.
+
+    This is just an example reading 2 files in a JSON format and creating the appropriate metadata input
+    for the :py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>` class.
+
+    It is possible to run directly this function by providing the location of the folder to parse, in the following way::
+
+      python -m SourceCode.video.processing.jobs.meta some_folder
+
+    """
     import json
 
     list_videos = os.listdir(folder)
