@@ -139,3 +139,63 @@ class SelectSpeaker(SelectPolygonJob):
     name = 'select_speaker'
 
     window_title = 'Select the location of the Speaker'
+
+
+
+def selection_mogrifier(folder, outfolder):
+    """Utility function transforming existing selections ready for
+    :py:class:`SelectSlide <SourceCode.video.processing.jobs.select_polygon.SelectSlide>` and
+    :py:class:`SelectSpeaker <SourceCode.video.processing.jobs.select_polygon.SelectSpeaker>`.
+
+    This is a simple function reading 2 files in a JSON format in an old (unsupported) format and
+    writing them to the output folder in the new format.
+
+    It is possible to run directly this function by providing the location of the folder to parse, in the following way::
+
+      python -m SourceCode.video.processing.jobs.select_polygon some_folder_init output_folder_root
+
+    """
+    import json
+
+    list_videos = os.listdir(folder)
+
+    for current_video in list_videos:
+
+        print 'processing video', current_video
+
+        full_path = os.path.abspath(os.path.join(folder, current_video))
+        out_path = os.path.abspath(os.path.join(outfolder, current_video))
+
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+
+        video_filename = current_video
+
+        # speaker
+        dout = {}
+        selection1 = os.path.join(full_path, 'processing_' + video_filename + '__select_speaker.json')
+        with open(selection1) as f:
+            d = json.load(f)
+            dout['points'] = d['points']
+            dout['video_filename'] = os.path.basename(d['video_filename'])
+
+        out_file = os.path.join(out_path, video_filename + '_select_speaker.json')
+        with open(out_file, 'w') as f:
+            json.dump(dout, f, indent=4)
+
+        # slides
+        dout = {}
+        selection2 = os.path.join(full_path, 'processing_' + video_filename + '__select_slides.json')
+        with open(selection2) as f:
+            d = json.load(f)
+            dout['points'] = d['points']
+            dout['video_filename'] = os.path.basename(d['video_filename'])
+
+        out_file = os.path.join(out_path, video_filename + '_select_slides.json')
+        with open(out_file, 'w') as f:
+            json.dump(dout, f, indent=4)
+
+if __name__ == '__main__':
+    import sys
+    print sys.argv
+    selection_mogrifier(sys.argv[1], sys.argv[2])
