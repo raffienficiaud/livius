@@ -11,6 +11,7 @@ main function:
 
 """
 
+import os
 import sys
 from moviepy.video.compositing.concatenate import concatenate
 
@@ -187,17 +188,15 @@ def createFinalVideo(slide_clip,
         if isinstance(image_filename, unicode):
             image_filename = image_filename.encode(sys.getdefaultencoding())
 
+        image_filename = os.path.abspath(image_filename)
+        assert(os.path.exists(image_filename))
         return ImageClip(image_filename)
 
     def create_slide_show_of_images(images_and_durations):
         all_slides = []
         for image, duration in images_and_durations:
 
-            image_clip = create_image_clip(image)
-            if (image_clip.w != canvas_video_size[0]) or (image_clip.h != canvas_video_size[1]):
-                # resize only if needed
-                image_clip = image_clip.resize((canvas_video_size[1], canvas_video_size[1]))
-
+            image_clip = resize_clip_if_needed(create_image_clip(image), canvas_video_size, False)
             image_clip = image_clip.set_duration(duration if duration is not None else 2)  # 2 secs is the default
 
             all_slides.append(image_clip)
@@ -218,6 +217,10 @@ def createFinalVideo(slide_clip,
     if intro_image_and_durations is None or not intro_image_and_durations:
         # this is shitty, we do not use that
         # The template for the second show
+
+        # SHOULD NOT GO THERE!!! Not working
+        assert(False)
+
         instituteText = "Max Planck Institute for Intelligent Systems"
         defaultText = 'Machine Learning Summer School 2015'
 
@@ -308,8 +311,8 @@ def createFinalVideo(slide_clip,
             end = None
             if(fadein_duration > 0):
                 ret += [clip_effect.subclip(0, fadein_duration)
-                                   .fx(vfx.fadein, duration=fadein_duration)]
-                                   #.afx(afx.audio_fadein, fadein_duration)]
+                                   .fx(vfx.fadein, duration=fadein_duration)
+                                   .afx(afx.audio_fadein, fadein_duration)]
                 start = fadein_duration
 
             if(fadeout_duration > 0):
@@ -319,8 +322,8 @@ def createFinalVideo(slide_clip,
 
             if(fadeout_duration > 0):
                 ret += [clip_effect.subclip(clip_effect.duration - fadeout_duration)
-                                   .fx(vfx.fadeout, duration=fadeout_duration)]
-                                   #.afx(afx.audio_fadeout, fadeout_duration)]
+                                   .fx(vfx.fadeout, duration=fadeout_duration)
+                                   .afx(afx.audio_fadeout, fadeout_duration)]
 
             return ret
 
@@ -389,7 +392,8 @@ def createFinalVideo(slide_clip,
     second_segment_overlay_clip = CompositeVideoClip([background_image_clip,
                                                       talk_info_clip,
                                                       speaker_clip_composed,
-                                                      slide_clip_composed])
+                                                      slide_clip_composed
+                                                      ])
 
     # same attributes as the clip it is supposed to overlay
     second_segment_overlay_clip = second_segment_overlay_clip.set_duration(second_segment_clip.duration)
