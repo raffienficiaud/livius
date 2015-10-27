@@ -101,7 +101,15 @@ in the wiki for more details).
   pip install sphinx
   pip install sphinxcontrib-programoutput 
   pip install sphinx_bootstrap_theme
-  
+
+Font on Linux
+-------------
+Some specific fonts are used (see Lato font below). On Linux those fonts sa ``.ttf`` files should be installed as follow:
+
+.. code::
+
+  cp *.ttf $HOME/.fonts
+  fc-cache -fv
   
 Meta information associated to the videos
 =========================================
@@ -135,7 +143,10 @@ related to the /Machine Learning Summer School/ (2013, 2015), but may be adapted
   (grey area on which the slides and the speaker are overlayed), mainly for visual sanity check
 * ``SourceCode/ressources/background_no_grey_mlss2015.png``, same as ``background_mlss2015`` without grey areas (if one
   of the stream is smaller than the target one). 
-
+* ``SourceCode/ressources/Lato2OFL.zip`` is an archive containing the **Lato** fonts that are used by Livius (for overlaying the title
+  etc.). This font was downloaded from [this](http://www.latofonts.com/lato-free-fonts/) web site. It is licensed under the
+  [SIL Open Font License (OFL) v1.1](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL) ("/The fonts can be used 
+  with­out any lim­i­ta­tions for com­mer­cial and non-​​commercial pur­poses/"). 
 
 Indices and tables
 ==================
