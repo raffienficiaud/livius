@@ -78,6 +78,18 @@ class Job(object):
         """Return all the parents jobs of this class."""
         return cls.parents
 
+    @classmethod
+    def workflow_to_string(cls, current_index=0):
+        """Returns a string version of the workflow"""
+
+        pref = ' ' * 2 * current_index
+        str = pref + cls.name + '\n'
+
+        if cls.get_parents() is not None:
+            for p in cls.get_parents():
+                str += p.workflow_to_string(current_index + 1)
+        return str
+
     def __init__(self, *args, **kwargs):
         """:param json_prefix: the prefix used for serializing the state of this runner."""
         super(Job, self).__init__()
@@ -124,6 +136,13 @@ class Job(object):
 
                 if par_instance.name in self._parent_names:
                     # not adding
+
+                    try:
+                        import ipdb
+                        ipdb.set_trace()
+                    except ImportError:
+                        pass
+
                     raise RuntimeError("name %s is already used for one parent of job %s" %
                                        (par_instance.name, self.name))
 
@@ -175,7 +194,11 @@ class Job(object):
         return None
 
     def is_up_to_date(self):
-        """Indicate wether this step should be processed again."""
+        """Indicate wether this step should be processed again.
+
+        This may be overriden by a child Job for instance when the output is a file and cannot be seen
+        by the internal state (example: output file does not exist, input parameters makes the output file obsolete...)
+        """
         for par in self._parent_instances:
             if not par.is_up_to_date():
                 return False
@@ -193,8 +216,15 @@ class Job(object):
         try:
             for k in self.attributes_to_serialize:
 
-                if str(dict_json[k]) != str(getattr(self, k)):
-                    logger.debug("Key %s mismatch: left=%s / right=%s", k, str(dict_json[k]), str(getattr(self, k)))
+                current_object = getattr(self, k)
+                if isinstance(current_object, unicode):
+                    if unicode(dict_json[k]) != unicode(current_object):
+                        logger.debug("Key %s mismatch: cached=%s / current=%s", k, unicode(dict_json[k]), unicode(getattr(self, k)))
+                        return False
+                    continue
+
+                if str(dict_json[k]) != str(current_object):
+                    logger.debug("Key %s mismatch: cached=%s / current=%s", k, str(dict_json[k]), str(getattr(self, k)))
                     return False
 
         except KeyError:
@@ -232,7 +262,7 @@ class Job(object):
             d[k] = getattr(self, k)
 
         with open(self.json_filename, 'w') as f:
-            json.dump(d, f)
+            json.dump(d, f, indent=4)
 
     def load_state(self):
         """Load the json file."""
@@ -303,3 +333,4 @@ class Job(object):
             self.cache_output()
 
         return None
+

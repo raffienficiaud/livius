@@ -1,0 +1,8 @@
+{
+"TalkDetail": [
+"Bernhard Schölkopf", 
+"What is Machine Learning", 
+"Max Planck Institute for Intelligent Systems", 
+"13 July 2015"
+]
+}

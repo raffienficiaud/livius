@@ -23,15 +23,15 @@ class HistogramCorrelationJob(Job):
 
     The inputs of the parents are:
 
-        * A function giving an histogram per frame and area name::
+    * A function giving an histogram per frame and area name::
 
-            (frame_index, area_name) -> Histogram
+        (frame_index, area_name) -> Histogram
 
-          See :py:class:`.histogram_computation.HistogramsLABDiff` for an
-          implementation example.
+      See :py:class:`.histogram_computation.HistogramsLABDiff` for an
+      implementation example.
 
-        * The number of thumbnails
-        * The number of vertical stripes
+    * The number of thumbnails
+    * The number of vertical stripes
 
     .. rubric:: Workflow outputs
 
@@ -41,10 +41,15 @@ class HistogramCorrelationJob(Job):
 
     """
 
+    #: Name of the job in the workflow
     name = 'histogram_correlation'
-    # :
+
+    #:
     attributes_to_serialize = []
-    # :
+
+    #: Cached output:
+    #:
+    #: * ``histogram_correlations`` the correlation on the histogram of two consecutive frames
     outputs_to_cache = ['histogram_correlations']
 
     def __init__(self, *args, **kwargs):
@@ -71,6 +76,7 @@ class HistogramCorrelationJob(Job):
         # Second parent is the NumberOfFiles
         number_of_files = args[1]
 
+
         # init
         self.histogram_correlations = {}
 
@@ -95,7 +101,7 @@ class HistogramCorrelationJob(Job):
 
             if previous_speaker_histogram_plane is not None:
                 # @todo(Stephan): Compute the energy here?
-                # Maybe create a new Job and a common subclass (cf. GatherSelections)
+                # Maybe create a new Job and a common subclass (cf. GenerateHistogramAreas)
                 pass
 
             previous_slide_histogram = slide_histogram

@@ -3,7 +3,16 @@
 Extract Slide Clip
 ==================
 
-This module provides the Job for extracting the slide clip from the videofile.
+This module provides the Job for extracting the slide clip from the videofile. The main class of interest is
+:py:class:`ExtractSlideClipJob` that performs all the necessary transformations on the slides, and creates a
+callable object suitable for MoviePy.
+
+.. autosummary::
+
+  WarpSlideJob
+  EnhanceContrastJob
+  ExtractSlideClipJob
+
 """
 
 from ..job import Job
@@ -18,7 +27,7 @@ from .histogram_computation import SelectSlide
 from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
 
 from ....util.tools import get_transformation_points_from_normalized_rect, \
-                           get_polygon_outer_bounding_box
+    get_polygon_outer_bounding_box
 
 
 class WarpSlideJob(Job):
@@ -33,8 +42,8 @@ class WarpSlideJob(Job):
 
     The inputs of the parents are
 
-        * The location of the slides given as a list of points.
-          (The slide rectangle is then assumed to be the outer bounding box of this polygon)
+    * The location of the slides given as a list of points.
+      (The slide rectangle is then assumed to be the outer bounding box of this polygon)
 
     .. rubric:: Workflow outputs
 
@@ -45,9 +54,17 @@ class WarpSlideJob(Job):
     which applies the desired slide transformation.
     """
 
+    #: name of the job in the workflow
     name = 'warp_slides'
-    # :
+
+    #: Cached inputs:
+    #:
+    #: * ``slide_clip_desired_format`` output size of the slides
     attributes_to_serialize = ['slide_clip_desired_format']
+
+    #: Parents:
+    #:
+    #: * :py:class:`SelectSlide` provides the location of the slides in the video stream
     parents = [SelectSlide]
 
     def __init__(self, *args, **kwargs):
@@ -64,7 +81,7 @@ class WarpSlideJob(Job):
         slide_location = self.select_slides.get_outputs()
         slide_rect = get_polygon_outer_bounding_box(slide_location)
 
-        class Warper:
+        class Warper(object):
 
             """Callable object for warping the frame into perspective and cropping the slides."""
 
@@ -72,7 +89,7 @@ class WarpSlideJob(Job):
                 self.slide_rect = slide_rect
 
                 # @note(Stephan): Convert to tuple (List is for JSON storage)
-                self.desiredLayout = (desiredLayout[0], desiredLayout[1])
+                self.desiredLayout = tuple(desiredLayout)
 
             def __call__(self, image):
                 """Cut out the slides from the video and warps them into perspective."""
@@ -94,7 +111,6 @@ class WarpSlideJob(Job):
 
 
 class EnhanceContrastJob(Job):
-
     """
     Job for enhancing the contrast in the slide images.
 
@@ -114,6 +130,7 @@ class EnhanceContrastJob(Job):
     which enhances the contrast of the given image at time t.
     """
 
+    #: name of the job in the workflow
     name = 'enhance_contrast'
     attributes_to_serialize = []
     parents = [ContrastEnhancementBoundaries]
@@ -129,7 +146,7 @@ class EnhanceContrastJob(Job):
 
         get_min_bounds, get_max_bounds = self.contrast_enhancement_boundaries.get_outputs()
 
-        class ContrastEnhancer:
+        class ContrastEnhancer(object):
 
             """Callable object for enhancing the contrast of the slides."""
 
@@ -154,7 +171,6 @@ class EnhanceContrastJob(Job):
 
 
 class ExtractSlideClipJob(Job):
-
     """
     Job for extracting the Slide Clip from the Video.
 
@@ -173,12 +189,15 @@ class ExtractSlideClipJob(Job):
         The transformations are only applied at write-time.
     """
 
+    #: name of the job in the workflow
     name = 'extract_slide_clip'
-    attributes_to_serialize = []
+    attributes_to_serialize = ['video_filename']
     parents = [WarpSlideJob, EnhanceContrastJob]
 
     def __init__(self, *args, **kwargs):
         super(ExtractSlideClipJob, self).__init__(*args, **kwargs)
+        assert('video_filename' in kwargs)
+        assert('video_location' in kwargs)
 
     def run(self, *args, **kwargs):
         pass
@@ -189,7 +208,8 @@ class ExtractSlideClipJob(Job):
         warp_slide = self.warp_slides.get_outputs()
         enhance_contrast = self.enhance_contrast.get_outputs()
 
-        clip = VideoFileClip(self.video_filename)
+        # not doing the cut here but rather in the final video composition
+        clip = VideoFileClip(os.path.join(self.video_location, self.video_filename))
 
         def apply_effects(get_frame, t):
             """Function that chains together all the post processing effects."""
@@ -200,4 +220,5 @@ class ExtractSlideClipJob(Job):
 
             return contrast_enhanced
 
+        # retains the duration of the clip
         return clip.fl(apply_effects)

@@ -6,10 +6,17 @@ This module defines several workflow using the standard/basic Jobs. To list
 all the workflows from the command line, the ``--list-workflows`` switch may
 be used.
 
+.. autosummary::
+
+    workflow_thumbnails_only
+    workflow_slide_detection_window
+    workflow_extract_slide_clip
+    workflow_video_creation
+    process
+
 """
 
-from .jobs.ffmpeg_to_thumbnails import factory as ffmpeg_factory
-from .jobs.histogram_computation import HistogramsLABDiff, GatherSelections, SelectSlide
+from .jobs.histogram_computation import HistogramsLABDiff, GenerateHistogramAreas, SelectSlide
 from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob, NumberOfFilesJob
 from .jobs.histogram_correlations import HistogramCorrelationJob
 from .jobs.segment_computation import SegmentComputationJob
@@ -32,9 +39,8 @@ logger.setLevel(logging.DEBUG)
 
 def workflow_thumbnails_only():
     """Return a workflow made by only one node that extracts the thumbnails from a video."""
-    ffmpeg = ffmpeg_factory()
 
-    return ffmpeg
+    return FFMpegThumbnailsJob
 
 
 def workflow_slide_detection_window():
@@ -45,19 +51,19 @@ def workflow_slide_detection_window():
 
 def workflow_extract_slide_clip():
     """
-    Return a workflow that extracs the slide clip from a video.
+    Return a workflow that creates the MoviePy clip for the slides.
 
-    Consists of many tasks such as
+    The clip for the slides include a contrast enhancement.
 
-        * ffmpeg thumbnail generation
-        * Polygon Selection for the Slides and Speaker
-        * Histogram Computations
-        * Histogram Correlations
-        * Segment Computation
-        * Perspective Transformations and Contrast Enhancement.
+    * ffmpeg thumbnail generation
+    * Polygon Selection for the Slides and Speaker
+    * Histogram Computations
+    * Histogram Correlations
+    * Segment Computation
+    * Perspective Transformations and Contrast Enhancement.
 
     """
-    HistogramsLABDiff.add_parent(GatherSelections)
+    HistogramsLABDiff.add_parent(GenerateHistogramAreas)
     HistogramsLABDiff.add_parent(FFMpegThumbnailsJob)
 
     HistogramCorrelationJob.add_parent(HistogramsLABDiff)
@@ -70,10 +76,36 @@ def workflow_extract_slide_clip():
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
     ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
 
+    # necessary parents are already in ExtractSlideClipJob, but this is a bit
+    # confusing.
     return ExtractSlideClipJob
 
 
+def workflow_video_creation():
+    """Workflow creating the final video
+
+    It potentially uses the already extracted thumbnails and intermediate processing
+    as the Jobs are redundant with :py:func:`workflow_extract_slide_clip`.
+
+    """
+
+    w_slide_clip = workflow_extract_slide_clip()
+
+    from .jobs.dummy_clip import RandomImageClipJob, OriginalVideoClipJob
+    from .jobs.create_movie import ClipsToMovie
+    from .jobs.meta import Metadata
+
+    ClipsToMovie.add_parent(w_slide_clip)
+    ClipsToMovie.add_parent(OriginalVideoClipJob)
+    ClipsToMovie.add_parent(Metadata)
+
+    return ClipsToMovie
+
+
 def process(workflow_instance, **kwargs):
+    """Process an instance of a workflow using the runtime parameters
+    given by ``kwargs``.
+    """
 
     instance = workflow_instance(**kwargs)
     instance.process()

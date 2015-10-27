@@ -50,9 +50,11 @@ def _get_min_max_boundary_from_file(args):
 
 
 class ContrastEnhancementBoundaries(Job):
-
     """
-    Job for extracting the min and max boundaries we use for contrast enhancing the slides.
+    Job for extracting the min and max boundaries we use for enhancing the contrast of
+    the slides.
+
+    The boundaries are computed on the thumbnail image transformed to grayscale.
 
     .. rubric:: Runtime parameters
 
@@ -62,9 +64,9 @@ class ContrastEnhancementBoundaries(Job):
 
     The inputs of the parents are expected to be the following:
 
-        * A list of images (specified by filename) to operate on
-        * The location of the slides given as a rectangle: [x, y, widht, height]
-        * A list of stable segments `[t_segment_start, t_segment_end]`
+    * A list of images (specified by filename) to operate on
+    * The location of the slides given as a rectangle: [x, y, widht, height]
+    * A list of stable segments `[t_segment_start, t_segment_end]`
 
     .. rubric:: Workflow outputs
 
@@ -76,15 +78,24 @@ class ContrastEnhancementBoundaries(Job):
     * The second function specifies the max boundary at time t.
 
     .. note::
+
         These functions check if the specified time lies in a stable segment.
         If it does, it returns the average boundaries for this segment.
         If t does not belong to a stable segment we interpolate linearly
         between the boundaries of the two segments it lies between.
+
+    .. rubric:: Complexity
+
+    Linear in the number of thumbnails. The thumbnails are read once.
     """
 
+    #: Name of the job in the workflow
     name = 'contrast_enhancement_boundaries'
 
-    # :
+    #: Cached output:
+    #:
+    #: * ``min_bounds`` min sequence function of time
+    #: * ``max_bounds`` max sequence function of time
     outputs_to_cache = ['min_bounds',
                         'max_bounds']
 
@@ -96,7 +107,7 @@ class ContrastEnhancementBoundaries(Job):
     def run(self, *args, **kwargs):
         assert(len(args) >= 3)
 
-        # First parent is ffmpeg
+        # First parent is ffmpeg (list of thumbnails)
         image_list = args[0]
 
         # Second parent is selected slide
