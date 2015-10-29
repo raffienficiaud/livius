@@ -160,12 +160,19 @@ class EnhanceContrastJob(Job):
                 min_val = self.get_min_bounds(t)
                 max_val = self.get_max_bounds(t)
 
+                # the YUV transformation is the same as the one used for the gray
+                # during the histogram computation
+                im_yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YCbCr)
+
                 # Perform the contrast enhancement
-                contrast_enhanced = 255.0 * (np.maximum(image.astype(np.float32) - min_val, 0)) / (max_val - min_val)
+                contrast_enhanced = (np.maximum(im_yuv[:, :, 0].astype(np.float32) - min_val, 0)) * (255.0 / (max_val - min_val))
                 contrast_enhanced = np.minimum(contrast_enhanced, 255.0)
                 contrast_enhanced = contrast_enhanced.astype(np.uint8)
 
-                return contrast_enhanced
+                im_yuv[:, :, 0] = contrast_enhanced
+                im_rgb = cv2.cvtColor(im_yuv, cv2.COLOR_YCbCr2BGR)
+
+                return im_rgb
 
         return ContrastEnhancer(get_min_bounds, get_max_bounds)
 
