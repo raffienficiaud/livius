@@ -162,7 +162,7 @@ class EnhanceContrastJob(Job):
 
                 # the YUV transformation is the same as the one used for the gray
                 # during the histogram computation
-                im_yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YCbCr)
+                im_yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YCR_CB)
 
                 # Perform the contrast enhancement
                 contrast_enhanced = (np.maximum(im_yuv[:, :, 0].astype(np.float32) - min_val, 0)) * (255.0 / (max_val - min_val))
@@ -170,7 +170,7 @@ class EnhanceContrastJob(Job):
                 contrast_enhanced = contrast_enhanced.astype(np.uint8)
 
                 im_yuv[:, :, 0] = contrast_enhanced
-                im_rgb = cv2.cvtColor(im_yuv, cv2.COLOR_YCbCr2BGR)
+                im_rgb = cv2.cvtColor(im_yuv, cv2.COLOR_YCR_CB2RGB)
 
                 return im_rgb
 
