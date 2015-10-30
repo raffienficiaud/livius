@@ -170,7 +170,7 @@ class EnhanceContrastJob(Job):
                 contrast_enhanced = contrast_enhanced.astype(np.uint8)
 
                 im_yuv[:, :, 0] = contrast_enhanced
-                im_rgb = cv2.cvtColor(im_yuv, cv2.COLOR_YCR_CB2RGB)
+                im_rgb = cv2.cvtColor(im_yuv, cv2.COLOR_YCR_CB2BGR)
 
                 return im_rgb
 
