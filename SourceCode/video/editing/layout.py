@@ -373,7 +373,7 @@ def createFinalVideo(slide_clip,
 
     # use the specific font from the layout
     list_fonts = TextClip.list('font')
-    lower_case_font = [i.lower() for i in ll]
+    lower_case_font = [i.lower() for i in list_fonts]
     index_desired_font = lower_case_font.index(final_layout['font']) if final_layout['font'] in lower_case_font else None
     final_font = list_fonts[index_desired_font] if index_desired_font else final_layout['font-fallback']
     talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font=final_font)
