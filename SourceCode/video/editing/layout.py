@@ -26,7 +26,10 @@ default_layout = {'canvas_video_size': (1920, 1080),
                   'slides_video_size': (1280, 960),
                   'speaker_video_size': (640, 360),
                   'speaker_video_position': (0, 360),
-                  'slides_video_position': (640, 60)}
+                  'slides_video_position': (640, 60),
+                  'font': 'lato-light',  # this font needs to be installed, see the documentation. the fallback is "Amiri"
+                  'font-fallback': 'Amiri',
+                  }
 
 
 def createFinalVideo(slide_clip,
@@ -367,7 +370,13 @@ def createFinalVideo(slide_clip,
         info_underslides = (u'%s - %s' % (speaker_name, talk_title)).encode('utf8')
     else:
         info_underslides = '%s - %s' % (speaker_name, talk_title)
-    talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font="Amiri")
+
+    # use the specific font from the layout
+    list_fonts = TextClip.list('font')
+    lower_case_font = [i.lower() for i in ll]
+    index_desired_font = lower_case_font.index(final_layout['font']) if final_layout['font'] in lower_case_font else None
+    final_font = list_fonts[index_desired_font] if index_desired_font else final_layout['font-fallback']
+    talk_info_clip = TextClip(info_underslides, fontsize=30, color='white', font=final_font)
 
     # center in height/width if resize uses aspect ratio conservation
     centered_speaker_video_position = list(speaker_video_position)
