@@ -70,21 +70,18 @@ class SelectPolygonJob(Job):
         """
         super(SelectPolygonJob, self).__init__(*args, **kwargs)
 
-
         if self.video_filename is None:
             raise RuntimeError("The video file name cannot be empty")
 
         assert('video_location' in kwargs)
 
         if not os.path.exists(os.path.join(self.video_location, self.video_filename)):
-            raise RuntimeError("The video file %s does not exist" % os.path.abspath(video_filename))
-
+            raise RuntimeError("The video file %s does not exist" % os.path.abspath(self.video_filename))
 
         # this `unicode` necessary because the json files are stored in unicode, and the
         # comparison of the list of files should work (unicode path operations
         # is unicode)
         self.video_filename = unicode(self.video_filename)
-
 
     def run(self, *args, **kwargs):
 

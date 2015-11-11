@@ -21,6 +21,7 @@ from ...editing.layout import createFinalVideo, default_layout as video_default_
 
 logger = logging.getLogger()
 
+
 class ClipsToMovie(Job):
     """Job taking two Clip job (and metadata) and produce the output video.
 
@@ -107,7 +108,7 @@ class ClipsToMovie(Job):
 
         self.background_image_name = unicode(kwargs.get('background_image_name', self.get_default_background_image()))
         self.credit_image_names = kwargs.get('credit_image_names', self.get_default_credit_images())
-        self.credit_image_names = [unicode(i) for i in self.credit_image_names]  #  unicode for json
+        self.credit_image_names = [unicode(i) for i in self.credit_image_names]  # unicode for json
         self.video_layout = kwargs.get('video_layout', video_default_layout)
         self.output_video_folder = unicode(kwargs.get('output_video_folder', self.get_output_video_folder()))
         self.output_video_file = kwargs.get('output_video_file', self.get_output_video_file())
@@ -155,7 +156,6 @@ class ClipsToMovie(Job):
         # default
         return super(ClipsToMovie, self).is_up_to_date()
 
-
     def run(self, *args, **kwargs):
 
         slide_clip = args[0]
@@ -191,7 +191,6 @@ class ClipsToMovie(Job):
                     if self.video_intro_images_folder is not None:
                         image_file = os.path.join(self.video_intro_images_folder, current)
 
-
                 if not os.path.exists(image_file):
                     logger.error("[INTRO] image %s not found", image_file)
                     raise RuntimeError("[INTRO] image %s does not exist" % image_file)
@@ -205,7 +204,6 @@ class ClipsToMovie(Job):
 
         if meta is not None and "video_end" in meta and meta['video_end'] is not None:
             pauses += [(meta['video_end'], None)]  # None means video end
-
 
         audio_clip = AudioFileClip(input_video)
 
@@ -227,13 +225,11 @@ class ClipsToMovie(Job):
                          flagWrite=True,
                          is_test=self.is_test)
 
-
         # stop time
         stop = datetime.datetime.now()
         self.processing_time = (stop - start).seconds
 
         pass
-
 
     pass
 
@@ -241,5 +237,4 @@ class ClipsToMovie(Job):
         super(ClipsToMovie, self).get_outputs()
         logger.info('[CREATEMOVIE] processed video %s in %s seconds', self.get_output_video_file(), self.processing_time)
         return self.processing_time
-
 

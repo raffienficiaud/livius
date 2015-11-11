@@ -340,4 +340,3 @@ class Job(object):
             self.cache_output()
 
         return None
-
