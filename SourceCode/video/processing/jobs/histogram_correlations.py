@@ -76,7 +76,6 @@ class HistogramCorrelationJob(Job):
         # Second parent is the NumberOfFiles
         number_of_files = args[1]
 
-
         # init
         self.histogram_correlations = {}
 

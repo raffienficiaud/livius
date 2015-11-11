@@ -16,7 +16,6 @@ import sys
 from moviepy.video.compositing.concatenate import concatenate
 
 import logging
-from timeit import itertools
 logger = logging.getLogger()
 
 # this settings are dependent on the background image
