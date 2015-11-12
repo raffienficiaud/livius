@@ -22,6 +22,7 @@ from .jobs.histogram_correlations import HistogramCorrelationJob
 from .jobs.segment_computation import SegmentComputationJob
 from .jobs.contrast_enhancement_boundaries import ContrastEnhancementBoundaries
 from .jobs.extract_slide_clip import ExtractSlideClipJob
+from .jobs.audio_mixer import AudioMixerJob
 
 import os
 
@@ -98,6 +99,7 @@ def workflow_video_creation():
     ClipsToMovie.add_parent(w_slide_clip)
     ClipsToMovie.add_parent(OriginalVideoClipJob)
     ClipsToMovie.add_parent(Metadata)
+    ClipsToMovie.add_parent(AudioMixerJob)
 
     return ClipsToMovie
 
