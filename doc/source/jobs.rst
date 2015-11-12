@@ -30,6 +30,9 @@ The jobs fall into the following categories:
   to eg. describe the video, add content (introduction, epilog images), etc. Located in the module 
   :py:mod:`meta <SourceCode.video.processing.jobs.meta>`
 
+* audio processing: jobs that process the audio part. See 
+  :py:mod:`audio_mixer <SourceCode.video.processing.jobs.audio_mixer>`  
+
 Reference
 ---------
 
@@ -45,4 +48,5 @@ Reference
    video.processing.jobs.segment_computation<jobs/segment_computation>
    video.processing.jobs.create_movie<jobs/video_content_creation>
    video.processing.jobs.dummy_clip<jobs/dummy_clips>
-   video.processing.jobs.dummy_clip<jobs/metadata>
+   video.processing.jobs.metadata<jobs/metadata>
+   video.processing.jobs.audio_mixer<jobs/audio_mixing>

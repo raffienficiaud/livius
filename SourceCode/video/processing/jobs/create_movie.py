@@ -50,7 +50,7 @@ class ClipsToMovie(Job):
 
     """
 
-    #: neame of the job in the workflow
+    #: name of the job in the workflow
     name = "clips_to_movie"
 
     #: Cached input:

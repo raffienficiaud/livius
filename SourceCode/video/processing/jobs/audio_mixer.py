@@ -6,7 +6,7 @@ This file contains jobs able to process the audio stream of moviePy.
 
 .. autosummary::
 
-  ClipsToMovie
+  AudioMixerJob
 
 """
 
@@ -24,7 +24,15 @@ class AudioMixerJob(Job):
     """
     Job for mixing audio channels.
 
-    The output video will have a mono audio stream.
+    The output video will have a mono audio stream, by mixing the two input streams. If the input stream
+    is mono, the output is just returned as is.
+
+    .. rubric:: Runtime parameters
+
+    * ``video_filename`` name of the video to process (only the base name)
+    * ``video_location`` location of the video to process (not cached)
+    * ``mixing_left`` amount of the left channel in the final stream
+    * ``mixing_right`` amount of the right channel in the final stream
 
     .. rubric:: Workflow inputs
 
@@ -40,7 +48,15 @@ class AudioMixerJob(Job):
 
     #: name of the job in the workflow
     name = 'audio_mixing'
+
+    #: Cached inputs:
+    #:
+    #: * ``video_filename`` name of the input video (should be relocatable according to
+    #:   ``video_location``).
+    #: * ``mixing_left`` the amount of the left channel in the final output
+    #: * ``mixing_right`` the amount of the right channel in the final output
     attributes_to_serialize = ['video_filename', 'mixing_left', 'mixing_right']
+
     parents = []
 
     def __init__(self, *args, **kwargs):
