@@ -15,6 +15,8 @@ from ..job import Job
 import datetime
 import os
 import logging
+import numpy as np
+
 
 from moviepy.editor import AudioFileClip
 
@@ -31,8 +33,8 @@ class AudioMixerJob(Job):
 
     * ``video_filename`` name of the video to process (only the base name)
     * ``video_location`` location of the video to process (not cached)
-    * ``mixing_left`` amount of the left channel in the final stream
-    * ``mixing_right`` amount of the right channel in the final stream
+    * ``audio_mixing_left`` amount of the left channel in the final stream
+    * ``audio_mixing_right`` amount of the right channel in the final stream
 
     .. rubric:: Workflow inputs
 
@@ -53,8 +55,8 @@ class AudioMixerJob(Job):
     #:
     #: * ``video_filename`` name of the input video (should be relocatable according to
     #:   ``video_location``).
-    #: * ``mixing_left`` the amount of the left channel in the final output
-    #: * ``mixing_right`` the amount of the right channel in the final output
+    #: * ``audio_mixing_left`` the amount of the left channel in the final output
+    #: * ``audio_mixing_right`` the amount of the right channel in the final output
     attributes_to_serialize = ['video_filename', 'mixing_left', 'mixing_right']
 
     parents = []
@@ -64,8 +66,8 @@ class AudioMixerJob(Job):
         assert('video_filename' in kwargs)
         assert('video_location' in kwargs)
 
-        self.mixing_left = float(kwargs['mixing_left']) if 'mixing_left' in kwargs else 0.2
-        self.mixing_right = float(kwargs['mixing_right']) if 'mixing_right' in kwargs else 0.8
+        self.mixing_left = float(kwargs['audio_mixing_left']) if 'audio_mixing_left' in kwargs else 0.5
+        self.mixing_right = float(kwargs['audio_mixing_right']) if 'audio_mixing_right' in kwargs else 0.5
 
     def run(self, *args, **kwargs):
         pass
@@ -79,13 +81,15 @@ class AudioMixerJob(Job):
 
         def apply_effects(get_frame, t):
             """Function that chains together all the post processing effects."""
+
             frame = get_frame(t)
 
             if frame.shape[1] < 2:
                 return frame
 
-            mixed = self.mixing_left * frame[:, 0] + self.mixing_right * frame[:, 1]
-            return mixed
+            a = self.mixing_left / (self.mixing_left + self.mixing_right)
+            mixed = a * frame[:, 0] + (1 - a) * frame[:, 1]
+            return np.vstack([mixed, mixed]).transpose()
 
         # retains the duration of the clip
-        return clip.fl(apply_effects)
+        return clip.fl(apply_effects, keep_duration=True)
