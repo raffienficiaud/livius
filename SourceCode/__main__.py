@@ -65,7 +65,10 @@ parser.add_argument('--option-file',
 
 parser.add_argument('--print-workflow',
                     action='store_true',
-                    help="""Prints the workflow (text/dot) and exits.""")
+                    help="""Prints the workflow (text) and exits.""")
+parser.add_argument('--dot-workflow',
+                    action='store_true',
+                    help="""Prints the workflow (dot) and exits.""")
 
 parser.add_argument('--is-visual-test',
                     action='store_true',
@@ -81,7 +84,7 @@ logger.setLevel(logging.DEBUG)
 
 # this should be the first thing
 if args.non_interactive is not None and args.non_interactive:
-    import matplotlib    
+    import matplotlib
     matplotlib.use('Agg')
 
 
@@ -102,12 +105,27 @@ if(args.list_workflows):
 
     sys.exit(0)
 
-if not args.video_folder and not args.video_file:
-    logger.error("[CONFIG] one or more video files or folders should be specified")
-    sys.exit(1)
-
 if not args.workflow:
     logger.error("[CONFIG] a workflow should be specified")
+    sys.exit(1)
+
+# loads the workflow
+try:
+    import video.processing.workflow as workflow_module
+    workflow_factory_obj = getattr(workflow_module, args.workflow)
+except Exception, e:
+    logger.error('[CONFIG] the workflow %s cannot be loaded', args.workflow)
+    sys.exit(1)
+
+if args.print_workflow or args.dot_workflow:
+    if args.print_workflow:
+        print workflow_factory_obj().workflow_to_string()
+    else:
+        print workflow_factory_obj().workflow_to_dot()
+    sys.exit(0)
+
+if not args.video_folder and not args.video_file:
+    logger.error("[CONFIG] one or more video files or folders should be specified")
     sys.exit(1)
 
 if args.video_folder:
@@ -122,23 +140,11 @@ if args.video_file:
             logger.error("[CONFIG] the specified video file does not exist: %s", f)
             sys.exit(1)
 
-# loads the workflow
-try:
-    import video.processing.workflow as workflow_module
-    workflow_factory_obj = getattr(workflow_module, args.workflow)
-except Exception, e:
-    logger.error('[CONFIG] the workflow %s cannot be loaded', args.workflow)
-    sys.exit(1)
-
 # loads the video files
 video_files = args.video_file if args.video_file is not None else []
 if args.video_folder is not None:
     for f in args.video_folder:
         video_files += [os.path.abspath(os.path.join(f, i)) for i in os.listdir(f)]
-
-if args.print_workflow:
-    print workflow_factory_obj().workflow_to_string()
-    sys.exit(0)
 
 if not video_files:
     logger.error('[CONFIG] the video list to be processed is empty')
