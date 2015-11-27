@@ -270,9 +270,12 @@ def createFinalVideo(slide_clip,
     speaker_clip_composed = resize_clip_if_needed(speaker_clip, speaker_video_size)
     slide_clip_composed = resize_clip_if_needed(slide_clip, slides_video_size)
 
-    # the audio_clip is associated to this clip
     if audio_clip is not None:
+        # the audio_clip is associated to this clip
         speaker_clip_composed = speaker_clip_composed.set_audio(audio_clip)
+        # the audio channel needs to be set for this one as well, otherwise
+        # the final result will depend on how this stream/video clip was opened (audio is on by default)
+        slide_clip_composed = slide_clip_composed.set_audio(audio_clip)
 
     # this one will be used for reference on properties
     # apparently in MoviePy, we cannot nest CompositeVideoClip, which is why it is done this way

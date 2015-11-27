@@ -50,7 +50,7 @@ class ClipsToMovie(Job):
 
     """
 
-    #: neame of the job in the workflow
+    #: name of the job in the workflow
     name = "clips_to_movie"
 
     #: Cached input:
@@ -161,6 +161,7 @@ class ClipsToMovie(Job):
         slide_clip = args[0]
         speaker_clip = args[1]
         meta = args[2] if len(args) > 2 else None
+        audio_clip = args[3] if len(args) > 3 else None
 
         assert(hasattr(self, 'processing_time'))
         self.processing_time = None
@@ -205,7 +206,9 @@ class ClipsToMovie(Job):
         if meta is not None and "video_end" in meta and meta['video_end'] is not None:
             pauses += [(meta['video_end'], None)]  # None means video end
 
-        audio_clip = AudioFileClip(input_video)
+        # if no specific handling of the audio is performed upstream, we default to the one of the video
+        if audio_clip is None:
+            audio_clip = AudioFileClip(input_video)
 
         createFinalVideo(slide_clip=slide_clip,
                          speaker_clip=speaker_clip,
