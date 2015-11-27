@@ -90,6 +90,46 @@ class Job(object):
                 str += p.workflow_to_string(current_index + 1)
         return str
 
+    @classmethod
+    def _workflow_to_dot(cls, all_nodes=None, edges=None):
+        str = ""
+
+        if all_nodes is None:
+            all_nodes = set()
+        if edges is None:
+            edges = set()
+
+        all_nodes |= set([cls.name])
+
+        if cls.get_parents() is not None:
+            for p in cls.get_parents():
+                dot, all_nodes_to_merge, edges_to_merge = p._workflow_to_dot(all_nodes, edges)
+                all_nodes |= all_nodes_to_merge
+                edges |= edges_to_merge
+                str += dot
+                if not (p.name, cls.name) in edges:
+                    str += "%s -> %s [splines=\"false\"];\n" % (p.name, cls.name)
+                    edges |= set([(p.name, cls.name)])
+
+        return str, all_nodes, edges
+
+    @classmethod
+    def workflow_to_dot(cls):
+        """Returns a dot representation of the current workflow.
+
+        This allows to plot the workflow with graphviz."""
+
+        str, all_nodes, all_edges = cls._workflow_to_dot()
+
+        for s in all_nodes:
+            str += "%s [fontname=\"verdana\", shape=\"box\"];\n" % s
+
+        out = "digraph graphname {\n"
+        out += "rankdir=LR\n node [style=rounded]\n"
+        out += str + "}"
+
+        return out
+
     def __init__(self, *args, **kwargs):
         """:param json_prefix: the prefix used for serializing the state of this runner."""
         super(Job, self).__init__()

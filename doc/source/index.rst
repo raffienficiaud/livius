@@ -85,6 +85,20 @@ processing is run on a eg. cluster and each processing of a unique video spans o
 
 ``--non-interactive`` might be needed in environment where no front-end interaction is possible (eg. remote session).
 
+If you want to see more about the details of the workflow, you may use the options ``--print-workflow`` and ``--dot-workflow``
+that print the selected workflow to the console, either in text or in `dot <http://www.graphviz.org/doc/info/lang.html>`_ format 
+(that then may be rendered with `graphviz <http://graphviz.org/>`_). 
+
+The following lines::
+
+    python -m SourceCode --workflow=workflow_extract_slide_clip --dot-workflow > test.dot
+    dot test.dot -Tsvg -otest.svg 
+
+yields this:
+
+.. image:: _static/output_workflow.svg 
+
+
 Installation
 ============
 
@@ -144,8 +158,8 @@ related to the /Machine Learning Summer School/ (2013, 2015), but may be adapted
 * ``SourceCode/ressources/background_no_grey_mlss2015.png``, same as ``background_mlss2015`` without grey areas (if one
   of the stream is smaller than the target one). 
 * ``SourceCode/ressources/Lato2OFL.zip`` is an archive containing the **Lato** fonts that are used by Livius (for overlaying the title
-  etc.). This font was downloaded from [this](http://www.latofonts.com/lato-free-fonts/) web site. It is licensed under the
-  [SIL Open Font License (OFL) v1.1](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL) ("/The fonts can be used 
+  etc.). This font was downloaded from `this <http://www.latofonts.com/lato-free-fonts/>`_ web site. It is licensed under the
+  `SIL Open Font License (OFL) v1.1 <http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL>`_ ("/The fonts can be used 
   with­out any lim­i­ta­tions for com­mer­cial and non-​​commercial pur­poses/"). 
 
 Indices and tables
