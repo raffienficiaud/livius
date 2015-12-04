@@ -27,7 +27,7 @@ def get_polygon_from_user(im,
         window_name = ''.join([chr(ord('a') + randint(0, 26)) for _ in range(10)])
 
     params = type('params', (object,), {})()
-    params.current_position = None
+    params.current_position = (0, 0)
     params.click = None
     params.click_position = None
     params.points = []
@@ -62,6 +62,9 @@ def get_polygon_from_user(im,
 
         if len(points) > 0 and params.current_position is not None:
             cv2.line(im_draw, points[-1], params.current_position, (255, 0, 0))
+
+        cv2.line(im_draw, (params.current_position[0], 0), (params.current_position[0], im_draw.shape[0]), (0, 255, 0))
+        cv2.line(im_draw, (0, params.current_position[1]), (im_draw.shape[1], params.current_position[1]), (0, 255, 0))
 
         cv2.imshow(window_name, im_draw)
         _ = cv2.waitKey(10)
