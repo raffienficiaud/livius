@@ -114,7 +114,7 @@ try:
     import video.processing.workflow as workflow_module
     workflow_factory_obj = getattr(workflow_module, args.workflow)
 except Exception, e:
-    logger.error('[CONFIG] the workflow %s cannot be loaded', args.workflow)
+    logger.error('[CONFIG] the workflow %s cannot be loaded (Error: %s)', args.workflow, e)
     sys.exit(1)
 
 if args.print_workflow or args.dot_workflow:
