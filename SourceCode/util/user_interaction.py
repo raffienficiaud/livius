@@ -33,6 +33,7 @@ def get_polygon_from_user(im,
     params.points = []
 
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_name, 1920, 1200)
     cv2.moveWindow(window_name, 100, 100)
 
     def onMouse(event, x, y, flags, param):
@@ -50,7 +51,6 @@ def get_polygon_from_user(im,
             params.click_position = (x, y)
 
     cv2.setMouseCallback(window_name, onMouse, params)
-    cv2.imshow(window_name, im)
 
     points = params.points
     while len(params.points) < 4:
@@ -67,7 +67,9 @@ def get_polygon_from_user(im,
         cv2.line(im_draw, (0, params.current_position[1]), (im_draw.shape[1], params.current_position[1]), (0, 255, 0))
 
         cv2.imshow(window_name, im_draw)
-        _ = cv2.waitKey(10)
+        wk = cv2.waitKey(10)
+        if wk == 1048603:
+            break
 
     cv2.destroyWindow(window_name)
 

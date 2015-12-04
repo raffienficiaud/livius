@@ -100,7 +100,13 @@ class SelectPolygonJob(Job):
             im_for_selection = cv2.imread(args[0][randint(0, len(args[0]))])
             width, height, _ = im_for_selection.shape
 
-        self.points = get_polygon_from_user(im_for_selection, 4, self.window_title)
+        self.points = (0, 0)
+        dropcount = 0
+        while len(self.points) < 4:
+            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, dropcount*5000)  # drop the first 500 frames, just like that
+            dropcount += 1
+            _, im_for_selection = cap.read()
+            self.points = get_polygon_from_user(im_for_selection, 4, self.window_title)
 
         # @note(Stephan):
         # Since Json stores tuples as list, we go from tuples to lists here. Then we can compare the
