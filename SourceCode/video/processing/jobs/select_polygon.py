@@ -15,9 +15,10 @@ This module defines a unique jobs for selecting polygons on images and/or videos
 import os
 import cv2
 from random import randint
+import numpy as np
 
 from ..job import Job
-from ....util.user_interaction import get_polygon_from_user
+from ....util.user_interaction import GetPolygon  # get_polygon_from_user
 
 
 class SelectPolygonJob(Job):
@@ -88,25 +89,99 @@ class SelectPolygonJob(Job):
         if self.is_up_to_date():
             return True
 
+        is_from_video = False
         if not args:
             cap = cv2.VideoCapture(os.path.join(self.video_location, self.video_filename))
-            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 500)  # drop the first 500 frames, just like that
+            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 500)
 
             width = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
             height = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 
             _, im_for_selection = cap.read()
+
+            is_from_video = True
         else:
             im_for_selection = cv2.imread(args[0][randint(0, len(args[0]))])
             width, height, _ = im_for_selection.shape
 
-        self.points = (0, 0)
-        dropcount = 0
-        while len(self.points) < 4:
-            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, dropcount*5000)  # drop the first 500 frames, just like that
-            dropcount += 1
-            _, im_for_selection = cap.read()
-            self.points = get_polygon_from_user(im_for_selection, 4, self.window_title)
+        self.points = []
+        while True:
+
+            redo_global_selection = True
+            if len(self.points) == 4:
+                redo_global_selection = False
+                print "The current corners are", self.points
+                u = raw_input("Do you want to redo the global corner selection selection? [y/N]")
+
+                if u.lower() == 'y' or u.lower() == 'yes':
+                    redo_global_selection = True
+
+            if redo_global_selection:
+                selection_object = GetPolygon(self.window_title)
+
+                print 'Please select', 4, "points on the image"
+                print 'You may skip the selection by pressing ESC, another image for selection will then be shown...'
+
+                self.points = selection_object.select_polygon_on_image(im_for_selection, 4)
+                dropcount = 1
+                while len(self.points) < 4:
+
+                    dropcount += 1
+                    if is_from_video:
+                        cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, dropcount * 500)
+                        _, im_for_selection = cap.read()
+                    else:
+                        im_for_selection = cv2.imread(args[0][randint(0, len(args[0]))])
+
+                    self.points = selection_object.select_polygon_on_image(im_for_selection, 4)
+
+                selection_object.close()
+
+            refined_coords = self.points
+            u = raw_input("Do you want to refine the corners selection? [y/N]")
+            if u.lower() == 'y' or u.lower() == 'yes':
+                refined_coords = []
+                selection_object = GetPolygon(self.window_title + " - corners refinements")
+
+                size = 250
+                for index, current_p in enumerate(self.points):
+                    left_corner_x = max(current_p[0] - size, 0)
+                    left_corner_y = max(current_p[1] - size, 0)
+                    current_image = im_for_selection[left_corner_y:min(current_p[1] + size, height), left_corner_x:min(current_p[0] + size, width), :]
+                    refined = selection_object.select_polygon_on_image(current_image, 1)
+                    if refined and len(refined) > 0:
+                        print current_p, 'refined = ', (refined[0][0] + left_corner_x, refined[0][1] + left_corner_y)
+                        refined_coords.append((refined[0][0] + left_corner_x, refined[0][1] + left_corner_y))
+                    else:
+                        print "refined skipped for point", index
+                        refined_coords.append(current_p)
+
+                selection_object.close()
+
+            self.points = refined_coords
+            output_layout = (800, 600)
+            transformation_matrix = cv2.getPerspectiveTransform(np.array(refined_coords, np.float32),
+                                                                np.array([(0, 0),
+                                                                          (output_layout[0], 0),
+                                                                          (output_layout[0], output_layout[1]),
+                                                                          (0, output_layout[1])],
+                                                                         np.float32))
+
+            warped_image = cv2.warpPerspective(im_for_selection, transformation_matrix, output_layout)
+
+            final_result_name = self.window_title + " - final result"
+            cv2.namedWindow(final_result_name, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(final_result_name, output_layout[0], output_layout[1])
+            cv2.moveWindow(final_result_name, 100, 100)
+            cv2.imshow(final_result_name, warped_image)
+
+            print "This is the final result, please indicate if the result is ok [y/N]"
+            wk = cv2.waitKey(0)
+            if (wk & 255) == ord('y') or (wk & 255) == ord('Y'):  # y / Y
+                break
+
+            print wk, wk & 255
+
 
         # @note(Stephan):
         # Since Json stores tuples as list, we go from tuples to lists here. Then we can compare the
