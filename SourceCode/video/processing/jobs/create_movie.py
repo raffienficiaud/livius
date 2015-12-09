@@ -177,7 +177,7 @@ class ClipsToMovie(Job):
         ressource_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "ressources"))
         video_background_image = os.path.join(ressource_folder, self.background_image_name)
 
-        credit_images_and_durations = [(os.path.join(ressource_folder, i), None) for i in self.credit_image_names]  # None sets the duration to the default
+        credit_images_and_durations = [(os.path.join(ressource_folder, i), 5) for i in self.credit_image_names]  # None sets the duration to the default
 
         # introduction image
         intro_images_and_durations = []
