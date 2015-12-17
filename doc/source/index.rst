@@ -54,7 +54,7 @@ workflow over a bunch of videos simply by running
 .. code::
 
   cd $livius_src
-  python -m SourceCode \
+  python -m livius \
     --workflow=my_workflow \
     --output-folder=/a/big/disk \
     --video-folder=my_folder_full_of_videos \
@@ -62,7 +62,7 @@ workflow over a bunch of videos simply by running
 
 The detailed options of Livius are given below (just type ``--help`` in the previous command line):
 
-.. program-output:: python -m SourceCode --help
+.. program-output:: python -m livius --help
     :cwd: ../../ 
 
 The parameter ``--option`` may be used to define additional options needed by the runtime behaviour of the Jobs. The 
@@ -91,7 +91,7 @@ that print the selected workflow to the console, either in text or in `dot <http
 
 The following lines::
 
-    python -m SourceCode --workflow=workflow_extract_slide_clip --dot-workflow > test.dot
+    python -m livius --workflow=workflow_extract_slide_clip --dot-workflow > test.dot
     dot test.dot -Tsvg -otest.svg 
 
 yields this:
@@ -115,6 +115,16 @@ in the wiki for more details).
   pip install sphinx
   pip install sphinxcontrib-programoutput 
   pip install sphinx_bootstrap_theme
+  
+And finally, you can install Livius:
+
+.. code::
+
+  pip install .
+  
+.. note::
+
+  As always it is recommended to install everything in a dedicated virtual environment. 
 
 Font on Linux
 -------------
@@ -135,9 +145,10 @@ The metadata associated to the video files describe the following:
 * optionally an image used as introduction
 * optionally the pauses and begin/end of the video 
 
-The meta data is loaded by the Job :py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>`. 
+The meta data is loaded by the Job :py:class:`Metadata <livius.video.processing.jobs.meta.Metadata>`. 
 If your metadata is stored in a way that differs with the expectation of 
-:py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>`, it is easy to adapt this class to your needs.
+:py:class:`Metadata <livius.video.processing.jobs.meta.Metadata>`, it is easy to adapt this class to your needs 
+(such an example if given in the file containing :py:class:`Metadata <livius.video.processing.jobs.meta.Metadata>`).
 
 Relocatable files
 =================
@@ -153,11 +164,11 @@ Available ressources
 The repository contains images that can be used out of the box for running Livius on videos. Those images are more or less 
 related to the /Machine Learning Summer School/ (2013, 2015), but may be adapted easily.
 
-* ``SourceCode/ressources/background_mlss2015.png`` the background image during the talk, containing visual cues 
+* ``livius/ressources/background_mlss2015.png`` the background image during the talk, containing visual cues 
   (grey area on which the slides and the speaker are overlayed), mainly for visual sanity check
-* ``SourceCode/ressources/background_no_grey_mlss2015.png``, same as ``background_mlss2015`` without grey areas (if one
+* ``livius/ressources/background_no_grey_mlss2015.png``, same as ``background_mlss2015`` without grey areas (if one
   of the stream is smaller than the target one). 
-* ``SourceCode/ressources/Lato2OFL.zip`` is an archive containing the **Lato** fonts that are used by Livius (for overlaying the title
+* ``livius/ressources/Lato2OFL.zip`` is an archive containing the **Lato** fonts that are used by Livius (for overlaying the title
   etc.). This font was downloaded from `this <http://www.latofonts.com/lato-free-fonts/>`_ web site. It is licensed under the
   `SIL Open Font License (OFL) v1.1 <http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL>`_ ("/The fonts can be used 
   with­out any lim­i­ta­tions for com­mer­cial and non-​​commercial pur­poses/"). 

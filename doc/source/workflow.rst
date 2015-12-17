@@ -1,2 +1,2 @@
-.. automodule:: SourceCode.video.processing.workflow
+.. automodule:: livius.video.processing.workflow
    :members:

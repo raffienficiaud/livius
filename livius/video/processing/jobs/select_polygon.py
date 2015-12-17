@@ -222,15 +222,15 @@ class SelectSpeaker(SelectPolygonJob):
 
 def selection_mogrifier(folder, outfolder):
     """Utility function transforming existing selections ready for
-    :py:class:`SelectSlide <SourceCode.video.processing.jobs.select_polygon.SelectSlide>` and
-    :py:class:`SelectSpeaker <SourceCode.video.processing.jobs.select_polygon.SelectSpeaker>`.
+    :py:class:`SelectSlide <livius.video.processing.jobs.select_polygon.SelectSlide>` and
+    :py:class:`SelectSpeaker <livius.video.processing.jobs.select_polygon.SelectSpeaker>`.
 
     This is a simple function reading 2 files in a JSON format in an old (unsupported) format and
     writing them to the output folder in the new format.
 
     It is possible to run directly this function by providing the location of the folder to parse, in the following way::
 
-      python -m SourceCode.video.processing.jobs.select_polygon some_folder_init output_folder_root
+      python -m livius.video.processing.jobs.select_polygon some_folder_init output_folder_root
 
     """
     import json

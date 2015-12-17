@@ -3,16 +3,15 @@ import unittest
 from tempfile import mkdtemp
 import os
 import shutil
-
-# logging facility
 import logging
+
+from livius.video.processing.job import Job
+
 FORMAT = '[%(asctime)-15s] %(message)s'
 logging.basicConfig(format=FORMAT)
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-
-from ..video.processing.job import Job
 
 
 class Job1(Job):
@@ -135,9 +134,6 @@ class JobTests(JobTestsFixture, unittest.TestCase):
         self.assertTrue(job_final.is_up_to_date())
 
 
-
-
-
 class JobParentAttributeTests(JobTestsFixture, unittest.TestCase):
     """Tests the access to the parent Jobs through a simple API"""
 
@@ -169,6 +165,3 @@ class JobParentAttributeTests(JobTestsFixture, unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             Job2(json_prefix=os.path.join(self.tmpdir, 'test_meta'))
-
-
-

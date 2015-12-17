@@ -29,13 +29,13 @@ For the current job, if the parameters have not changed and the parents do not n
 the current job may also retrieve its state from the stored file.
 
 All this functionality (loading/storing state, comparing states, check for outdated parents) is already taken care of by the 
-:py:class:`Job <SourceCode.video.processing.job.Job>` class, and only a few number of *fields* need to be set up. 
+:py:class:`Job <livius.video.processing.job.Job>` class, and only a few number of *fields* need to be set up. 
 
 *********
 Extension
 *********
 If the default method for loading the state back from the JSON file needs some additional functionality, it is possible to overload the
-:py:func:`load_state <SourceCode.video.processing.job.Job.load_state>` function.
+:py:func:`Job.load_state <livius.video.processing.job.Job.load_state>` function.
 
 *****************************
 Runtime and static parameters
@@ -57,17 +57,17 @@ Every job is named using the simple ``name`` attribute::
         
 This name **should** be unique in the workflow. If the behaviour of a job is needed several times in a workflow (but with different parameters), then 
 new classes may be defined being child of the job to reuse, this time with a different name. This is the case for instance for the classes 
-:py:class:`SelectSlide <SourceCode.video.processing.jobs.select_polygon.SelectSlide>` and :py:class:`SelectSpeaker <SourceCode.video.processing.jobs.select_polygon.SelectSpeaker>`, 
-refining the behaviour of :py:class:`SelectPolygonJob <SourceCode.video.processing.jobs.select_polygon.SelectPolygonJob>`.
+:py:class:`SelectSlide <livius.video.processing.jobs.select_polygon.SelectSlide>` and :py:class:`SelectSpeaker <livius.video.processing.jobs.select_polygon.SelectSpeaker>`, 
+refining the behaviour of :py:class:`SelectPolygonJob <livius.video.processing.jobs.select_polygon.SelectPolygonJob>`.
 
 --------------------
 Job cache comparison
 --------------------
-The main entry of the cached value comparison is performed by the method :py:func:`Job.is_up_to_date`, which is possible
+The main entry of the cached value comparison is performed by the method :py:func:`Job.is_up_to_date <livius.video.processing.job.Job.is_up_to_date>`, which is possible
 to override in a child class (for eg. test for file existance, timestamp of files, etc).
 
 This method checks that the parents are up to date (and returns ``False`` if not), and then calls the function
-:py:func:`are_states_equal`, which is also possible to override.
+:py:func:`Job.are_states_equal <livius.video.processing.job.Job.are_states_equal>`, which is also possible to override.
 
 The current implementation of the comparison is that the values being compared are transformed to a string, and the 
 resulting strings are compared instead. 
@@ -83,8 +83,8 @@ resulting strings are compared instead.
 Job action
 ----------
 
-Subclasses only need to define their specific parameters, outputs and parents and overload the :py:func:`run <SourceCode.video.processing.job.Job.run>` and
-:py:func:`get_outputs <SourceCode.video.processing.job.Job.get_outputs>` functions.
+Subclasses only need to define their specific parameters, outputs and parents and overload the :py:func:`Job.run <livius.video.processing.job.Job.run>` and
+:py:func:`Job.get_outputs <livius.video.processing.job.Job.get_outputs>` functions.
 
 
 
@@ -94,7 +94,7 @@ Subclasses only need to define their specific parameters, outputs and parents an
 Example Job
 -----------
 
-We are going to use the :py:class:`HistogramCorrelationJob <SourceCode.video.processing.jobs.histogram_correlations.HistogramCorrelationJob>` to explain
+We are going to use the :py:class:`HistogramCorrelationJob <livius.video.processing.jobs.histogram_correlations.HistogramCorrelationJob>` to explain
 how to build further Jobs.
 
 *********
@@ -152,13 +152,13 @@ integers and also sort it, so we do ::
 Defining the Job Action
 ***********************
 
-The action of the Job is defined in the :py:func:`run <SourceCode.video.processing.job.Job.run>` method which every Job needs to overload.
+The action of the Job is defined in the :py:func:`run <livius.video.processing.job.Job.run>` method which every Job needs to overload.
 
 ##############
 Parent Inputs
 ##############
 
-The :py:func:`run <SourceCode.video.processing.job.Job.run>` method receives its argumentes in the same order that the parents of the Job are
+The :py:func:`run <livius.video.processing.job.Job.run>` method receives its argumentes in the same order that the parents of the Job are
 specified.
 
 When building a workflow we can for example specify ::
@@ -171,8 +171,8 @@ or alternatively directly set the `parents` member of the Job ::
     parents = [HistogramsLABDiff, NumberOfFilesJob]
 
 
-The first parent returns a function of `time` and `area_name` (see :py:class:`HistogramsLABDiff <SourceCode.video.processing.jobs.histogram_computation.HistogramsLABDiff>`)
-and the second parent just returns the number of thumbnails. So the :py:func:`run <SourceCode.video.processing.job.Job.run>` method looks as follows ::
+The first parent returns a function of `time` and `area_name` (see :py:class:`HistogramsLABDiff <livius.video.processing.jobs.histogram_computation.HistogramsLABDiff>`)
+and the second parent just returns the number of thumbnails. So the :py:func:`run <livius.video.processing.job.Job.run>` method looks as follows ::
 
     def run(self, *args, **kwargs):
 
@@ -200,11 +200,11 @@ and the second parent just returns the number of thumbnails. So the :py:func:`ru
             previous_speaker_histogram_plane = speaker_histogram_plane
 
 
-The :py:func:`run <SourceCode.video.processing.job.Job.run>` method builds up a dictionary with the indices being the frames and the
+The :py:func:`run <livius.video.processing.job.Job.run>` method builds up a dictionary with the indices being the frames and the
 values being the corresponding histogram correlation.
 
 This dictionary is saved to the JSON file as specified by the `outputs_to_cache` member of
-:py:class:`HistogramCorrelationJob <SourceCode.video.processing.jobs.histogram_correlations.HistogramCorrelationJob>`.
+:py:class:`HistogramCorrelationJob <livius.video.processing.jobs.histogram_correlations.HistogramCorrelationJob>`.
 
 
 ##############
@@ -212,7 +212,7 @@ Job Outputs
 ##############
 
 Since it is more convenient for other Jobs to operate with a proper function instead of just a dictionary we transform the output in the
-:py:func:`get_outputs <SourceCode.video.processing.job.Job.get_outputs>` method. ::
+:py:func:`get_outputs <livius.video.processing.job.Job.get_outputs>` method. ::
 
     def get_outputs(self):
         super(HistogramCorrelationJob, self).get_outputs()
@@ -222,13 +222,13 @@ Since it is more convenient for other Jobs to operate with a proper function ins
 
         return Functor(self.histogram_correlations)
 
-The :py:class:`Functor <util.functor.Functor>` class just wraps the dictionary in a callable object.
+The :py:class:`Functor <livius.util.functor.Functor>` class just wraps the dictionary in a callable object.
 When this object is called with an index, it returns the value of the index from the dictionary.
 
 ---------
 Reference
 ---------
 
-.. automodule:: SourceCode.video.processing.job
+.. automodule:: livius.video.processing.job
    :members:
    :undoc-members:

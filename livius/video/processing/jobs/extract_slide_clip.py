@@ -64,7 +64,7 @@ class WarpSlideJob(Job):
 
     #: Parents:
     #:
-    #: * :py:class:`SelectSlide` provides the location of the slides in the video stream
+    #: * :py:class:`.select_polygon.SelectSlide` provides the location of the slides in the video stream
     parents = [SelectSlide]
 
     def __init__(self, *args, **kwargs):
@@ -185,8 +185,8 @@ class ExtractSlideClipJob(Job):
 
     The inputs of the parents are
 
-    * A function for warping the Slides into perspective (:class:`WarpSlideJob`)
-    * A function for enhancing the contrast of the warped Slides (:class:`EnhanceContrastJob`)
+    * A function for warping the Slides into perspective (:py:class:`WarpSlideJob`)
+    * A function for enhancing the contrast of the warped Slides (:py:class:`EnhanceContrastJob`)
 
     .. rubric:: Workflow outputs
 

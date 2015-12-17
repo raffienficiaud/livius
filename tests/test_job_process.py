@@ -5,9 +5,10 @@ Test the proper processing of the Job and their parents
 import unittest
 import os
 
+from livius.video.processing.job import Job
 
-from ..video.processing.job import Job
 from .test_job import JobTestsFixture, Job1, Job2
+
 
 class JobProcessTests(JobTestsFixture, unittest.TestCase):
     """Tests the proper processing of a DAG of Jobs"""

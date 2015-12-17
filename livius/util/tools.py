@@ -1,4 +1,7 @@
 """
+tools
+=======
+
 This module is a collection of small Python functions and classes which make common patterns shorter and easier.
 It is by no means a complete collection but you can keep extending it.
 If you need any other convenient utilities, you would add them inside this module.
@@ -70,7 +73,7 @@ def get_polygon_outer_bounding_box(polygon):
 def crop_image_from_normalized_coordinates(im, rect):
     """
     Returns a cropped image from `rect` where the coordinates are normalized.
-    The form of `rect` is similar to :py:`get_polygon_outer_bounding_box`.
+    The form of `rect` is similar to :py:func:`get_polygon_outer_bounding_box`.
     """
     import math
 
@@ -201,19 +204,18 @@ def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow
     This function can be served for getting the sum of the difference of the pixel value of selected frames.
     After creating an instance of the class and call the corresponding method,
     a window will be open to get the user for points and then return the points back.
-    Inputs:
-        fullPathToVideoFile: The corresponding path to the video file
-        marginToReadFrames: The amount of seconds from the beginning and end of the video
-                                to read the frames and calculate the sum of them.
-        flagShow: If true, the final summed frame has been shown.
 
-    Outputs:
-        finalDiffSumNorm: The final 2D-image is the sum of difference of all frames between
-                         (video.duration)-marginToReadFrames - marginToReadFrames).
 
-    Example:
+    :param fullPathToVideoFile: The corresponding path to the video file
+    :param marginToReadFrames: The amount of seconds from the beginning and end of the video
+        to read the frames and calculate the sum of them.
+    :param flagShow: If true, the final summed frame has been shown.
+    :returns: The final 2D-image is the sum of difference of all frames between
+        (video.duration)-marginToReadFrames - marginToReadFrames).
+
+    Example::
+
         sum_all_differences_frames(inputVideo, marginToReadFrames=20, flagShow=True)
-
     """
 
     # Reading the video file
@@ -248,23 +250,21 @@ def sum_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow
 
 
 def max_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
-
     """
     This function can be served for getting the max of the difference of the pixel value of selected frames.
     After creating an instance of the class and call the corresponding method,
     a window will be open to get the user for points and then return the points back.
 
-    Inputs:
-        fullPathToVideoFile: The corresponding path to the video file
-        marginToReadFrames: The amount of seconds from the beginning and end of the video
-                                to read the frames and calculate the sum of them.
-        flagShow: If true, the final summed frame has been shown.
+    :param fullPathToVideoFile: The corresponding path to the video file
+    :param marginToReadFrames: The amount of seconds from the beginning and end of the video
+        to read the frames and calculate the sum of them.
+    :param flagShow: If true, the final summed frame has been shown.
 
-    Outputs:
-        finalDiffMaxNorm: The final 2D-image is the max of the difference of all frames between
-                         (video.duration)-marginToReadFrames - marginToReadFrames).
+    :returns: The final 2D-image is the max of the difference of all frames between
+        (video.duration)-marginToReadFrames - marginToReadFrames).
 
-    Example:
+    Example::
+
         max_all_differences_frames(inputVideo, marginToReadFrames=20, flagShow=True)
     """
 
@@ -303,24 +303,21 @@ def max_all_differences_frames(fullPathToVideoFile, marginToReadFrames, flagShow
 
 
 def max_all_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
-
-    """ This function can be served for getting the max pixel value of selected frames.
+    """
+    This function can be served for getting the max pixel value of selected frames.
     After creating an instance of the class and call the corresponding method,
     a window will be open to get the user for points and then return the points back.
 
-    Inputs:
-        fullPathToVideoFile: The corresponding path to the video file
-        marginToReadFrames: The amount of seconds from the beginning and end of the video
-                                to read the frames and calculate the sum of them.
-        flagShow: If true, the final summed frame has been shown.
+    :param fullPathToVideoFile: The corresponding path to the video file
+    :param marginToReadFrames: The amount of seconds from the beginning and end of the video
+        to read the frames and calculate the sum of them.
+    :param flagShow: If true, the final summed frame has been shown.
+    :returns: The final 2D-image is the max of all frames between
+        (video.duration)-marginToReadFrames - marginToReadFrames).
 
-    Outputs:
-        finalMaxNorm: The final 2D-image is the max of all frames between
-                         (video.duration)-marginToReadFrames - marginToReadFrames).
+    Example::
 
-    Example:
         max_all_frames(inputVideo, marginToReadFrames=20, flagShow=True)
-
     """
 
     # Reading the video file
@@ -356,23 +353,17 @@ def max_all_frames(fullPathToVideoFile, marginToReadFrames, flagShow):
 
 
 def read_histogram_correlations_and_boundaries_from_json_file(filepath, slide_stripe=0):
-    """Reads a json file containing the information about the histogram correlations and the
-       histogram boundaries. The information is computed for several stripes.
+    """
+    Reads a json file containing the information about the histogram correlations and the
+    histogram boundaries. The information is computed for several stripes.
 
-       slide_stripe is the stripe we assume the slides of the talk to be in.
+    :param slide_stripe: the stripe we assume the slides of the talk to be in.
+    :returns: all histogram correlations and boundaries for the desired stripe
 
-       Returns all histogram correlations and boundaries for the desired stripe
+   .. note::
 
-       Note:
        The json file/object must have the following structure:
 
-       @todo(Stephan): update the description of the json file
-       {
-        "frame_id": {
-            "dist_stripes": {"0": , ..., "N_stripes - 1": },
-            "boundaries": {"0": {"min": , "max":}, ..., "N_stripes - 1": {"min": , "max": }}
-        }
-       }
     """
     with open(filepath) as f:
         distances_histogram = json.load(f)

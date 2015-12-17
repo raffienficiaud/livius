@@ -1,3 +1,3 @@
-.. automodule:: SourceCode.video.processing.jobs.dummy_clip
+.. automodule:: livius.video.processing.jobs.dummy_clip
    :members:
    :special-members:

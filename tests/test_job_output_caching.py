@@ -5,7 +5,8 @@ Test that the outputs of nodes that are up to date are loaded from the JSON file
 import unittest
 import os
 
-from ..video.processing.job import Job
+from livius.video.processing.job import Job
+
 from .test_job import JobTestsFixture
 
 

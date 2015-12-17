@@ -2,20 +2,18 @@
 
 
 import unittest
-from tempfile import mkdtemp
 import os
 import shutil
 import tempfile
-
-# logging facility
 import logging
+
+from livius.video.processing.job import Job
+
 FORMAT = '[%(asctime)-15s] %(message)s'
 logging.basicConfig(format=FORMAT)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-from ..video.processing.job import Job
 
 
 class JDummy(Job):
@@ -62,7 +60,6 @@ class JobCacheTest(unittest.TestCase):
 
         job2 = self.get_job(some_parameter=some_parameter)
         self.assertTrue(job2.is_up_to_date())
-
 
     def test_cache_dict_string(self):
         """Tests the ability to cache dictionaries containing strings"""
