@@ -83,16 +83,16 @@ class Job(object):
         """Returns a string version of the workflow"""
 
         pref = ' ' * 2 * current_index
-        str = pref + cls.name + '\n'
+        _str = pref + cls.name + '\n'
 
         if cls.get_parents() is not None:
             for p in cls.get_parents():
-                str += p.workflow_to_string(current_index + 1)
-        return str
+                _str += p.workflow_to_string(current_index + 1)
+        return _str
 
     @classmethod
     def _workflow_to_dot(cls, all_nodes=None, edges=None):
-        str = ""
+        _str = ""
 
         if all_nodes is None:
             all_nodes = set()
@@ -106,12 +106,12 @@ class Job(object):
                 dot, all_nodes_to_merge, edges_to_merge = p._workflow_to_dot(all_nodes, edges)
                 all_nodes |= all_nodes_to_merge
                 edges |= edges_to_merge
-                str += dot
+                _str += dot
                 if not (p.name, cls.name) in edges:
-                    str += "%s -> %s [splines=\"false\"];\n" % (p.name, cls.name)
+                    _str += "%s -> %s [splines=\"false\"];\n" % (p.name, cls.name)
                     edges |= set([(p.name, cls.name)])
 
-        return str, all_nodes, edges
+        return _str, all_nodes, edges
 
     @classmethod
     def workflow_to_dot(cls):
@@ -119,14 +119,14 @@ class Job(object):
 
         This allows to plot the workflow with graphviz."""
 
-        str, all_nodes, all_edges = cls._workflow_to_dot()
+        _str, all_nodes, _ = cls._workflow_to_dot()
 
         for s in all_nodes:
-            str += "%s [fontname=\"verdana\", shape=\"box\"];\n" % s
+            _str += "%s [fontname=\"verdana\", shape=\"box\"];\n" % s
 
         out = "digraph graphname {\n"
         out += "rankdir=LR\n node [style=rounded]\n"
-        out += str + "}"
+        out += _str + "}"
 
         return out
 
@@ -177,11 +177,11 @@ class Job(object):
                 if par_instance.name in self._parent_names:
                     # not adding
 
-                    try:
-                        import ipdb
-                        ipdb.set_trace()
-                    except ImportError:
-                        pass
+                    # try:
+                    #     import ipdb
+                    #     ipdb.set_trace()
+                    # except ImportError:
+                    #     pass
 
                     raise RuntimeError("name %s is already used for one parent of job %s" %
                                        (par_instance.name, self.name))
