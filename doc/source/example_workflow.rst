@@ -17,9 +17,6 @@ The workflow can be run from the command line in the main **livius** folder via
 
     python -m video.processing.workflow
 
-
-(after following the livius installation procedure from Parnia's documentation.)
-
 --------------------------------------
 Workflow for extracting the Slide Clip
 --------------------------------------

@@ -62,6 +62,8 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
+nitpicky = True
+
 # General information about the project.
 project = u'Livius'
 copyright = u'2015, Max Planck for Intelligent Systems'

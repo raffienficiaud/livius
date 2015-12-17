@@ -43,7 +43,7 @@ class ClipsToMovie(Job):
     The input consists in two moviePy clips, and a metadata feed. The video clips are respectively
     for the slides and the speaker:
 
-    * slides: have been warped and corrected accordingly. Such a clip may be provided by :py:class:`ExtractSlideClipJob`.
+    * slides: have been warped and corrected accordingly. Such a clip may be provided by :py:class:`.extract_slide_clip.ExtractSlideClipJob`.
     * speaker: tracking the speaker and stabilizing the tracked region over time.
 
     The metadata feed is a dictionaty containing the informations about the video.
@@ -61,7 +61,7 @@ class ClipsToMovie(Job):
     #: * ``background_image_name`` filename of the background image
     #: * ``credit_image_names`` image shown at the end of the video. By default their location is in the ressource folder of the
     #:   python livius package.
-    #: * ``video_layout`` the layout of the final video. See :py:func:`createFinalVideo` for a description
+    #: * ``video_layout`` the layout of the final video. See :py:func:`createFinalVideo <livius.video.editing.layout.createFinalVideo>` for a description
     #:   of the layout.
     attributes_to_serialize = ['output_video_file',
                                'video_filename',
@@ -82,7 +82,7 @@ class ClipsToMovie(Job):
         :param str video_intro_images_folder: location of the background image. Changing this value
           will not trigger a recomputation so that it is possible to relocate the files to another
           folder. Defaults to ``None``, in which case full paths are expected from the Metadata provider
-          (under the key ``intro_images``). See :py:class:`Metadata`.
+          (under the key ``intro_images``). See :py:class:`Metadata <.meta.Metadata>`.
         :param str background_image_name: the name of the image used for background. If not specified, the function
           :py:func:`get_default_background_image` will be used instead. This value is cached.
         :param str background_image_name: the name of the image used for ending the video. If not specified, the function
