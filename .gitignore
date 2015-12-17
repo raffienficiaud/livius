@@ -1,0 +1,5 @@
+*.pyc
+SourceCode/histograms/
+SourceCode/Example Data/
+tmp
+doc/build
