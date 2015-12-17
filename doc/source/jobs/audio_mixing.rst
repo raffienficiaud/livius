@@ -1,3 +1,3 @@
-.. automodule:: SourceCode.video.processing.jobs.audio_mixer
+.. automodule:: livius.video.processing.jobs.audio_mixer
    :members:
    :special-members:

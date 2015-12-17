@@ -68,7 +68,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # temporary path
-_tmp_path = os.path.join('/home/livius/Code/livius/SourceCode/Example Data/tmp')
+_tmp_path = os.path.join('/home/livius/Code/livius/livius/Example Data/tmp')
 if not os.path.exists(_tmp_path):
     os.makedirs(_tmp_path)
 
@@ -1663,7 +1663,7 @@ def plot_histogram_distances():
 
 if __name__ == '__main__':
 
-    storage = '/home/livius/Code/livius/SourceCode/Example Data'
+    storage = '/home/livius/Code/livius/livius/Example Data'
     filename = 'video_7.mp4'
 
     # plot_histogram_distances()

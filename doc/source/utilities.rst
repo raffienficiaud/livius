@@ -1,15 +1,19 @@
 Utility functions
 =================
 
-.. automodule:: SourceCode.util.functor
+.. automodule:: livius.util.functor
    :members:
    :undoc-members:
    
-.. automodule:: SourceCode.util.histogram
+.. automodule:: livius.util.histogram
    :members:
    :undoc-members:
 
-.. automodule:: SourceCode.util.user_interaction
+.. automodule:: livius.util.user_interaction
+   :members:
+   :undoc-members:
+
+.. automodule:: livius.util.tools
    :members:
    :undoc-members:
 

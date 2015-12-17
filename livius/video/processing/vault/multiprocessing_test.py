@@ -247,9 +247,9 @@ def initialize_process(kwargs, thumbnails):
 
 if __name__ == '__main__':
 
-    _tmp_path = '/home/livius/Code/livius/SourceCode/Example Data/tmp'
+    _tmp_path = '/home/livius/Code/livius/livius/Example Data/tmp'
 
-    directory = '/home/livius/Code/livius/SourceCode/Example Data/thumbnails/'
+    directory = '/home/livius/Code/livius/livius/Example Data/thumbnails/'
 
     video7_slide_coordinates = np.array([[0.36004776, 0.01330207],
                                          [0.68053395, 0.03251761],

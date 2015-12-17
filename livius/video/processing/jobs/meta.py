@@ -25,7 +25,7 @@ logger = logging.getLogger()
 class Metadata(Job):
     """
     Job taking the metadata location anf video filename and produce metadata suitable
-    for the movie composition object :py:class:`ClipsToMovie <SourceCode.video.processing.jobs.create_movie.ClipsToMovie>`.
+    for the movie composition object :py:class:`ClipsToMovie <livius.video.processing.jobs.create_movie.ClipsToMovie>`.
 
     The expected structure of the meta data is the following:
 
@@ -49,7 +49,7 @@ class Metadata(Job):
     .. note::
 
       Some of the attributes of the final video are set by the
-      :py:class:`ClipsToMovie <SourceCode.video.processing.jobs.create_movie.ClipsToMovie>`
+      :py:class:`ClipsToMovie <livius.video.processing.jobs.create_movie.ClipsToMovie>`
       job (such as the credit/epilog
       images, the background image, etc).
 
@@ -160,14 +160,14 @@ class Metadata(Job):
 
 def metadata_mogrifier(folder):
     """Utility function transforming metadata stored in txt file into a format usable by
-    :py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>` usable one.
+    :py:class:`Metadata <livius.video.processing.jobs.meta.Metadata>` usable one.
 
     This is just an example reading 2 files in a JSON format and creating the appropriate metadata input
-    for the :py:class:`Metadata <SourceCode.video.processing.jobs.meta.Metadata>` class.
+    for the :py:class:`Metadata <livius.video.processing.jobs.meta.Metadata>` class.
 
     It is possible to run directly this function by providing the location of the folder to parse, in the following way::
 
-      python -m SourceCode.video.processing.jobs.meta some_folder
+      python -m livius.video.processing.jobs.meta some_folder
 
     """
     import json

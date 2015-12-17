@@ -16,22 +16,22 @@ Categories
 The jobs fall into the following categories:
 
 * user interaction: this is meanly for user selection of image parts. This category
-  is covered by the :py:mod:`select_polygon <SourceCode.video.processing.jobs.select_polygon>`
+  is covered by the :py:mod:`select_polygon <livius.video.processing.jobs.select_polygon>`
   module.
 
 * slide processing: the functionality is covered by the module 
-  :py:mod:`extract_slide_clip <SourceCode.video.processing.jobs.extract_slide_clip>`
+  :py:mod:`extract_slide_clip <livius.video.processing.jobs.extract_slide_clip>`
   
 * video content creation: those type of jobs create objects suitable for MoviePy as inputs. Some utility
-  classes/functions are also provided in the :py:mod:`dummy_clip <SourceCode.video.processing.jobs.dummy_clip>`
+  classes/functions are also provided in the :py:mod:`dummy_clip <livius.video.processing.jobs.dummy_clip>`
   module. 
   
 * metadata management: jobs that are able to provide the workflow with meta data that will be used 
   to eg. describe the video, add content (introduction, epilog images), etc. Located in the module 
-  :py:mod:`meta <SourceCode.video.processing.jobs.meta>`
+  :py:mod:`meta <livius.video.processing.jobs.meta>`
 
 * audio processing: jobs that process the audio part. See 
-  :py:mod:`audio_mixer <SourceCode.video.processing.jobs.audio_mixer>`  
+  :py:mod:`audio_mixer <livius.video.processing.jobs.audio_mixer>`  
 
 Reference
 ---------

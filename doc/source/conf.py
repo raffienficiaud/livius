@@ -22,12 +22,11 @@ import shlex
 # sys.path.insert(0, os.path.abspath('.'))
 
 
-# Adding the SourceCode folder to the path
+# Adding the livius folder to the path
 root_source_folder = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                      os.pardir,
                                      os.pardir))
 sys.path.append(root_source_folder)
-# sys.path.append(os.path.join(root_source_folder, 'SourceCode', 'video', 'processing'))
 
 
 # -- General configuration ------------------------------------------------
@@ -113,7 +112,7 @@ exclude_patterns = []
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['SourceCode.', ]
+modindex_common_prefix = ['livius.', ]
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
