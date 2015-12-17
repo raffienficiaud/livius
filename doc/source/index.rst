@@ -115,6 +115,16 @@ in the wiki for more details).
   pip install sphinx
   pip install sphinxcontrib-programoutput 
   pip install sphinx_bootstrap_theme
+  
+And finally, you can install Livius:
+
+.. code::
+
+  pip install .
+  
+.. note::
+
+  As always it is recommended to install everything in a dedicated virtual environment. 
 
 Font on Linux
 -------------
