@@ -51,7 +51,7 @@ import time
 from util.tools import *
 from video.processing.slideDetection import *
 from video.editing.layout import createFinalVideo
-from video.processing.postProcessing import PostProcessor
+from livius.video.processing.vault.postProcessing import PostProcessor
 from video.processing.speakerTracking import *
 
 #--------------------------------------------------------------------
