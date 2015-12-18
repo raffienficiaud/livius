@@ -3,17 +3,17 @@ Utility functions
 
 .. automodule:: livius.util.functor
    :members:
-   :undoc-members:
+   :special-members:
    
 .. automodule:: livius.util.histogram
    :members:
-   :undoc-members:
+   :special-members:
 
 .. automodule:: livius.util.user_interaction
    :members:
-   :undoc-members:
+   :special-members:
 
 .. automodule:: livius.util.tools
    :members:
-   :undoc-members:
+   :special-members:
 

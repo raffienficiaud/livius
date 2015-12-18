@@ -13,9 +13,9 @@ def get_histogram_min_max_with_percentile(hist,
     """Gets the p- and (1-p)-percentile as an approximation of the boundaries
        of the histogram.
 
-    :param (array) hist: the histogram on which the boundaries should be computed
-    :param (Boolean) is_normalized: if False, the histogram is normalized prior to the computation
-    :param (float) percentile: the percentile above/below the min/max that should be returned. If None
+    :param array hist: the histogram on which the boundaries should be computed
+    :param bool is_normalized: if False, the histogram is normalized prior to the computation
+    :param float percentile: the percentile above/below the min/max that should be returned. If None
         0.01 (1%) is taken.
     :returns: a tuple (min, max) value for the histogram
     """

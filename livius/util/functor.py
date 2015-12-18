@@ -11,7 +11,7 @@ class Functor(object):
     Creates a callable object from the given data.
     The data must be indexable by the arguments that are provided when calling the object.
 
-    :param  data: The data which is accessed by the arguments given when
+    :param data: The data which is accessed by the arguments given when
                   this object is called.
     :type data: Anything with a specified ``__getitem__`` method
 
@@ -24,13 +24,13 @@ class Functor(object):
         self.transform = transform
 
     def __call__(self, *args):
-        """
-        Index the stored data.
+        """Index the stored data.
 
         :param args: One or more indices we want to access the data with.
 
-        :note:
-        The arguments when calling the object must be provided in order of indexing
+        .. note::
+
+           The arguments when calling the object must be provided in order of indexing
         """
         item = None
 

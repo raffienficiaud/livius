@@ -17,7 +17,7 @@ def get_polygon_from_user(im,
     Shows a window with the given image, inviting the user to click on several points
     in order to define a polygon
 
-    :param (numpy array) im: image to show
+    :param im: image to show as a numpy array
     :param nb_points_polygon: number of points of the polygon
     :param windows_name: the title of the window shown to the user. If None, a random string will be shown
 

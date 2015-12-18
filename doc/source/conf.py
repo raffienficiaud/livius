@@ -56,6 +56,8 @@ templates_path = ['_templates']
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
+autodoc_default_flags = [':no-undoc-members:', ':special-members:']
+
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
