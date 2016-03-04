@@ -1,5 +1,5 @@
 {
-	"segment_computation_tolerance": 0.05,
+	"segment_computation_tolerance": 0.02,
     "segment_computation_min_length_in_seconds": 2,
     "slide_clip_desired_format": [1280, 960],
     "nb_vertical_stripes": 10,
