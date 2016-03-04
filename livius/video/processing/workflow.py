@@ -20,8 +20,8 @@ from .jobs.histogram_computation import HistogramsLABDiff, GenerateHistogramArea
 from .jobs.ffmpeg_to_thumbnails import FFMpegThumbnailsJob, NumberOfFilesJob
 from .jobs.histogram_correlations import HistogramCorrelationJob
 from .jobs.segment_computation import SegmentComputationJob
-from .jobs.contrast_enhancement_boundaries import ContrastEnhancementBoundaries
-from .jobs.extract_slide_clip import ExtractSlideClipJob
+from .jobs.contrast_enhancement_boundaries import ContrastEnhancementBoundaries, BoundariesConvolutionOnStableSegments
+from .jobs.extract_slide_clip import ExtractSlideClipJob, EnhanceContrastJob
 from .jobs.audio_mixer import AudioMixerJob
 
 import os
@@ -75,8 +75,12 @@ def workflow_extract_slide_clip():
 
     ContrastEnhancementBoundaries.add_parent(FFMpegThumbnailsJob)
     ContrastEnhancementBoundaries.add_parent(SelectSlide)
-    ContrastEnhancementBoundaries.add_parent(SegmentComputationJob)
 
+    BoundariesConvolutionOnStableSegments.add_parent(ContrastEnhancementBoundaries)
+    BoundariesConvolutionOnStableSegments.add_parent(SegmentComputationJob)
+
+    EnhanceContrastJob.parents = None
+    EnhanceContrastJob.add_parent(BoundariesConvolutionOnStableSegments)
     # necessary parents are already in ExtractSlideClipJob, but this is a bit
     # confusing.
     return ExtractSlideClipJob
@@ -92,7 +96,7 @@ def workflow_video_creation():
 
     w_slide_clip = workflow_extract_slide_clip()
 
-    from .jobs.dummy_clip import RandomImageClipJob, OriginalVideoClipJob
+    from .jobs.dummy_clip import OriginalVideoClipJob
     from .jobs.create_movie import ClipsToMovie
     from .jobs.meta import Metadata
 
