@@ -14,6 +14,7 @@ from ..job import Job
 from moviepy.editor import VideoClip, VideoFileClip
 import os
 
+
 class RandomImageClipJob(Job):
 
     """

@@ -15,12 +15,11 @@ MLSS 2015, but may be easily adapted to your needs.
 
 from ..job import Job
 
-import datetime
 import os
 import logging
 
-
 logger = logging.getLogger()
+
 
 class Metadata(Job):
     """
@@ -134,7 +133,6 @@ class Metadata(Job):
             self.date = d['date']
             self.video_begin = d['video_begin'] if 'video_begin' in d else ""  # empty string evaluates to False and is serializable
             self.video_end = d['video_end'] if 'video_end' in d else ""
-
 
         # listing the image files, sorting them, and considering them as introduction images.
         l = os.listdir(os.path.dirname(self._get_meta_filename()))
