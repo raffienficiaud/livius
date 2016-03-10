@@ -35,7 +35,7 @@ def _get_min_max_boundary_from_file(args):
 
     import cv2
 
-    filename, slide_crop_rect = args
+    filename, slide_crop_rect, percentile = args
     im = cv2.imread(filename)
     im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
@@ -44,7 +44,7 @@ def _get_min_max_boundary_from_file(args):
     slide = crop_image_from_normalized_coordinates(im_gray, slide_crop_rect)
     slidehist = cv2.calcHist([slide], [0], None, [256], [0, 256])
 
-    boundaries = get_histogram_min_max_with_percentile(slidehist, False)
+    boundaries = get_histogram_min_max_with_percentile(slidehist, False, percentile=percentile)
 
     return boundaries
 
@@ -92,6 +92,11 @@ class ContrastEnhancementBoundaries(Job):
     #: Name of the job in the workflow
     name = 'contrast_enhancement_boundaries'
 
+    #: Cached inputs:
+    #:
+    #: * ``histogram_contrast_enhancement_percentile`` the percentile to keep for computing the boundaries from the histograms
+    attributes_to_serialize = ['histogram_contrast_enhancement_percentile']
+
     #: Cached output:
     #:
     #: * ``min_bounds`` min sequence function of time
@@ -104,6 +109,9 @@ class ContrastEnhancementBoundaries(Job):
                  **kwargs):
         super(ContrastEnhancementBoundaries, self).__init__(*args, **kwargs)
 
+        self.histogram_contrast_enhancement_percentile = float(kwargs['histogram_contrast_enhancement_percentile']) if 'histogram_contrast_enhancement_percentile' in kwargs else 0.01
+
+
     def run(self, *args, **kwargs):
         assert(len(args) >= 3)
 
@@ -114,11 +122,12 @@ class ContrastEnhancementBoundaries(Job):
         slide_crop_rect = get_polygon_outer_bounding_box(args[1])
 
         # Third parent is the SegmentComputation, we only access it in get_outputs().
-
         pool = Pool(processes=6)
 
         boundaries = pool.map(_get_min_max_boundary_from_file,
-                              itertools.izip(image_list, itertools.repeat(slide_crop_rect)))
+                              itertools.izip(image_list,
+                                             itertools.repeat(slide_crop_rect),
+                                             itertools.repeat(self.histogram_contrast_enhancement_percentile)))
 
         # Create two single lists
         self.min_bounds, self.max_bounds = map(list, zip(*boundaries))

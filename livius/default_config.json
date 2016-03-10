@@ -4,5 +4,6 @@
     "slide_clip_desired_format": [1280, 960],
     "nb_vertical_stripes": 10,
     "audio_mixing_left": 0.8,
-    "audio_mixing_right": 0.2
+    "audio_mixing_right": 0.2,
+    "histogram_contrast_enhancement_percentile": 0.01
 }
