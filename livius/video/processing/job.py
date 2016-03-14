@@ -71,6 +71,9 @@ class Job(object):
 
         if cls.parents is None:
             cls.parents = []
+
+        if obj in cls.parents:
+            logger.warning("The parent %r appears more than once for the class %r", obj, cls)
         cls.parents.append(obj)
 
     @classmethod
