@@ -144,7 +144,10 @@ class EnhanceContrastJob(Job):
     def get_outputs(self):
         super(EnhanceContrastJob, self).get_outputs()
 
-        get_min_bounds, get_max_bounds = self.contrast_enhancement_boundaries.get_outputs()
+        # we can switch the parent to another one that is statically inside `parents`
+        # when creating the workflow. Hence we need to access the parent by the name
+        # that is actually inside self.parents
+        get_min_bounds, get_max_bounds = getattr(self, self.parents[0].name).get_outputs()
 
         class ContrastEnhancer(object):
 
