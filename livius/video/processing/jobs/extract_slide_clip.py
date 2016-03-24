@@ -23,6 +23,11 @@ import os
 
 from moviepy.editor import VideoFileClip
 
+try:
+    import colorcorrect.algorithm as cca
+except ImportError:
+    cca = None
+
 from .histogram_computation import SelectSlide
 from .contrast_enhancement_boundaries import ContrastEnhancementBoundaries
 
@@ -178,6 +183,51 @@ class EnhanceContrastJob(Job):
         return ContrastEnhancer(get_min_bounds, get_max_bounds)
 
 
+class WhiteBalanceCorrectionJob(Job):
+    """
+    Job for applying white balance correction to the slides.
+
+    .. rubric:: Workflow inputs
+
+    Nothing
+
+    .. rubric:: Workflow outputs
+
+    Returns a callable object that provides a function::
+
+        img -> img
+
+    which corrects for the white balance.
+    """
+
+    #: name of the job in the workflow
+    name = 'white_balance'
+    attributes_to_serialize = []
+
+    def __init__(self, *args, **kwargs):
+        super(WhiteBalanceCorrectionJob, self).__init__(*args, **kwargs)
+
+    def run(self, *args, **kwargs):
+        pass
+
+    def get_outputs(self):
+        super(WhiteBalanceCorrectionJob, self).get_outputs()
+
+        class WhiteBalanceCorrection(object):
+
+            """Callable object for correcting the white balance of the slides."""
+
+            def __init__(self):
+                pass
+
+            def __call__(self, image):
+                """Perform white balance correction."""
+                # Perform the contrast enhancement
+                return cca.retinex_with_adjust(image)
+
+        return WhiteBalanceCorrection()
+
+
 class ExtractSlideClipJob(Job):
     """
     Job for extracting the Slide Clip from the Video.
@@ -200,7 +250,7 @@ class ExtractSlideClipJob(Job):
     #: name of the job in the workflow
     name = 'extract_slide_clip'
     attributes_to_serialize = ['video_filename']
-    parents = [WarpSlideJob, EnhanceContrastJob]
+    parents = [WarpSlideJob, EnhanceContrastJob, WhiteBalanceCorrectionJob]
 
     def __init__(self, *args, **kwargs):
         super(ExtractSlideClipJob, self).__init__(*args, **kwargs)
@@ -215,6 +265,7 @@ class ExtractSlideClipJob(Job):
 
         warp_slide = self.warp_slides.get_outputs()
         enhance_contrast = self.enhance_contrast.get_outputs()
+        correct_white_balance = self.white_balance.get_outputs()
 
         # not doing the cut here but rather in the final video composition
         clip = VideoFileClip(os.path.join(self.video_location, self.video_filename))
@@ -226,7 +277,12 @@ class ExtractSlideClipJob(Job):
             warped = warp_slide(frame)
             contrast_enhanced = enhance_contrast(warped, t)
 
-            return contrast_enhanced
+            if cca is None:
+                return contrast_enhanced
+
+            white_balance_corrected = correct_white_balance(contrast_enhanced)
+
+            return white_balance_corrected
 
         # retains the duration of the clip
         return clip.fl(apply_effects)
