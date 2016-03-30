@@ -7,7 +7,10 @@ we apply in order to enhance the contrast of the slides.
 
 .. autosummary::
 
+  BoundariesConvolutionOnStableSegments
   ContrastEnhancementBoundaries
+  ComputeExtremaOnAndBetweenSegments
+  ComputesExtremaByLinearInterpolationOnSegments
 
 """
 
@@ -51,17 +54,26 @@ def _get_min_max_boundary_from_file(args):
     return boundaries
 
 
-class BoundsFromTime(object):
-    """Assigns 2 values per segments and perform a linear interpolation between segments.
+class ComputeExtremaOnAndBetweenSegments(object):
+    """Callable object for computing the extremas over time for each segment by averaging.
 
-    The two values are depending on the application, the same value (average) or
-    a line between the boundaries."""
+    The object first computes a unique value over each segment by taking the average of the values in
+    the associated lists.
+    It then acts as a continuous function (callable object) returning values of extremum as a function of time.
+
+    Between segments, a linear interpolation is performed.
+
+    .. note:: the average function may be replaced by any other function returning a pair of appropriate values
+       representing a linear slope. The function will then interpolate on this slope.
+    """
 
     def __init__(self, boundaries, segments, default_boundary):
         self.boundaries = boundaries
         self.segments = segments
         self.default_boundary = default_boundary
-        self.boundary_for_segment = map(self.get_histogram_boundaries_linear_interpolation_for_segment,
+
+        # change here to have another effect (see get_histogram_boundaries_linear_interpolation_for_segment)
+        self.boundary_for_segment = map(self.get_histogram_boundary_average_for_segment,
                                         self.segments)
 
         return
@@ -126,6 +138,9 @@ class BoundsFromTime(object):
 
         bounds_in_segment = self.boundaries[int(start):int(end)]
 
+        # note: the initial intention of this code was to have a good slope for the
+        # content of the segment. The following code is hence buggy, see the convolution class
+        # below for an example of proper implementation.
         yinterp = np.interp([start, end], range(int(start), int(end)), bounds_in_segment)
 
         return yinterp
@@ -222,8 +237,14 @@ class ContrastEnhancementBoundaries(Job):
         return self.min_bounds, self.max_bounds
 
 
-class LinearInterpolationOnSegments(object):
-    """XXX"""
+class ComputesExtremaByLinearInterpolationOnSegments(object):
+    """Callable object for computing the extremas over time from segments list of values.
+
+    The segment list of values should represent an estimation of the extremas every seconds (sampling time
+    for the estimation of the extreams). The callable object performs a linear interpolation of those values
+    within segments to have a continuous function of time.
+
+    Between segments, a linear interpolation is also performed. """
 
     def __init__(self, boundaries, segments, default_boundary):
         self.boundaries = boundaries
@@ -234,10 +255,6 @@ class LinearInterpolationOnSegments(object):
     def __call__(self, t):
         segment_index = 0
 
-        # if t == 2026:
-        #     import ipdb
-        #     ipdb.set_trace()
-
         for (start, end) in self.segments:
 
             if (start <= t) and (t <= end - 1):
@@ -247,8 +264,6 @@ class LinearInterpolationOnSegments(object):
 
                 t0 = int(math.floor(t))  # linear interpolation between each of the elements
                 t1 = t0 + 1  # spaced by 1 sec
-
-                print start, end, t, segment_index, len(current_segment_values), t1 - int(start)
 
                 if (t == end - 1):
                     assert(current_segment_values[int(t) - int(start)] == current_segment_values[-1])
@@ -285,8 +300,11 @@ class LinearInterpolationOnSegments(object):
 
 class BoundariesConvolutionOnStableSegments(Job):
     """Post processing of the slides boundaries for enhancing the contrast of
-    the slides. This particular Job performs a convolution with some 'kernel'
-    (currently only a box kernel).
+    the slides.
+
+    This particular Job performs a convolution with some 'kernel'
+    (currently only a box kernel), and a pair of callable object representing functions of
+    the min/max wrt. time (see :py:class:`ComputesExtremaByLinearInterpolationOnSegments`).
 
     .. rubric:: Runtime parameters
 
@@ -301,6 +319,13 @@ class BoundariesConvolutionOnStableSegments(Job):
     * a 2-uple where each element is a list. Each list contains respectively the min and max
       computed from the histograms (at some frequency, eg. 1 value per second).
     * A list of stable segments `[t_segment_start, t_segment_end]`
+
+    .. rubric:: Example
+
+    An example of processing with convolutions within segments (and linear approximation for small segments)
+    can be seen in the following image
+
+      .. image:: /_static/grey_level_smoothing_over_time.png
 
     """
 
@@ -410,5 +435,5 @@ class BoundariesConvolutionOnStableSegments(Job):
 
         segments = self.compute_segments.get_outputs()
 
-        return LinearInterpolationOnSegments(self.min_bounds_averaged, segments, 0), \
-            LinearInterpolationOnSegments(self.max_bounds_averaged, segments, 255)
+        return ComputesExtremaByLinearInterpolationOnSegments(self.min_bounds_averaged, segments, 0), \
+            ComputesExtremaByLinearInterpolationOnSegments(self.max_bounds_averaged, segments, 255)
