@@ -58,7 +58,6 @@ class SelectPolygonJob(Job):
     #: Specifies the window title that is shown to the user when asked to perform the area selection
     window_title = ''
 
-
     def __init__(self,
                  *args,
                  **kwargs):
@@ -217,7 +216,6 @@ class SelectSpeaker(SelectPolygonJob):
     name = 'select_speaker'
 
     window_title = 'Select the location of the Speaker'
-
 
 
 def selection_mogrifier(folder, outfolder):

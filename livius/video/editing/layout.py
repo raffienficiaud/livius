@@ -356,8 +356,17 @@ def createFinalVideo(slide_clip,
 
     # making processing shorter if this is a test
     if is_test:
-        slide_clip_composed = slide_clip_composed.set_duration(10)
-        speaker_clip_composed = speaker_clip_composed.set_duration(10)
+        duration = int(slide_clip_composed.duration)
+        current_start = 0
+        out1 = []
+        out2 = []
+        while current_start < duration:
+            out1 += [slide_clip_composed.subclip(current_start, current_start + 3)]
+            out2 += [speaker_clip_composed.subclip(current_start, current_start + 3)]
+            current_start += 10 * 60  # every 10 mins
+
+        slide_clip_composed = concatenate(out1)
+        speaker_clip_composed = concatenate(out2)
 
     # we take again the slide clip as the reference one
     second_segment_clip = slide_clip_composed
@@ -417,6 +426,13 @@ def createFinalVideo(slide_clip,
     outputVideo = concatenate([first_segment_clip, second_segment_overlay_clip, third_segment_clip])
 
     if flagWrite:
-        outputVideo.write_videofile(output_file_name + container, fps, codec=codecFormat)
+        kw_additional_args = {}
+        if is_test:
+            kw_additional_args['threads'] = 4
+            kw_additional_args['preset'] = 'ultrafast'
+        outputVideo.write_videofile(output_file_name + container,
+                                    fps,
+                                    codec=codecFormat,
+                                    **kw_additional_args)
 
     return outputVideo
