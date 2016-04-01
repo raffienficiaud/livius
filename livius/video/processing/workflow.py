@@ -108,6 +108,33 @@ def workflow_video_creation():
     return ClipsToMovie
 
 
+def workflow_extract_slide_clip_no_contrast_correction():
+    """
+    Return a workflow that creates the MoviePy clip for the slides.
+
+    The clip for the slides DOES NOT include any contrast enhancement, only warping.
+
+    * ffmpeg thumbnail generation
+    * Polygon Selection for the Slides and Speaker
+    * Perspective Transformations.
+
+    """
+    from .jobs.dummy_clip import OriginalVideoClipJob
+    from .jobs.create_movie import ClipsToMovie
+    from .jobs.meta import Metadata
+    from .jobs.extract_slide_clip import WarpSlideJob
+
+    # removes all the contrast associated correction (keep the warping)
+    ExtractSlideClipJob.parents = [WarpSlideJob]
+
+    ClipsToMovie.add_parent(ExtractSlideClipJob)
+    ClipsToMovie.add_parent(OriginalVideoClipJob)
+    ClipsToMovie.add_parent(Metadata)
+    ClipsToMovie.add_parent(AudioMixerJob)
+
+    return ClipsToMovie
+
+
 def process(workflow_instance, **kwargs):
     """Process an instance of a workflow using the runtime parameters
     given by ``kwargs``.
