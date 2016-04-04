@@ -214,7 +214,7 @@ class ExtractSlideClipJob(Job):
         super(ExtractSlideClipJob, self).get_outputs()
 
         warp_slide = self.warp_slides.get_outputs()
-        enhance_contrast = self.enhance_contrast.get_outputs()
+        enhance_contrast = self.enhance_contrast.get_outputs() if hasattr(self, "enhance_contrast") else None
 
         # not doing the cut here but rather in the final video composition
         clip = VideoFileClip(os.path.join(self.video_location, self.video_filename))
@@ -224,6 +224,9 @@ class ExtractSlideClipJob(Job):
             frame = get_frame(t)
 
             warped = warp_slide(frame)
+            if enhance_contrast is None:
+                return warped
+
             contrast_enhanced = enhance_contrast(warped, t)
 
             return contrast_enhanced
