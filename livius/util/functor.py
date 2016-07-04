@@ -44,4 +44,3 @@ class Functor(object):
             item = self.transform(item)
 
         return item
-

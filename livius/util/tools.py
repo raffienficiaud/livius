@@ -161,7 +161,7 @@ def rectify_coordinates(oldCoordinates):
         sys.exit("[tools] Error: You have selected less than 4 points. You must choose four coordinates.")
 
 
-def video_duration_shrink (fullVideoPath, tStart, tEnd, writeFlie=False):
+def video_duration_shrink(fullVideoPath, tStart, tEnd, writeFlie=False):
 
     """
     This function serves to shrink the video duration and

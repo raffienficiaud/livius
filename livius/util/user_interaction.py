@@ -109,7 +109,6 @@ class GetPolygon(object):
         cv2.resizeWindow(self.window_name, 1920, 1200)
         cv2.moveWindow(self.window_name, 100, 100)
 
-
     def select_polygon_on_image(self, im, nb_points_polygon):
 
         params = type('params', (object,), {})()

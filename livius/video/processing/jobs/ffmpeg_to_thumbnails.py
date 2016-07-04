@@ -85,8 +85,6 @@ class FFMpegThumbnailsJob(Job):
 
     def get_thumbnail_location(self):
         """Returns the location where the thumbnails will/are stored, relative to the thumbnail root directory."""
-        #return os.path.join('thumbnails',
-        #                    os.path.splitext(os.path.basename(self.video_filename))[0])
         return os.path.splitext(os.path.basename(self.video_filename))[0]
 
     def __init__(self,
@@ -118,9 +116,8 @@ class FFMpegThumbnailsJob(Job):
         # is unicode)
         self.video_filename = unicode(self.video_filename)
 
-
         if not os.path.exists(os.path.join(self.video_location, self.video_filename)):
-            raise RuntimeError("The video file %s does not exist" % \
+            raise RuntimeError("The video file %s does not exist" %
                                os.path.abspath(os.path.join(self.video_location, self.video_filename)))
 
         # Put in default values if they are not passed in the kwargs
