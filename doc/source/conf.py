@@ -68,8 +68,8 @@ nitpicky = True
 
 # General information about the project.
 project = u'Livius'
-copyright = u'2015, Max Planck for Intelligent Systems'
-author = u'Max Planck for Intelligent Systems'
+copyright = u'2015, Max Planck Society, Raffi Enficiaud, Stefan Wenninger, Parnia Bahar'
+author = u'Raffi Enficiaud, Stefan Wenninger, Parnia Bahar'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
