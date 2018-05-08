@@ -14,6 +14,7 @@ from ..job import Job
 from moviepy.editor import VideoClip, VideoFileClip
 import os
 
+
 class RandomImageClipJob(Job):
 
     """
@@ -62,6 +63,7 @@ class RandomImageClipJob(Job):
         super(RandomImageClipJob, self).get_outputs()
 
         import numpy as np
+
         def make_frame(t):
             """Function that chains together all the post processing effects."""
             return np.random.random(self.frame_size + [3]) * 255

@@ -33,22 +33,22 @@ class Job(object):
     (e.g the fact that keys are always stored as unicode strings).
     """
 
-    # : Name of the Job (used for identification).
+    #: Name of the Job (used for identification).
     name = "root"
 
-    # : List of attributes that represent the Job's state
+    #: List of attributes that represent the Job's state
     attributes_to_serialize = []
 
     # : Outputs of the Job.
     outputs_to_cache = []
 
-    # : List of parents.
-    # :
-    # : .. important::
-    # :      The order of the parents is important as it
-    # :      determines the order in which the outputs of
-    # :      outputs of the parent Jobs are passed to this
-    # :      Job's :func:`run` method.
+    #: List of parents.
+    #:
+    #: .. important::
+    #:      The order of the parents is important as it
+    #:      determines the order in which the outputs of
+    #:      outputs of the parent Jobs are passed to this
+    #:      Job's :func:`run` method.
     parents = None
 
     # private API
@@ -71,6 +71,9 @@ class Job(object):
 
         if cls.parents is None:
             cls.parents = []
+
+        if obj in cls.parents:
+            logger.warning("The parent %r appears more than once for the class %r", obj, cls)
         cls.parents.append(obj)
 
     @classmethod
