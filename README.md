@@ -18,7 +18,7 @@ The documentation can be found online on [read-the-doc](http://livius.readthedoc
 
 The code is released under the MIT License
 
-> Copyright 2018 Max Planck Society, Raffi Enficiaud, Lennart Bramlage
+> Copyright 2015 Max Planck Society, Raffi Enficiaud, Stefan Wenninger, Parnia Bahar
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 > to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -30,3 +30,7 @@ The code is released under the MIT License
 > FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 > LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 > IN THE SOFTWARE.
+
+All other materials, such as pictures and videos, are in the repository for the sole purpose of
+helping the contributors or users of the code adapt this tool to their need. Those materials
+(logos, pictures, ) are copyrighted and not part of the above license.
